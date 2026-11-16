@@ -1,6 +1,6 @@
 // Verifica stills de cada cena: fonte carregada, escala mínima, cobertura e paleta.
 // Uso: node scripts/check-render.mjs [--fonts] [--scale] [--safe-zone] [--transitions] [--words] [--media]
-//        [--style <id>] [--all]
+//        [--fill] [--cta] [--style <id>] [--all]
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import { readFileSync, mkdtempSync, rmSync, mkdirSync, readdirSync, symlinkSync } from "node:fs";
@@ -15,12 +15,12 @@ const repo = path.resolve(root, "..");
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const styleId = args.includes("--style") ? args[args.indexOf("--style") + 1] : null;
-const FLAGS = ["fonts", "scale", "safe-zone", "transitions", "words", "media"];
+const FLAGS = ["fonts", "scale", "safe-zone", "transitions", "words", "media", "fill", "cta"];
 const picked = FLAGS.some(flag);
 const all = flag("all") || (!picked && !styleId);
 /** `--style X` roda as checagens de cena do estilo; as flags isoladas restringem. */
 const want = (n) => all || flag(n) || (!!styleId && !picked);
-const sceneChecks = all || ["fonts", "scale", "safe-zone"].some(flag) || (!!styleId && !picked);
+const sceneChecks = all || ["fonts", "scale", "safe-zone", "fill"].some(flag) || (!!styleId && !picked);
 const SAFE_STYLES = ["isometric-pastel", "forge-motion"];
 const readJson = (p) => JSON.parse(readFileSync(p, "utf8"));
 
@@ -167,6 +167,22 @@ try {
           `${tag}: texto na zona segura (y ${SAFE.top}-${SAFE.bottom}, guarda ${SAFE.rightGuard}px)`
           + (bad.length ? ` fora: ${JSON.stringify(bad[0])}` : ""));
       }
+      if (want("fill") && style.id === "forge-motion") {
+        const cap = captionBand();
+        // Cobertura vertical do conteúdo (painéis e texto) na zona útil e folga até a legenda.
+        const spans = [...(probe.panels ?? []), ...(probe.boxes ?? [])]
+          .map((b) => [Math.max(b.top, SAFE.top), Math.min(b.bottom, cap.top - 40)]).filter(([a, b]) => b > a)
+          .sort((x, y) => x[0] - y[0]);
+        const merged = [];
+        for (const sp of spans) merged.length && sp[0] <= merged.at(-1)[1] ? merged.at(-1)[1] = Math.max(merged.at(-1)[1], sp[1]) : merged.push([...sp]);
+        const useful = cap.top - 40 - SAFE.top;
+        const gaps = merged.map((m, k) => m[0] - (k ? merged[k - 1][1] : SAFE.top)).concat(merged.length ? cap.top - 40 - merged.at(-1)[1] : useful);
+        const empty = Math.max(...gaps) / useful;
+        check(empty <= 0.15, `${tag}: faixa vazia vertical ${(empty * 100).toFixed(0)}% <= 15% da zona útil`);
+        const bottoms = [...(probe.panels ?? []), ...(probe.boxes ?? [])].map((b) => b.bottom);
+        const free = bottoms.length ? cap.top - Math.max(...bottoms) : 0;
+        check(free >= 40, `${tag}: folga ${free.toFixed(0)}px >= 40px entre o conteúdo e a legenda (y ${cap.top.toFixed(0)})`);
+      }
       if (all || styleId) {
         const palette = [...inputProps.style.look.palette.map(hex), hex(theme.colors.accent)];
         const a = analyze(decodePng(readFileSync(out)), hex(theme.colors.bg), palette);
@@ -216,6 +232,26 @@ try {
       onBrowserLog: (l) => logs.push(l.text) });
     return { probe: JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8)), output };
   };
+  if (want("cta")) {
+    const texts = ["Quer ver mais?", "Siga para ver mais sobre automação local de vídeo ok",
+      "Rode npx @nathanramorim/forge-sdd init e comece agora ok"];
+    const lonely = (lines) => lines.some((l) => l.length > 1 && l.at(-1) < 2);
+    for (const text of texts) {
+      const scene = { type: "cta", dur: 3, narration: "", text };
+      const forgeProps = { ...engineProps([scene], theme.id, forge.id), probe: true };
+      const { probe } = await probeAt(forgeProps, 85);
+      const lines = (probe.ctaLines ?? [])[0] ?? [];
+      check(lines.length > 0 && !lonely([lines]), `cta forge-motion "${text.slice(0, 24)}": linhas ${JSON.stringify(lines)} sem palavra sozinha`);
+      const props = { ...overlayProps([{ at: 0, dur: 6, type: "cta", text }], 6), probe: true };
+      const composition = await selectComposition({ serveUrl, id: "Overlay", inputProps: props });
+      const logs = [];
+      await renderStill({ composition, serveUrl, output: path.join(tmp, "cta.png"), inputProps: props, frame: 90,
+        imageFormat: "png", onBrowserLog: (l) => logs.push(l.text) });
+      const ov = JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8));
+      const ovLines = (ov.ctaLines ?? [])[0] ?? [];
+      check(ovLines.length > 0 && !lonely([ovLines]), `cta overlay "${text.slice(0, 24)}": linhas ${JSON.stringify(ovLines)} sem palavra sozinha`);
+    }
+  }
   if (want("transitions")) {
     // Os limites vêm de render/src/timeline.ts (DUP-03): o script lê a duração, sem cópia.
     const seconds = Number(/TRANSITION_SECONDS = ([\d.]+)/.exec(readFileSync(path.join(root, "src/timeline.ts"), "utf8"))[1]);

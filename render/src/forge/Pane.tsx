@@ -14,7 +14,7 @@ export const Pane: React.FC<{
   const dotColors = [theme.colors.bad ?? accent, theme.colors.warn ?? accent, theme.colors.success ?? accent,
     theme.colors.accent2 ?? accent, accent];
   return (
-    <div data-reveal-at={reveal} style={{
+    <div data-panel="" data-reveal-at={reveal} style={{
       opacity, background: theme.colors.surface, borderRadius: spec.radius,
       border: `2px solid ${spec.border}`, overflow: "hidden", display: "flex", flexDirection: "column",
       boxShadow: `0 0 40px ${theme.colors.glow ?? "transparent"}`, ...style,

@@ -4,6 +4,7 @@ import { Scene, Theme, Style, Word } from "../types";
 import { fontFamily } from "../fonts";
 import { SCALE, titleSize } from "../scale";
 import { CAMERA_MARGIN, SAFE, SIDE_MARGIN } from "../safeZone";
+import { CAPTION } from "../overlay/regions";
 import { fitFontSize } from "../text-fit";
 import { easeOut, springForge, stagger } from "../motion";
 import { Camera } from "./Camera";
@@ -19,10 +20,14 @@ type Props = { scene: Scene; theme: Theme; style: Style };
 const WIDTH = 1080;
 const CONTENT_W = WIDTH - 2 * SIDE_MARGIN;
 const AREA_TOP = SAFE.top + CAMERA_MARGIN;
-const AREA_H = SAFE.bottom - SAFE.top - 2 * CAMERA_MARGIN;
+/** Folga mínima entre o conteúdo e a legenda (`CAPTION`, DUP-03): o conteúdo termina acima dela. */
+const CAPTION_GAP = 40;
+const AREA_H = CAPTION.top - CAPTION_GAP - SAFE.top - 2 * CAMERA_MARGIN;
 const GAP = 28;
 const PACKET_SECONDS = 1.2;
 const STEP = 0.18;
+const BALANCE: React.CSSProperties = { textWrap: "balance" } as React.CSSProperties;
+const FILL: React.CSSProperties = { display: "flex", flexDirection: "column", justifyContent: "center" };
 
 const accents = (theme: Theme, style: Style): string[] =>
   style.look.palette?.length ? style.look.palette : [theme.colors.accent];
@@ -72,7 +77,7 @@ export const ForgePhrase: React.FC<Props> = ({ scene, theme, style }) => {
   return (
     <Stage>
       <Card theme={theme} accent={a} opacity={enter} offsetX={(1 - enter) * -40}
-        style={{ padding: "48px 40px", textAlign: "center" }}>
+        style={{ ...FILL, padding: "48px 40px", textAlign: "center", minHeight: AREA_H * 0.88 }}>
         <div style={{ ...body(theme), fontWeight: 800, fontSize: titleSize(text, CONTENT_W - 80), lineHeight: 1.15 }}>
           <GradWords theme={theme} text={text} words={scene.words} fallbackStep={0.12} />
         </div>
@@ -87,7 +92,7 @@ export const ForgeFlow: React.FC<Props> = ({ scene, theme, style }) => {
   const { fps } = useVideoConfig();
   const list = accents(theme, style);
   const count = Math.max(steps.length, 1);
-  const paneH = Math.min(170, (AREA_H - GAP * (count - 1)) / count);
+  const paneH = Math.min(260, (AREA_H - GAP * (count - 1)) / count);
   const total = paneH * count + GAP * (count - 1);
   const top = AREA_TOP + (AREA_H - total) / 2;
   const x = SIDE_MARGIN + CONTENT_W / 2;
@@ -136,7 +141,8 @@ export const ForgeList: React.FC<Props> = ({ scene, theme, style }) => {
   const Item: React.FC<{ item: string; i: number }> = ({ item, i }) => {
     const { enter, at } = useEnter(i, scene.words, items.length);
     return (
-      <Card theme={theme} accent={pick(list, i)} opacity={enter} offsetX={(1 - enter) * -60} reveal={at}>
+      <Card theme={theme} accent={pick(list, i)} opacity={enter} offsetX={(1 - enter) * -60} reveal={at}
+        style={{ ...FILL, flex: "1 1 0", maxHeight: 360 }}>
         <div style={{ ...body(theme), fontSize: SCALE.body }}><Inline text={item} theme={theme} /></div>
       </Card>
     );
@@ -156,11 +162,11 @@ export const ForgeCompare: React.FC<Props> = ({ scene, theme, style }) => {
     const side = sides[i];
     return (
       <Pane theme={theme} accent={pick(list, i)} opacity={enter} style={{ flex: 1, transform: `translateY(${(1 - enter) * 30}px)` }}>
-        <div style={{ ...body(theme), fontWeight: 800, fontSize: SCALE.secondary, color: pick(list, i), marginBottom: 12 }}>
+        <div style={{ ...body(theme), fontWeight: 800, fontSize: SCALE.body, color: pick(list, i), marginBottom: 16 }}>
           {side?.label ?? ""}
         </div>
         {(side?.points ?? []).map((p, k) => (
-          <div key={k} style={{ ...body(theme), fontWeight: 500, fontSize: SCALE.min, marginBottom: 8 }}>
+          <div key={k} style={{ ...body(theme), fontWeight: 500, fontSize: SCALE.secondary, marginBottom: 12 }}>
             <Inline text={p} theme={theme} />
           </div>
         ))}
@@ -181,9 +187,9 @@ export const ForgeCta: React.FC<Props> = ({ scene, theme, style }) => {
   const [a, b] = accents(theme, style);
   return (
     <Stage>
-      <Pane theme={theme} accent={a} opacity={enter} style={{ padding: "20px 0" }}>
-        <div style={{
-          fontFamily: fontFamily(monoFont(theme)), fontWeight: 500, fontSize: SCALE.secondary,
+      <Pane theme={theme} accent={a} opacity={enter} style={{ ...FILL, padding: "60px 0", flex: "1 1 0", maxHeight: 700 }}>
+        <div data-cta="" style={{ ...BALANCE, padding: "0 32px",
+          fontFamily: fontFamily(monoFont(theme)), fontWeight: 500, fontSize: SCALE.body,
           color: theme.colors.text, textAlign: "center", lineHeight: 1.3,
         }}>
           <span style={{ color: b ?? a }}>$ </span>{text}

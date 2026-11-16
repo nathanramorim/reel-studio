@@ -128,9 +128,10 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
               alignItems: "center", opacity: p,
             }}>
               <Card theme={theme} accent={accent} style={{ width: "100%", padding: "6px 24px" }}>
-                <div style={{
+                <div data-cta="" style={{
                   fontFamily: fontFamily(monoFont(theme)), fontWeight: 500, fontSize: SCALE.min,
                   color: theme.colors.text, lineHeight: 1.2, overflowWrap: "anywhere",
+                  textWrap: "balance" as React.CSSProperties["textWrap"],
                 }}>
                   {o.text ?? theme.cta.text}
                 </div>
