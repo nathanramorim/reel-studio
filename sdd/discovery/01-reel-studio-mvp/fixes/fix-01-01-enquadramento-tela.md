@@ -26,10 +26,15 @@ SEG-03, ARQ-05, ARQ-10, TST-01, DUP-03
 ## Escopo
 - `cut --layout auto|fill|fit` (padrão `auto`): vídeo em pé usa `fill`; vídeo em paisagem usa `fit`.
 - `fit`: a imagem inteira cabe na largura de 1080, centralizada sobre fundo desfocado do próprio vídeo, e a legenda fica na faixa livre abaixo.
+- `cut --layout fill` força o preenchimento 9:16 em vídeo de paisagem (pessoa falando).
+- `cut --anchor left|center|right|<0 a 1>` (padrão `center`) desloca a janela do corte no `fill`.
+- A skill pergunta uma vez, para vídeo em paisagem, se é gravação de tela ou pessoa, passa `--layout` e guarda a escolha na pasta do vídeo.
+- O `cut` imprime o layout escolhido (ex.: `layout: fit (2860x1776)`).
 - `focus` com `--region` fica fora e vira feature futura.
 
 ## Critérios de Aceitação Executáveis
 - `cd engine && uv run pytest tests/test_cut.py -k layout`: `auto` escolhe `fit` para 2860×1776 e `fill` para 1080×1920; o filtro de `fit` não contém `crop` do vídeo principal.
+- `pytest -k anchor`: `--anchor left` e `right` mudam o `x` do `crop`; valor fora de 0 a 1 é rejeitado na borda (`SEG-01`).
 - `uv run reel-studio cut "<gravação>" --theme forge --dry-run` mostra o layout escolhido e não escreve nada (`ARQ-05`).
 - `cd engine && uv run ruff check` passa.
 - Com a gravação real, o mp4 sai 1080×1920 e a tela aparece inteira (conferência manual).
