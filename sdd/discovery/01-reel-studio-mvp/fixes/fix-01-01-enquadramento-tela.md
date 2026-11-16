@@ -13,10 +13,10 @@ ADR-0001 (`core/` é o domínio; CLI é a borda). Módulo dono: `core/cut.py` (`
 | Dimensões do vídeo | `core/` | nenhuma | criar | Sonda via ffprobe em `core/proc.py`, sem módulo novo |
 
 ## Dependências novas
-Nenhuma (ffprobe vem com o ffmpeg).
+`opencv-python-headless`, extra opcional `vision` do uv (`ARQ-04`): detecção de rosto local. Consultar context7 com a versão exata na implementação (`SEG-07`). Sem o extra, o corte cai em `fit`.
 
 ## Rules e IDs da Constituição Aplicáveis
-SEG-03, ARQ-05, ARQ-10, TST-01, DUP-03
+SEG-03, SEG-07, ARQ-04, ARQ-05, ARQ-10, TST-01, DUP-03
 
 ## Feature Correlacionada
 - **Origem:** `sdd/discovery/01-reel-studio-mvp/features/feat-01-04-cortar-legenda.md`.
@@ -24,16 +24,16 @@ SEG-03, ARQ-05, ARQ-10, TST-01, DUP-03
 - **Evidência:** `Gravação de Tela 2026-11-15 às 15.04.39.mov` tem 2860×1776. Em 9:16 cabem ~999 px de largura, cerca de 35% da tela; o resto some e o conteúdo fica ilegível.
 
 ## Escopo
-- `cut --layout auto|fill|fit` (padrão `auto`): vídeo em pé usa `fill`; vídeo em paisagem usa `fit`.
-- `fit`: a imagem inteira cabe na largura de 1080, centralizada sobre fundo desfocado do próprio vídeo, e a legenda fica na faixa livre abaixo.
-- `cut --layout fill` força o preenchimento 9:16 em vídeo de paisagem (pessoa falando).
-- `cut --anchor left|center|right|<0 a 1>` (padrão `center`) desloca a janela do corte no `fill`.
-- A skill pergunta uma vez, para vídeo em paisagem, se é gravação de tela ou pessoa, passa `--layout` e guarda a escolha na pasta do vídeo.
+Tudo automático; a pessoa não passa parâmetro.
+- `cut` sonda as dimensões; vídeo em pé usa `fill`.
+- Em paisagem, amostra alguns quadros do trecho e detecta rosto localmente (OpenCV, nada sai da máquina). Rosto consistente: `fill` com o corte centrado no rosto. Sem rosto: `fit` (tela inteira sobre fundo desfocado, legenda na faixa livre).
+- Sem o extra do OpenCV, paisagem usa `fit` (nunca perde conteúdo).
 - O `cut` imprime o layout escolhido (ex.: `layout: fit (2860x1776)`).
+- `--layout` e `--anchor` existem só como override raro; a skill não pergunta nada.
 - `focus` com `--region` fica fora e vira feature futura.
 
 ## Critérios de Aceitação Executáveis
-- `cd engine && uv run pytest tests/test_cut.py -k layout`: `auto` escolhe `fit` para 2860×1776 e `fill` para 1080×1920; o filtro de `fit` não contém `crop` do vídeo principal.
+- `cd engine && uv run pytest tests/test_cut.py -k layout`: sem parâmetro, escolhe `fit` para 2860×1776 sem rosto, `fill` centrado no rosto para paisagem com rosto e `fill` para 1080×1920; sem OpenCV, paisagem usa `fit`; o filtro de `fit` não contém `crop` do vídeo principal.
 - `pytest -k anchor`: `--anchor left` e `right` mudam o `x` do `crop`; valor fora de 0 a 1 é rejeitado na borda (`SEG-01`).
 - `uv run reel-studio cut "<gravação>" --theme forge --dry-run` mostra o layout escolhido e não escreve nada (`ARQ-05`).
 - `cd engine && uv run ruff check` passa.
