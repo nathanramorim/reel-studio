@@ -19,7 +19,7 @@
         "stroke": { "type": "string" },
         "palette": { "type": "array", "items": { "type": "string" } },
         "font": { "type": "string" },
-        "motion": { "enum": ["pop", "draw", "slide", "morph"] }
+        "motion": { "enum": ["pop", "draw", "slide", "morph", "forge"] }
       }
     },
     "scene_types": {

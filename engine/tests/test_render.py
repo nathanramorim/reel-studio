@@ -168,3 +168,28 @@ def test_padrao_voz_none_sem_source_ou_parcial_ou_vazio():
     assert render.default_audio([{"source": src}, {}]) == "none"
     assert render.default_audio([{}]) == "none"
     assert render.default_audio([]) == "none"
+
+
+# --- estilo forge-motion (05-05) ---
+def test_forge_motion_valida_e_resolve_paleta_pelo_tema():
+    from reel_studio.core.contracts import load_style, load_theme
+    from reel_studio.core.render import props
+
+    style, theme = load_style("forge-motion"), load_theme("forge")
+    assert style["look"]["motion"] == "forge" and style["background"] == "theme"
+    out = props({"scenes": [{"type": "flow", "dur": 4, "narration": "x", "steps": ["a", "b"]}]},
+                theme, style)
+    colors = theme["colors"]
+    assert out["style"]["look"]["palette"] == [colors["accent"], colors["accent2"],
+                                               colors["success"]]
+
+
+def test_forge_motion_aceita_tema_sem_brand():
+    from reel_studio.core.contracts import load_style, load_theme
+    from reel_studio.core.render import props
+
+    theme = load_theme("exemplo")
+    assert "brand" not in theme
+    out = props({"scenes": [{"type": "cta", "dur": 3, "narration": "x"}]}, theme,
+                load_style("forge-motion"))
+    assert out["style"]["id"] == "forge-motion"

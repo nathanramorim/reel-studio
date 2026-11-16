@@ -20,7 +20,7 @@ export const Probe: React.FC<{ families: string[] }> = ({ families }) => {
         serifWidth: textWidth("serif", "700"),
       }));
       const sizes: number[] = [];
-      const boxes: { top: number; bottom: number; right: number }[] = [];
+      const boxes: { top: number; bottom: number; left: number; right: number }[] = [];
       document.querySelectorAll<HTMLElement>("#probe-root *").forEach((el) => {
         const texts = [...el.childNodes].filter((n) => n.nodeType === 3 && n.textContent?.trim());
         if (!texts.length) return;
@@ -29,7 +29,7 @@ export const Probe: React.FC<{ families: string[] }> = ({ families }) => {
           const range = document.createRange();
           range.selectNodeContents(node);
           const r = range.getBoundingClientRect();
-          boxes.push({ top: r.top, bottom: r.bottom, right: r.right });
+          boxes.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
         });
       });
       const minSize = sizes.length ? Math.min(...sizes) : null;

@@ -1,5 +1,6 @@
 import React from "react";
 import { Scene, Theme, Style } from "./types";
+import { ForgePhrase, ForgeFlow, ForgeList, ForgeCompare, ForgeCta } from "./forge/ForgeScenes";
 import { IsoPhrase, IsoFlow, IsoList, IsoCompare } from "./iso/scenes";
 
 export type SceneComponent = React.FC<{ scene: Scene; theme: Theme; style: Style }>;
@@ -13,5 +14,13 @@ export const styleScenes: Record<string, Partial<Record<Scene["type"], SceneComp
     flow: IsoFlow,
     list: IsoList,
     compare: IsoCompare,
+  },
+  "forge-motion": {
+    title: ForgePhrase,
+    highlight: ForgePhrase,
+    flow: ForgeFlow,
+    list: ForgeList,
+    compare: ForgeCompare,
+    cta: ForgeCta,
   },
 };

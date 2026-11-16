@@ -82,11 +82,13 @@ uv run reel-studio prompt-suggest aula.mp4 --max 5    # modo corte: mostra o pro
 # o agente escreve cortes.json a partir do prompt
 uv run reel-studio save-clips aula.mp4 --file cortes.json --max 5
 uv run reel-studio cut aula.mp4 --theme busize
+# com `overlays` no clips.json, o corte ganha uma camada de componentes (gancho, passos, CTA, logo);
+# o mp4 do corte fica intacto e o resultado sai em clip-NN-TEMA-overlay.mp4. --overlays none ignora.
 
 uv run reel-studio prompt-script aula.mp4 --style isometric-pastel   # modo VSL
 # o agente escreve roteiro.json a partir do prompt
 uv run reel-studio save-scenes aula.mp4 --style isometric-pastel --theme forge --file roteiro.json
-uv run reel-studio render aula.mp4 --theme forge   # --captions narration|none, --audio original|none
+uv run reel-studio render aula.mp4 --theme forge --style forge-motion   # --captions narration|none, --audio original|none
 ```
 
 **`correcoes.json`** (opcional, ao lado do vídeo ou em `--glossary`): mapa `errado -> certo` aplicado à transcrição em memória. Uma chave aceita variantes separadas por `|` (`"checaja|checage|checajem": "checagem"`); a mesma variante com dois valores é erro. O tema pode ter `vocabulary` (lista de termos), que junto aos valores do glossário alimenta o prompt do Whisper (`transcribe --theme TEMA`, `--prompt` para texto extra). `save-clips` e `save-scenes` aceitam `--file` e `--style` ou os mesmos valores como argumentos posicionais.

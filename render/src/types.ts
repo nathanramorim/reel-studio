@@ -9,7 +9,16 @@ export type Theme = {
   fonts: { title: string; body: string; mono?: string };
   caption: { style: "word-highlight" | "line"; position: string; size?: number; uppercase?: boolean };
   logo: string | null;
+  brand?: Brand;
   cta: { text: string; handle?: string };
+};
+
+/** Kit da marca (contracts/theme.schema.json); `logoUri` e `mascotUri` são data URIs do SVG, lidos pelo motor. */
+export type Brand = {
+  logo?: string | null; mascot?: string | null; mono?: string;
+  logoUri?: string; mascotUri?: string;
+  panel?: { radius?: number; border?: string; bar?: boolean; dots?: number };
+  packet?: { glow?: boolean; radius?: number };
 };
 
 export type Style = {
@@ -39,4 +48,14 @@ export type ReelProps = {
   style: Style;
   fps: number;
   probe?: boolean;
+};
+
+export type OverlayItem = {
+  at: number; dur: number; text?: string;
+  type: "hook" | "keyword" | "step" | "callout" | "progress" | "cta" | "logo";
+};
+
+/** Props da composição `Overlay` (camada transparente sobre o corte); `length` em segundos. */
+export type OverlayProps = {
+  overlays: OverlayItem[]; theme: Theme; style: Style; fps: number; length: number; probe?: boolean;
 };
