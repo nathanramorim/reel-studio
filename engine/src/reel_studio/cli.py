@@ -158,11 +158,18 @@ def script(video: Video, style: str, theme: str | None = None,
 
 @app.command(name="cut")
 def cut_cmd(video: Video, theme: str = "pessoal",
+            layout: Annotated[str | None, typer.Option(
+                help="Override raro: fill, zoom ou fit (padrão: automático)")] = None,
+            anchor: Annotated[str | None, typer.Option(
+                help="Override raro do fill: left, center, right ou 0 a 1")] = None,
             dry_run: Annotated[bool, typer.Option(help="Só mostra o plano")] = False):
     """Recorta os clips aprovados, em 9:16, com legenda no tema."""
     p = Project.open(video)
     clips = contracts.load("clips", p.require("clips.json", f"reel-studio suggest {video}"))
-    jobs = cut.plan(p.video, p.dir, clips, _transcript(p), contracts.load_theme(theme))
+    jobs = cut.plan(p.video, p.dir, clips, _transcript(p), contracts.load_theme(theme),
+                     layout=layout, anchor=cut.parse_anchor(anchor))
+    for j in jobs:
+        typer.echo(f"{j.clip_id} layout: {j.layout.describe(j.size)}")
     if dry_run:
         for j in jobs:
             typer.echo(f"dry-run {j.clip_id}: {j.out.name}")
