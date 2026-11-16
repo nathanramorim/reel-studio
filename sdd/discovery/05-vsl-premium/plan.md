@@ -15,3 +15,4 @@
 | 4 | feat-05-11 voz gerada a partir de gravação: amostra automática, clone local (extra `tts`), duração das cenas e tempos de palavra pelo áudio gerado, consentimento e ADR-0003 | 03, 06 | não | ARQ-04, SEG-03, SEG-05, SEG-07, DUP-03, TST-01 |
 | 4 | feat-05-12 QA e entrega: quadros do meio da transição, pôster no quadro 0, `share-copy.txt`, créditos do `/brag` | 06, 07, 09, 11 | não | ARQ-05, DUP-03, TST-01 |
 | 5 | feat-05-13 ajustes visuais do corte com componentes e do `forge-motion` | 04, 05 | não | ARQ-05, DUP-03, TST-01 |
+| 5 | feat-05-14 corte dividido (vídeo em cima, legenda e instruções embaixo), abertura animada e apresentador (mascote) | 04, 13 | não | SEG-03, ARQ-05, ARQ-06, ARQ-10, DUP-01, DUP-03, TST-01 |
