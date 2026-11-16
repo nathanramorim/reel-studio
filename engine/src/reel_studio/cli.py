@@ -8,7 +8,7 @@ from typing import Annotated
 
 import typer
 
-from .core import audio, contracts, cut, paths, render
+from .core import audio, contracts, cut, glossary, paths, render
 from .core.compact import compact, estimate_tokens
 from .core.errors import ReelError
 from .core.llm import LLMClient
@@ -30,9 +30,24 @@ def _load_env() -> None:
             return
 
 
-def _transcript(p: Project) -> dict:
+Glossary = Annotated[Path | None, typer.Option(
+    help="correcoes.json (padrão: o mais próximo do vídeo)")]
+
+
+def _corrected(p: Project, file: Path | None = None,
+               theme: dict | None = None) -> tuple[dict, str]:
+    """Transcrição com o glossário aplicado em memória; o transcript.json segue cru."""
     t = p.require("transcript.json", f"reel-studio transcribe {p.video.name}")
-    return contracts.load("transcript", t)
+    data = contracts.load("transcript", t)
+    found = glossary.find(p.video, p.dir, theme or {}, file)
+    if found is None:
+        return data, ""
+    data, n = glossary.apply(data, found.mapping)
+    return data, f"glossário: {n} correções ({found.source})"
+
+
+def _transcript(p: Project, file: Path | None = None) -> dict:
+    return _corrected(p, file)[0]
 
 
 @app.command()
@@ -66,12 +81,14 @@ def transcribe(video: Video, model: str = "small", lang: str = "pt",
 
 
 @app.command(name="prompt-suggest")
-def prompt_suggest_cmd(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int = 60):
+def prompt_suggest_cmd(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int = 60,
+                       glossary: Glossary = None):
     """Mostra o prompt do modo corte, para o agente gerar o JSON (sem rede, sem chave)."""
     from .core.suggest import prompt as build_prompt
 
     p = Project.open(video)
-    system, user = build_prompt(_transcript(p), max_clips=max, min_s=min_seconds, max_s=max_seconds)
+    system, user = build_prompt(_transcript(p, glossary), max_clips=max,
+                                min_s=min_seconds, max_s=max_seconds)
     typer.echo(f"~{estimate_tokens(user)} tokens de transcrição\n")
     typer.echo("=== SYSTEM ===\n" + system)
     typer.echo("\n=== USER ===\n" + user)
@@ -113,12 +130,14 @@ def suggest(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int 
 
 
 @app.command(name="prompt-script")
-def prompt_script_cmd(video: Video, style: str, start: float = 0.0, end: float | None = None):
+def prompt_script_cmd(video: Video, style: str, start: float = 0.0, end: float | None = None,
+                      glossary: Glossary = None):
     """Mostra o prompt do modo VSL, para o agente gerar o JSON (sem rede, sem chave)."""
     from .core.script import prompt as build_prompt
 
     p = Project.open(video)
-    system, user = build_prompt(_transcript(p), contracts.load_style(style), start, end)
+    system, user = build_prompt(_transcript(p, glossary), contracts.load_style(style),
+                                start, end)
     typer.echo(f"~{estimate_tokens(user)} tokens de transcrição\n")
     typer.echo("=== SYSTEM ===\n" + system)
     typer.echo("\n=== USER ===\n" + user)
@@ -162,12 +181,17 @@ def cut_cmd(video: Video, theme: str = "pessoal",
                 help="Override raro: fill, zoom ou fit (padrão: automático)")] = None,
             anchor: Annotated[str | None, typer.Option(
                 help="Override raro do fill: left, center, right ou 0 a 1")] = None,
+            glossary: Glossary = None,
             dry_run: Annotated[bool, typer.Option(help="Só mostra o plano")] = False):
     """Recorta os clips aprovados, em 9:16, com legenda no tema."""
     p = Project.open(video)
     clips = contracts.load("clips", p.require("clips.json", f"reel-studio suggest {video}"))
-    jobs = cut.plan(p.video, p.dir, clips, _transcript(p), contracts.load_theme(theme),
-                     layout=layout, anchor=cut.parse_anchor(anchor))
+    th = contracts.load_theme(theme)
+    transcript, note = _corrected(p, glossary, th)
+    if note:
+        typer.echo(note)
+    jobs = cut.plan(p.video, p.dir, clips, transcript, th,
+                    layout=layout, anchor=cut.parse_anchor(anchor))
     for j in jobs:
         typer.echo(f"{j.clip_id} layout: {j.layout.describe(j.size)}")
     if dry_run:

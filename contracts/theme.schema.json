@@ -35,6 +35,7 @@
       }
     },
     "logo": { "type": ["string", "null"] },
+    "glossary": { "type": "object", "additionalProperties": { "type": "string" } },
     "cta": {
       "type": "object",
       "required": ["text"],
