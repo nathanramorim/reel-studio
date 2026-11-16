@@ -10,5 +10,7 @@
 | Cenas | `core/script.py` | `scenes.json` | `contracts/scenes.schema.json` | Modo VSL; `prompt()`/`normalize()` são o caminho padrão (agente) |
 | Tema | `themes/*.json` | — | `contracts/theme.schema.json` | Marca |
 | Estilo | `styles/*/style.json` | — | `contracts/style.schema.json` | Linguagem visual e tipos de cena |
+| Contraste | `core/contrast.py` | — | `ratio(a, b)`, `effective_background(theme, style)`, `resolve(theme, style)`, `ink_for(fills, theme, style)` | Contraste WCAG 2.x das cores do tema sobre o fundo efetivo; `resolve` devolve cores corrigidas e avisos |
+| Paleta do estilo | `core/palette.py` | — | `resolve(palette, colors)`, `resolve_color(value, colors, fallback)`, `derived(accent, count)` | Token do tema vira hex; token ausente usa tons derivados do `accent` |
 | Validação | `core/contracts.py` | — | `load(kind, path)` | Fonte única de schemas |
 | Glossário | `core/glossary.py` | `correcoes.json` | `find(...)`, `apply(transcript, mapping)` | Corrige termos em memória; `transcript.json` segue cru |
