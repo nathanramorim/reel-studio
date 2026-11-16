@@ -7,6 +7,13 @@ description: Use para transformar um vídeo já gravado em reel vertical para In
 
 Transforma um vídeo gravado em reel 9:16. O LLM nunca vê vídeo ou áudio: só a transcrição, compactada e enviada em **uma chamada** por etapa. Tudo roda local até o render.
 
+Funciona em qualquer agente que leia skills (Claude Code, agy/Antigravity, Codex via `AGENTS.md`). As instruções abaixo usam `RAIZ` para o lugar onde o motor e o render estão:
+
+| Agente | `RAIZ` é |
+|---|---|
+| Claude Code (plugin) | a variável de ambiente `CLAUDE_PLUGIN_ROOT` |
+| agy, Codex, ou uso direto | a pasta onde você clonou `reel-studio` |
+
 ## Dois modos
 
 | Modo | Quando | Comando final |
@@ -16,10 +23,10 @@ Transforma um vídeo gravado em reel 9:16. O LLM nunca vê vídeo ou áudio: só
 
 ## Passo a passo
 
-1. **Pergunte o que falta**, uma vez: modo (corte ou VSL), tema (`uv run reel-studio list` em `${CLAUDE_PLUGIN_ROOT}/engine` mostra os disponíveis) e, no modo VSL, o estilo.
+1. **Pergunte o que falta**, uma vez: modo (corte ou VSL), tema (`uv run reel-studio list` em `RAIZ/engine` mostra os disponíveis) e, no modo VSL, o estilo.
 2. **Extraia e transcreva** (sempre, os dois modos precisam):
    ```
-   cd ${CLAUDE_PLUGIN_ROOT}/engine
+   cd RAIZ/engine
    uv run reel-studio extract VIDEO
    uv run reel-studio transcribe VIDEO
    ```
@@ -48,7 +55,7 @@ Transforma um vídeo gravado em reel 9:16. O LLM nunca vê vídeo ou áudio: só
    ```
    uv run reel-studio render VIDEO --theme TEMA
    ```
-   Na primeira vez, `cd ${CLAUDE_PLUGIN_ROOT}/render && npm install` (demora, avise antes).
+   Na primeira vez, `cd RAIZ/render && npm install` (demora, avise antes).
 5. **Sem Claude Code, ou querendo automatizar sem agente no loop:** troque `prompt-suggest`/`save-clips` por `suggest` direto (idem `prompt-script`/`save-scenes` por `script`), com `OPENROUTER_API_KEY` no `.env`. Esse caminho existe só para automação fora de uma sessão com agente.
 6. **Nunca gere o vídeo final sem aprovação** do `clips.json` ou do `scenes.json`.
 7. **Sem tema que combine?** Veja `references/criar-tema.md`.

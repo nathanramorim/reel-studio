@@ -6,6 +6,8 @@
   <a href="https://github.com/nathanramorim/reel-studio/releases"><img alt="versão" src="https://img.shields.io/github/v/tag/nathanramorim/reel-studio?label=vers%C3%A3o&color=4f8ef7&labelColor=0d0f14"></a>
   <img alt="licença" src="https://img.shields.io/badge/licen%C3%A7a-MIT-4f8ef7?labelColor=0d0f14">
   <img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-plugin-4f8ef7?labelColor=0d0f14">
+  <img alt="agy" src="https://img.shields.io/badge/agy-skill-4f8ef7?labelColor=0d0f14">
+  <img alt="Codex" src="https://img.shields.io/badge/Codex-AGENTS.md-4f8ef7?labelColor=0d0f14">
   <img alt="uv" src="https://img.shields.io/badge/Python-uv-4f8ef7?labelColor=0d0f14">
   <img alt="dados" src="https://img.shields.io/badge/dados-100%25%20locais-4f8ef7?labelColor=0d0f14">
 </p>
@@ -35,29 +37,27 @@ A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o v�
 - **Python 3.11+** com [uv](https://docs.astral.sh/uv/).
 - **ffmpeg** no PATH (`brew install ffmpeg` ou `winget install ffmpeg`).
 - **Node.js 18+** (só para o modo VSL, que usa Remotion).
-- **Claude Code**, para instalar como plugin e gerar cortes/roteiros sem chave de API.
-- Só se for automatizar **fora** do Claude Code: chave no [OpenRouter](https://openrouter.ai) (`OPENROUTER_API_KEY`).
+- **Um agente que lê skills** (Claude Code, agy/Antigravity ou Codex) para gerar cortes e roteiros sem chave de API. Sem nenhum deles, dá para automatizar com `OPENROUTER_API_KEY` (veja "Caminho de automação" abaixo).
 
 ## Instalação
 
-```
-/plugin install reel-studio --marketplace nathanramorim/reel-studio
-```
+### No Claude Code
 
-Ou, fora do Claude Code:
-
-```bash
-claude plugin marketplace add nathanramorim/reel-studio
-claude plugin install reel-studio
+```
+/plugin marketplace add nathanramorim/reel-studio
+/plugin install reel-studio@reel-studio
 ```
 
-Ou clone e rode direto:
+### No agy (Antigravity) ou Codex
 
 ```bash
 git clone https://github.com/nathanramorim/reel-studio
-cd reel-studio/engine && uv sync --extra transcribe
+cd reel-studio
+cd engine && uv sync --extra transcribe
 cd ../render && npm install   # só se for usar o modo VSL
 ```
+
+Abra o agy ou o Codex **dentro da pasta `reel-studio`**: o agy encontra a skill em `.agents/skills/reel-studio/`, o Codex lê `AGENTS.md` na raiz. Os dois apontam para a mesma fonte, `skills/reel-studio/SKILL.md`.
 
 ## Como usar
 
@@ -69,7 +69,9 @@ No Claude Code, dentro de uma sessão com o plugin instalado:
 
 A skill pergunta o modo, o tema e (no modo VSL) o estilo, mostra o plano e só gera o vídeo depois do seu "sim". Comandos extras: `/transcrever` e `/extrair-voz`.
 
-Pela CLI, dentro de uma sessão com agente (sem chave de API — o agente lê o prompt e escreve o JSON):
+No agy ou no Codex não há comando de barra: basta pedir em linguagem natural, ex. "gere um reel de aula.mp4 no modo corte, tema busize" — o agente lê a mesma skill e segue os mesmos passos.
+
+Pela CLI, dentro de uma sessão com agente, em qualquer um dos três (sem chave de API — o agente lê o prompt e escreve o JSON):
 
 ```bash
 cd engine
@@ -91,7 +93,7 @@ Fora do Claude Code, para automação (CI, cron), use `suggest` e `script` no lu
 
 ## Temas e estilos
 
-**Temas prontos:** `pessoal`, `busize`, `forge`, e `exemplo` para você copiar e criar o seu (veja a skill, referência "criar tema").
+Tema é a sua marca (cores, fontes, legenda, CTA): qualquer pessoa cria o dela. `pessoal`, `busize` e `forge` são as minhas, incluídas como exemplo real; `exemplo` é o template genérico para copiar (veja a skill, referência "criar tema").
 
 **Estilos disponíveis**, copiados do [AI Style Atlas](https://www.futurepedia.io/resources/ai-style-atlas/view) para não depender do site:
 

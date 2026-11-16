@@ -24,6 +24,7 @@ Transformar vídeos já gravados em reels verticais (corte do vídeo real ou VSL
 | Estilo x tema | Eixos independentes e combináveis (ADR-0001) |
 | MCP? | Não. Skill carrega sob demanda (ADR-0001) |
 | Layout Python | `engine/src/reel_studio/cli.py` é a borda (equivale a `cmd/`); `engine/src/reel_studio/core/` é o domínio (equivale a `internal/`) (ADR-0001) |
+| Multiagente (DUP-10) | Skill do produto (gerar reels) tem fonte única em `skills/reel-studio/`, exigida pelo plugin do Claude Code; `.agents/skills/reel-studio/` (agy) e `AGENTS.md` (Codex) são adaptadores finos que apontam para ela — não duplicam o corpo (ADR-0001) |
 
 ## Ferramentas e Integrações
 | Campo | Valor |

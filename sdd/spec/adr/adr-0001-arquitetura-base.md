@@ -17,6 +17,7 @@ O autor grava vídeos explicando processos e quer reels para o Instagram sem fer
 6. **Distribuição como plugin do Claude Code** (skill + comandos), sem MCP: a skill só entra no contexto quando é usada.
 7. **Layout Python:** `cli.py` é a borda (papel do `cmd/` em `ARQ-01`) e `core/` é o domínio (papel do `internal/`).
 8. **Modo semiautomático:** a IA sugere cortes e cenas, a pessoa aprova o JSON antes do render.
+9. **Compatível com qualquer agente que leia skills (`DUP-10`).** A fonte única da skill de produto é `skills/reel-studio/`, porque é essa a estrutura exigida pelo plugin do Claude Code. `.agents/skills/reel-studio/SKILL.md` (lido pelo agy/Antigravity) e `AGENTS.md` na raiz (lido pelo Codex) são adaptadores finos: cada um aponta para `skills/reel-studio/SKILL.md` e suas `references/`, sem repetir o conteúdo. Os temas e os temas de exemplo são do autor; qualquer pessoa cria os seus (`themes/exemplo.json`).
 
 ## Consequências
 
