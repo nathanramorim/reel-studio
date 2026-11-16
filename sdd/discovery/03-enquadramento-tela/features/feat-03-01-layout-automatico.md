@@ -1,4 +1,4 @@
-# fix-01-01-enquadramento-tela — Corte de gravação de tela some com o conteúdo
+# feat-03-01-layout-automatico — Layout automático do corte (pessoa e tela)
 
 ## Modelo do módulo
 completo
@@ -18,7 +18,7 @@ ADR-0001 (`core/` é o domínio; CLI é a borda). Módulo dono: `core/cut.py` (`
 ## Rules e IDs da Constituição Aplicáveis
 SEG-03, SEG-07, ARQ-04, ARQ-05, ARQ-10, TST-01, DUP-03
 
-## Feature Correlacionada
+## Contexto do defeito
 - **Origem:** `sdd/discovery/01-reel-studio-mvp/features/feat-01-04-cortar-legenda.md`.
 - **Causa-raiz:** `ffmpeg_args` aplica `scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920`. Em vídeo de paisagem, o corte central mantém só uma faixa estreita.
 - **Evidência:** `Gravação de Tela 2026-11-15 às 15.04.39.mov` tem 2860×1776. Em 9:16 cabem ~999 px de largura, cerca de 35% da tela; o resto some e o conteúdo fica ilegível.
