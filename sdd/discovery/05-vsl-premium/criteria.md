@@ -1,4 +1,4 @@
-# Critérios — 05 VSL premium
+# Critérios — 05 Reels premium
 
 ## Modelo do módulo
 `completo` para `render/` (movimento, transições, painéis) e para `core/` (roteiro, batida, trilha, entrega); `enxuto` para os JSON de tema e estilo e para a documentação.
@@ -13,6 +13,8 @@ ADR-0001 (estilo e tema independentes; o LLM gera `scenes.json`, nunca código d
 - `ARQ-05`: `--dry-run` não escreve nada.
 - `SEG-03`: ffmpeg e Node por lista de argumentos. `SEG-05`: dados sensíveis nunca em log, vídeo ou copy.
 - Sem rede no render; fontes e ativos locais.
+- **Não regredir:** o comando do `ffmpeg` do corte e o `.ass` da legenda ficam idênticos quando não há camadas; o enquadramento automático, o glossário e a folga/fade não mudam.
+- Camadas de componentes são compositadas por cima do mp4 do corte (formato com alfa só na composição), nunca no lugar dele (`ARQ-05`).
 
 ## O que já existe
 | Procurei | Onde | Achei | Decisão | Justificativa |
@@ -29,7 +31,9 @@ ADR-0001 (estilo e tema independentes; o LLM gera `scenes.json`, nunca código d
 | Áudio e `source` | `core/render.py` | áudio original por cena; duração efetiva | estender | Mixagem com a trilha |
 | Roteiro | `core/script.py` (`prompt`, `normalize`) | cenas, narração, `source` | estender | Gancho, tom, copy |
 | Checagem de quadros | `render/scripts/check-render.mjs` | fonte, escala, cobertura, paleta | estender | Zona segura e quadros do meio da transição |
-| Layouts de corte | `core/frames.py`, `core/cut.py` | rosto, atividade, região por densidade | reusar | Recorte do trecho real para o painel |
+| Layouts de corte | `core/frames.py`, `core/cut.py` | rosto, atividade, região por densidade | reusar sem alterar | Base do corte com componentes e da janela com a tela real |
+| Voz e glossário | `core/render.py` (`--audio original`), `core/glossary.py` | voz original com `source`; correções em memória | reusar | Voz é o padrão com vídeo |
+| `clips.json` | `contracts/clips.schema.json`, `core/suggest.py` | cortes com `hook` | estender | Campo `overlays` por corte |
 | Vídeo do Forge | `forge-sdd/docs/video-pipeline/video.html`, `musica.py` | linguagem de movimento e trilha em Python puro | reusar como referência | Identidade do tema; trilha portada para `core/music.py` |
 | `/brag` | `latent-spaces/brag` (MIT) | regras de criação e acabamento | adaptar | Ideias, com créditos |
 
@@ -40,7 +44,8 @@ Nenhuma. O `musica.py` do Forge usa só a biblioteca padrão de Python. Consulta
 ```mermaid
 graph TB
   User((Criador)) -->|"/gerar-reel (VSL, tom)"| Skill[Skill reel-studio + agente]
-  Skill -->|roteiro: gancho, destaques, fecho, copy| CLI[Motor reel-studio]
+  Media[(Vídeo, conteúdo ou ideia)] --> Skill
+  Skill -->|cortes + overlays, ou roteiro: gancho, destaques, fecho, copy| CLI[Motor reel-studio]
   CLI --> Render[Render Remotion]
   CLI --> Music[Trilha e efeitos na batida]
   Theme[(Tema: design system + brand)] --> Render
@@ -52,6 +57,9 @@ graph TB
 ## C4: contêineres
 ```mermaid
 graph LR
+  K[clips.json: overlays] --> L[Camada de componentes: Remotion transparente]
+  C0[cut: ffmpeg, intocado] --> F
+  L --> F
   S[scenes.json: tone, share, beats, media] --> R[core/render]
   R --> P[props: cores resolvidas, palavras com tempo, brand]
   P --> M[Remotion: forge-motion, transições, painéis]
@@ -88,4 +96,6 @@ sequenceDiagram
 | C5 | Tempo de leitura mínimo (0,3 s por palavra) e cortes na grade de batidas | `cd engine && uv run pytest -k "leitura or batida"` |
 | C6 | `ffprobe`: pôster no quadro 0, trilha e áudio original, duração igual a frames/fps | `ffprobe` e `ffmpeg` sobre o mp4 |
 | C7 | Tema novo ou estilo sem `brand` continua renderizando (compatibilidade) | `uv run pytest -k brand` |
-| C8 | Manual: VSL do clip-05, tema forge, estilo `forge-motion`, comparado com o vídeo do pipeline | `uv run reel-studio render … --style forge-motion --theme forge` |
+| C8 | **Não regressão:** sem camadas, o comando do `ffmpeg` do corte e o `.ass` são idênticos aos de hoje (teste de igualdade) | `cd engine && uv run pytest -k regressao` |
+| C9 | Manual, corte: os 5 cortes da gravação 14.33.02 com componentes por cima, mesmo enquadramento, legenda e voz de hoje | `uv run reel-studio cut … --theme forge` com `overlays` |
+| C10 | Manual, VSL: clip-05, tema forge, estilo `forge-motion`, voz original e legenda, comparado com o vídeo do pipeline | `uv run reel-studio render … --style forge-motion --theme forge` |

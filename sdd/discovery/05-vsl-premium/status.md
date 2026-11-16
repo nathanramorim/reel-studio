@@ -1,7 +1,7 @@
-# Status — 05 VSL premium
+# Status — 05 Reels premium
 
-**Status:** discovery, critérios e plano prontos; aguardando o Gate 1 (aprovação do humano).
+**Status:** discovery, critérios e plano atualizados com as três entradas (vídeo, conteúdo, livre) e o que não pode regredir; aguardando o Gate 1.
 
-**Próximo passo:** aprovar e rodar `/split-features` (9 tasks em 4 ondas).
+**Próximo passo:** aprovar e rodar `/split-features` (11 tasks em 4 ondas).
 
-**A confirmar:** estilo novo `forge-motion` além do isométrico; trilha opcional na primeira rodada; créditos do `/brag` no README.
+**A confirmar:** voz sintética fora do escopo; estilo `forge-motion`; trilha opcional; créditos do `/brag`.
