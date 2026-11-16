@@ -27,7 +27,11 @@ def _jobs(tmp_path, transcript, overlays=True, with_overlays=True):
 def test_regressao_comando_do_corte_nao_muda_com_camadas(tmp_path, transcript):
     sem = _jobs(tmp_path, transcript, with_overlays=False)[0]
     com = _jobs(tmp_path, transcript)[0]
-    assert com.args == sem.args and com.ass_text == sem.ass_text and com.out == sem.out
+    assert com.args == sem.args and com.out == sem.out
+    # 05-13: o overlay `hook` já desenha o gancho, então o `.ass` não o repete.
+    assert "Dialogue: 1" in sem.ass_text and "Dialogue: 1" not in com.ass_text
+    assert com.ass_text == sem.ass_text.replace(
+        next(ln for ln in sem.ass_text.splitlines() if ln.startswith("Dialogue: 1")) + "\n", "")
 
 
 def test_regressao_sem_camadas_nao_ha_passo_de_composicao(tmp_path, transcript):

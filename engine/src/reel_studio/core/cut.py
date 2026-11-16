@@ -199,13 +199,20 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
         chosen = _resolve(size, layout, anchor, analyzer, video, start, end)
         jobs.append(CutJob(
             clip_id=c["id"], ass_name=ass_name,
-            ass_text=build_ass(transcript, start, end, theme, c.get("hook", "")),
+            ass_text=build_ass(transcript, start, end, theme, _ass_hook(c, overlays)),
             out=out, layout=chosen, size=size, start=start, end=end,
             overlays=_layer(c, start) if overlays else (),
             args=ffmpeg_args(ffmpeg, video, start, end, ass_name, out, chosen, size,
                              theme["colors"]["bg"], (cfg["fade_in"], cfg["fade_out"])),
         ))
     return jobs
+
+
+def _ass_hook(clip: dict, overlays: bool) -> str:
+    """`hook` do corte para o `.ass`; vazio quando um overlay `hook` já desenha o gancho."""
+    if overlays and any(o.get("type") == "hook" for o in clip.get("overlays", [])):
+        return ""
+    return clip.get("hook", "")
 
 
 def _layer(clip: dict, window_start: float) -> tuple[dict, ...]:
