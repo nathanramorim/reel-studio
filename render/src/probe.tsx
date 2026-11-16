@@ -20,11 +20,20 @@ export const Probe: React.FC<{ families: string[] }> = ({ families }) => {
         serifWidth: textWidth("serif", "700"),
       }));
       const sizes: number[] = [];
+      const boxes: { top: number; bottom: number; right: number }[] = [];
       document.querySelectorAll<HTMLElement>("#probe-root *").forEach((el) => {
-        const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim());
-        if (hasText) sizes.push(parseFloat(getComputedStyle(el).fontSize));
+        const texts = [...el.childNodes].filter((n) => n.nodeType === 3 && n.textContent?.trim());
+        if (!texts.length) return;
+        sizes.push(parseFloat(getComputedStyle(el).fontSize));
+        texts.forEach((node) => {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          const r = range.getBoundingClientRect();
+          boxes.push({ top: r.top, bottom: r.bottom, right: r.right });
+        });
       });
-      console.log(`[probe] ${JSON.stringify({ fonts, minSize: sizes.length ? Math.min(...sizes) : null })}`);
+      const minSize = sizes.length ? Math.min(...sizes) : null;
+      console.log(`[probe] ${JSON.stringify({ fonts, minSize, boxes })}`);
       continueRender(handle);
     });
   }, []);

@@ -156,3 +156,15 @@ def test_cores_props_do_forge_trazem_fundo_e_paleta_do_forge(sid):
     assert all(c.startswith("#") for c in p["style"]["look"]["palette"])
     if sid == "isometric-pastel":
         assert p["style"]["look"]["palette"][:3] == ["#4f8ef7", "#8aa4ff", "#3ecf8e"]
+
+
+def test_padrao_voz_original_quando_todas_as_cenas_tem_source():
+    src = {"start": 0, "end": 2}
+    assert render.default_audio([{"source": src}, {"source": src}]) == "original"
+
+
+def test_padrao_voz_none_sem_source_ou_parcial_ou_vazio():
+    src = {"start": 0, "end": 2}
+    assert render.default_audio([{"source": src}, {}]) == "none"
+    assert render.default_audio([{}]) == "none"
+    assert render.default_audio([]) == "none"

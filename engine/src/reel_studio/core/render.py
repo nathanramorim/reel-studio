@@ -21,6 +21,11 @@ class Mix:
     audio: str = "none"
 
 
+def default_audio(scenes: list[dict]) -> str:
+    """Padrão do `--audio`: a voz original quando todas as cenas têm `source`, senão nenhuma."""
+    return "original" if scenes and all("source" in s for s in scenes) else "none"
+
+
 def durations(scenes: list[dict], audio: str) -> list[float]:
     """Duração efetiva: com áudio original, o maior entre `dur` e o trecho (não corta a fala)."""
     out = []

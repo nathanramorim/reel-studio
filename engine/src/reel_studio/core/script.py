@@ -52,6 +52,29 @@ def check_sources(scenes: list[dict], video_duration: float | None) -> None:
         spans.append((i, (a, b)))
 
 
+READ_PER_WORD = 0.3
+READ_ENTRY = 0.4
+
+
+def displayed_words(scene: dict) -> int:
+    """Palavras que a cena mostra na tela (`text`, `steps`, `items`)."""
+    parts = [scene.get("text") or "", *(scene.get("steps") or []), *(scene.get("items") or [])]
+    return sum(len(p.split()) for p in parts)
+
+
+def check_reading(scenes: list[dict]) -> None:
+    """Cada cena dura o suficiente para ler o que exibe: 0,3 s por palavra mais 0,4 s de entrada."""
+    for i, s in enumerate(scenes, 1):
+        words = displayed_words(s)
+        if not words:
+            continue
+        minimum = words * READ_PER_WORD + READ_ENTRY
+        if s["dur"] < minimum:
+            raise ContractError(
+                f"Cena {i}: {s['dur']}s é curto para ler {words} palavras; "
+                f"duração mínima {minimum:.1f}s.")
+
+
 def normalize(raw: dict, style: dict, theme_id: str | None,
               video_duration: float | None = None) -> dict:
     allowed = set(style["scene_types"])
@@ -65,6 +88,7 @@ def normalize(raw: dict, style: dict, theme_id: str | None,
         data["theme"] = theme_id
     contracts.validate("scenes", data)
     check_sources(scenes, video_duration)
+    check_reading(scenes)
     return data
 
 

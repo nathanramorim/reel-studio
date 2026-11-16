@@ -14,7 +14,22 @@
           "start": { "type": "number", "minimum": 0 },
           "end": { "type": "number", "minimum": 0 },
           "hook": { "type": "string", "maxLength": 60, "description": "Frase curta no topo do reel" },
-          "reason": { "type": "string" }
+          "reason": { "type": "string" },
+          "overlays": {
+            "type": "array",
+            "description": "Componentes sobre o corte; at e dur em segundos relativos ao corte",
+            "items": {
+              "type": "object",
+              "required": ["at", "dur", "type"],
+              "properties": {
+                "at": { "type": "number", "minimum": 0 },
+                "dur": { "type": "number", "exclusiveMinimum": 0 },
+                "type": { "enum": ["hook", "keyword", "step", "callout", "progress", "cta", "logo"] },
+                "text": { "type": "string", "maxLength": 60 }
+              },
+              "additionalProperties": false
+            }
+          }
         },
         "additionalProperties": false
       }

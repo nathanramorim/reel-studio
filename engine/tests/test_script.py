@@ -59,3 +59,33 @@ def test_normalize_rejeita_source_invertido_ou_fora_do_video(a, b):
 def test_normalize_rejeita_source_sobreposto():
     with pytest.raises(ContractError, match="sobreposto"):
         normalize({"scenes": [_cena(0, 5), _cena(4, 8)]}, _style(), None, 100.0)
+
+
+# --- tempo de leitura (05-01) ---
+def _leitura(scene):
+    from reel_studio.core import script
+    style = {"id": "isometric-pastel", "scene_types": ["title", "list", "cta"]}
+    return script.normalize({"scenes": [scene]}, style, None)
+
+
+def test_leitura_cena_curta_demais_e_rejeitada():
+    from reel_studio.core.errors import ContractError
+    texto = " ".join(["palavra"] * 10)  # 10 palavras: mínimo 3,4 s
+    with pytest.raises(ContractError, match=r"Cena 1.*10 palavras.*3\.4s"):
+        _leitura({"type": "title", "dur": 3, "narration": "", "text": texto})
+
+
+def test_leitura_cena_adequada_passa():
+    texto = " ".join(["palavra"] * 10)
+    assert _leitura({"type": "title", "dur": 3.5, "narration": "", "text": texto})
+
+
+def test_leitura_conta_itens_e_passos():
+    from reel_studio.core.errors import ContractError
+    with pytest.raises(ContractError, match="leitura|curto"):
+        _leitura({"type": "list", "dur": 2, "narration": "",
+                  "items": ["um dois três", "quatro cinco seis"]})
+
+
+def test_leitura_texto_vazio_nao_exige_minimo():
+    assert _leitura({"type": "cta", "dur": 1, "narration": "fale algo longo aqui"})

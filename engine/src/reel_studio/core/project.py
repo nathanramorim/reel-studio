@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from . import paths
 from .errors import ReelError
 
 _CHUNK = 4 * 1024 * 1024
+SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+TEXT_ROOT = "reel-projects"
 ARTIFACTS = ("audio.wav", "voice.wav", "transcript.json", "clips.json", "scenes.json")
 
 
@@ -27,7 +30,7 @@ def fingerprint(video: Path) -> str:
 
 @dataclass(frozen=True)
 class Project:
-    video: Path
+    video: Path | None
     dir: Path
 
     @classmethod
@@ -45,6 +48,16 @@ class Project:
                 (d / name).unlink(missing_ok=True)
             paths.write_json(meta_path, {"video": v.name, "fingerprint": fp})
         return cls(video=v, dir=d)
+
+    @classmethod
+    def open_text(cls, slug: str, base: str | Path | None = None) -> Project:
+        """Pasta de trabalho para conteúdo ou ideia, sem vídeo: `reel-projects/<slug>/`."""
+        if not SLUG.fullmatch(slug):
+            raise ReelError(f"Nome de projeto inválido: {slug!r}. Use minúsculas, números e hífen.")
+        root = (Path(base) if base else Path.cwd()).expanduser().resolve()
+        d = root / TEXT_ROOT / slug
+        d.mkdir(parents=True, exist_ok=True)
+        return cls(video=None, dir=d)
 
     def path(self, name: str) -> Path:
         return self.dir / name

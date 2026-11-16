@@ -1,5 +1,5 @@
 // Verifica stills de cada cena: fonte carregada, escala mínima, cobertura e paleta.
-// Uso: node scripts/check-render.mjs [--fonts] [--scale] [--style <id>]
+// Uso: node scripts/check-render.mjs [--fonts] [--scale] [--safe-zone] [--style <id>]
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import { readFileSync, mkdtempSync, rmSync } from "node:fs";
@@ -14,8 +14,13 @@ const repo = path.resolve(root, "..");
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const styleId = args.includes("--style") ? args[args.indexOf("--style") + 1] : null;
-const all = !flag("fonts") && !flag("scale") && !styleId;
+const all = !flag("fonts") && !flag("scale") && !flag("safe-zone") && !styleId;
 const readJson = (p) => JSON.parse(readFileSync(p, "utf8"));
+
+// Mesmos limites de render/src/safeZone.ts (DUP-03: o script lê o arquivo, sem cópia).
+const SAFE = Object.fromEntries([...readFileSync(path.join(root, "src/safeZone.ts"), "utf8")
+  .matchAll(/^\s+(top|bottom|rightGuard|lowerHalf): (\d+),/gm)].map((m) => [m[1], Number(m[2])]));
+const WIDTH = 1080;
 
 const theme = readJson(path.join(repo, "themes/forge.json"));
 const SCENES = [
@@ -94,7 +99,7 @@ const check = (ok, msg) => { if (!ok) failures.push(msg); console.log(`${ok ? "o
 const serveUrl = await bundle({ entryPoint: path.join(root, "src/index.ts"), publicDir: path.join(root, "public") });
 const tmp = mkdtempSync(path.join(tmpdir(), "check-render-"));
 try {
-  for (const sid of all ? ["__default__", ...STYLES.slice(0, 1)] : styleId ? [styleId] : ["__default__"]) {
+  for (const sid of all ? ["__default__", STYLES[0]] : styleId ? [styleId] : flag("safe-zone") ? [STYLES[0]] : ["__default__"]) {
     const style = sid === "__default__" ? readJson(path.join(repo, "styles", STYLES[2], "style.json")) : readJson(path.join(repo, "styles", sid, "style.json"));
     for (let i = 0; i < SCENES.length; i++) {
       const scene = SCENES[i];
@@ -115,6 +120,13 @@ try {
       }
       if (all || flag("scale")) {
         check(probe.minSize >= 44, `${tag}: menor texto ${probe.minSize}px >= 44px`);
+      }
+      if ((all || flag("safe-zone")) && style.id === "isometric-pastel") {
+        const bad = (probe.boxes ?? []).filter((b) => b.top < SAFE.top - 0.5 || b.bottom > SAFE.bottom + 0.5
+          || (b.bottom > SAFE.lowerHalf && b.right > WIDTH - SAFE.rightGuard + 0.5));
+        check((probe.boxes ?? []).length > 0 && bad.length === 0,
+          `${tag}: texto na zona segura (y ${SAFE.top}-${SAFE.bottom}, guarda ${SAFE.rightGuard}px)`
+          + (bad.length ? ` fora: ${JSON.stringify(bad[0])}` : ""));
       }
       if (all || styleId) {
         const palette = [...inputProps.style.look.palette.map(hex), hex(theme.colors.accent)];
