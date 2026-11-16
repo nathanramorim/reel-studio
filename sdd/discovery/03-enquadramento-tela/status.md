@@ -1,7 +1,7 @@
 # Status — 03 Enquadramento automático do corte
 
-**Status:** discovery e feature prontos; fila ainda não despachada.
+**Status:** feat-03-01 e feat-03-02 implementadas na branch; PR #2 em revisão.
 
-**Próximo passo:** `forge queue enqueue` da `feat-03-01` e `forge dispatch 03-enquadramento-tela`.
+**Próximo passo:** Reviewer conferir feat-03-02; C5 manual com gravação real.
 
-**A confirmar:** limiar do rosto (~8% da altura) com vídeos reais.
+**A confirmar:** limiar do rosto (~8% da altura) e histerese do zoom (8%) com vídeos reais.

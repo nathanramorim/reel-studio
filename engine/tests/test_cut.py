@@ -54,12 +54,12 @@ def test_layout_atividade_concentrada_usa_zoom():
     lay = choose_layout(TELA, Analysis(region=Region(0.1, 0.5, 0.5, 0.3)))
     assert lay.kind == "zoom"
     vf = video_filter(lay, TELA, "c.ass")
-    assert "crop=" in vf and "boxblur" in vf and "ass=c.ass" in vf
+    assert "crop=" in vf and "boxblur" not in vf and "ass=c.ass" in vf
 
 
 def test_layout_fit_nao_corta_o_video_principal():
     vf = video_filter(Layout("fit"), TELA, "c.ass")
-    assert "crop" not in vf and "boxblur" in vf and "scale=1080:-2" in vf
+    assert "crop" not in vf and "boxblur" not in vf and "pad=1080:1920" in vf
 
 
 def test_layout_plan_escolhe_sem_parametro(tmp_path, transcript):
@@ -67,7 +67,7 @@ def test_layout_plan_escolhe_sem_parametro(tmp_path, transcript):
     jobs = plan(Path("v.mov"), tmp_path, clips, transcript, load_theme("pessoal"),
                 size=TELA, analyzer=lambda *_: None)
     assert jobs[0].layout.kind == "fit"
-    assert "-filter_complex" in jobs[0].args
+    assert "-vf" in jobs[0].args and "-filter_complex" not in jobs[0].args
 
 
 def test_anchor_left_e_right_mudam_o_x_do_crop():
@@ -137,3 +137,57 @@ class _FakeProject:
     def require(self, name, _hint):
         return {"clips": [{"id": "clip-01", "start": 0.0, "end": 2.0}]} \
             if name == "clips.json" else self._t
+
+
+# --- fundo do tema, faixa do conteúdo e zoom no tempo ---
+from reel_studio.core.captions import MARGIN_V, H  # noqa: E402
+from reel_studio.core.cut import BAND_H, BAND_Y  # noqa: E402
+
+CLIP_INICIO = 140.0
+TROCA = 141.35  # troca do clip-02 do zoom_cortes.py
+
+
+def _regiao(cx, cy):
+    return Region(cx - 0.2, cy - 0.15, 0.4, 0.3)
+
+
+def test_zoom_dinamico_troca_x_e_y_no_tempo():
+    steps = ((0.0, _regiao(0.3, 0.3)), (TROCA - CLIP_INICIO, _regiao(0.7, 0.6)))
+    lay = Layout("zoom", region=steps[0][1], steps=steps)
+    vf = video_filter(lay, TELA, "c.ass")
+    assert "if(gte(t\\,1.35)\\," in vf
+    crop = vf.split("crop=")[1].split(",pad")[0] if ",pad" in vf else vf
+    assert crop.startswith("1144:532:") and crop.count("if(") == 2
+
+
+def test_zoom_dinamico_sem_troca_usa_valor_fixo():
+    lay = Layout("zoom", region=_regiao(0.5, 0.5))
+    assert "if(" not in video_filter(lay, TELA, "c.ass")
+
+
+def test_zoom_dinamico_vem_da_analise(tmp_path, transcript):
+    steps = ((0.0, _regiao(0.3, 0.3)), (1.35, _regiao(0.7, 0.6)))
+    analise = Analysis(region=steps[0][1], steps=steps)
+    clips = {"clips": [{"id": "clip-01", "start": 0.0, "end": 3.2}]}
+    jobs = plan(Path("v.mov"), tmp_path, clips, transcript, load_theme("forge"),
+                size=TELA, analyzer=lambda *_: analise)
+    assert jobs[0].layout.kind == "zoom" and "gte(t" in jobs[0].args[jobs[0].args.index("-vf") + 1]
+
+
+def test_fundo_usa_a_cor_do_tema():
+    forge = load_theme("forge")["colors"]["bg"]
+    vf = video_filter(Layout("fit"), TELA, "c.ass", forge)
+    assert f"color=0x{forge[1:]}" in vf and "boxblur" not in vf
+
+
+def test_fundo_invalido_e_rejeitado():
+    with pytest.raises(ReelError):
+        video_filter(Layout("fit"), TELA, "c.ass", "red;rm")
+
+
+def test_faixa_termina_acima_da_legenda_lower_third():
+    theme = load_theme("forge")
+    assert theme["caption"]["position"] == "lower-third"
+    topo_legenda = H - MARGIN_V["lower-third"] - theme["caption"]["size"]
+    assert BAND_Y + BAND_H <= topo_legenda
+    assert f"{BAND_Y}+({BAND_H}-ih)/2" in video_filter(Layout("fit"), TELA, "c.ass")

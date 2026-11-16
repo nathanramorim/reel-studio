@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-SAMPLES = 8
+WINDOW_SAMPLES = 4       # quadros por janela de tempo
+WINDOW_SECONDS = 6.0     # duração alvo de cada janela
+MAX_WINDOWS = 6
+SHIFT = 0.08             # deslocamento do centro (fração do quadro) que justifica trocar a região
 MIN_FACE_HEIGHT = 0.08   # rosto com pelo menos 8% da altura do quadro
 MIN_FACE_SHARE = 0.5     # presente em pelo menos metade dos quadros
 MAX_REGION_AREA = 0.6    # atividade além disso é "espalhada"
@@ -27,7 +30,8 @@ class Region:
 @dataclass(frozen=True)
 class Analysis:
     face_x: float | None = None     # centro horizontal do rosto, 0 a 1
-    region: Region | None = None    # atividade concentrada
+    region: Region | None = None    # atividade concentrada (primeira região da sequência)
+    steps: tuple[tuple[float, Region], ...] = ()  # (t relativo ao corte, região) por troca
 
 
 def _expand(x0: float, y0: float, x1: float, y1: float) -> Region:
@@ -39,6 +43,22 @@ def _expand(x0: float, y0: float, x1: float, y1: float) -> Region:
     return Region(x, y, w, h)
 
 
+def track(regions: list[Region | None], starts: list[float]) -> tuple[tuple[float, Region], ...]:
+    """Sequência de trocas: só muda de região quando o centro se afasta o bastante (histerese)."""
+    steps: list[tuple[float, Region]] = []
+    for t, r in zip(starts, regions, strict=True):
+        if r is None:
+            continue
+        if not steps:
+            steps.append((0.0, r))
+            continue
+        prev = steps[-1][1]
+        if (abs((r.x + r.w / 2) - (prev.x + prev.w / 2)) >= SHIFT
+                or abs((r.y + r.h / 2) - (prev.y + prev.h / 2)) >= SHIFT):
+            steps.append((t, r))
+    return tuple(steps)
+
+
 def analyze(video: Path, start: float, end: float) -> Analysis | None:
     """Amostra quadros do trecho. None quando o OpenCV não está instalado."""
     try:
@@ -48,8 +68,9 @@ def analyze(video: Path, start: float, end: float) -> Analysis | None:
     cap = cv2.VideoCapture(str(video))
     try:
         frames = []
-        for i in range(SAMPLES):
-            t = start + (end - start) * (i + 0.5) / SAMPLES
+        total = _window_count(end - start) * WINDOW_SAMPLES
+        for i in range(total):
+            t = start + (end - start) * (i + 0.5) / total
             cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
             ok, frame = cap.read()
             if ok:
@@ -58,10 +79,14 @@ def analyze(video: Path, start: float, end: float) -> Analysis | None:
         cap.release()
     if len(frames) < 2:
         return Analysis()
-    return _analyze_frames(cv2, frames)
+    return _analyze_frames(cv2, frames, end - start)
 
 
-def _analyze_frames(cv2, frames: list) -> Analysis:
+def _window_count(duration: float) -> int:
+    return min(MAX_WINDOWS, max(1, round(duration / WINDOW_SECONDS)))
+
+
+def _analyze_frames(cv2, frames: list, duration: float = 0.0) -> Analysis:
     height, width = frames[0].shape[:2]
     scale = 480 / max(width, height)
     small = [cv2.cvtColor(cv2.resize(f, None, fx=scale, fy=scale), cv2.COLOR_BGR2GRAY)
@@ -69,7 +94,12 @@ def _analyze_frames(cv2, frames: list) -> Analysis:
     face_x = _face(cv2, small)
     if face_x is not None:
         return Analysis(face_x=face_x)
-    return Analysis(region=_activity(cv2, small))
+    n = max(1, len(small) // WINDOW_SAMPLES)
+    size = len(small) // n
+    groups = [small[i * size:(i + 1) * size] for i in range(n)]
+    starts = [duration * i / n for i in range(n)]
+    steps = track([_activity(cv2, g) if len(g) > 1 else None for g in groups], starts)
+    return Analysis(region=steps[0][1] if steps else None, steps=steps)
 
 
 def _face(cv2, gray: list) -> float | None:

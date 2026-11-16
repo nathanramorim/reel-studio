@@ -1,0 +1,26 @@
+{
+  "feature_id": "feat-03-01",
+  "branch": "feat/03-enquadramento-tela",
+  "spec_status": "reviewed",
+  "updated_at": "2026-11-16T05:54:01Z",
+  "items": [
+    {
+      "task_id": "feat-03-01-layout-automatico",
+      "title": "feat-03-01-layout-automatico — Layout automático do corte (pessoa e tela)",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-01-layout-automatico.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-03",
+        "SEG-07",
+        "ARQ-04",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    }
+  ]
+}

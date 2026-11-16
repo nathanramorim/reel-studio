@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,7 +13,9 @@ from .errors import ReelError
 from .frames import Analysis, Region
 
 LAYOUTS = ("fill", "zoom", "fit")
-BLUR = "boxblur=20:5"
+BAND_Y = 320   # faixa do conteúdo (zoom e fit): acima da legenda lower-third
+BAND_H = 920
+_HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 @dataclass(frozen=True)
@@ -20,6 +23,7 @@ class Layout:
     kind: str = "fill"
     anchor: float = 0.5
     region: Region | None = None
+    steps: tuple[tuple[float, Region], ...] = ()
 
     def describe(self, size: tuple[int, int]) -> str:
         return f"{self.kind} ({size[0]}x{size[1]})"
@@ -72,26 +76,49 @@ def choose_layout(size: tuple[int, int], analysis: Analysis | None) -> Layout:
         anchor = (analysis.face_x * sw - W / 2) / (sw - W)
         return Layout("fill", anchor=min(max(anchor, 0.0), 1.0))
     if analysis.region is not None:
-        return Layout("zoom", region=analysis.region)
+        return Layout("zoom", region=analysis.region, steps=analysis.steps)
     return Layout("fit")
 
 
-def _background() -> str:
-    return f"[0:v]split[a][b];[a]scale={W}:{H},{BLUR}[bg];"
+def _pad_color(bg: str) -> str:
+    if not _HEX.fullmatch(bg):
+        raise ReelError(f"Cor de fundo do tema inválida: {bg!r}. Use #RRGGBB.")
+    return "0x" + bg[1:]
 
 
-def video_filter(layout: Layout, size: tuple[int, int], ass_name: str) -> str:
+def _steps(layout: Layout) -> tuple[tuple[float, Region], ...]:
+    return layout.steps or ((0.0, layout.region),)
+
+
+def _switch(values: list[tuple[float, int]]) -> str:
+    """Expressão x ou y do crop no tempo: if(gte(t,T),valor,...) com vírgulas escapadas."""
+    expr = str(values[0][1])
+    for t, v in values[1:]:
+        expr = f"if(gte(t\\,{t:.2f})\\,{v}\\,{expr})"
+    return expr
+
+
+def _crop(layout: Layout, size: tuple[int, int]) -> str:
+    steps = _steps(layout)
+    cw = _even(max(r.w for _, r in steps) * size[0])
+    ch = _even(max(r.h for _, r in steps) * size[1])
+    xs, ys = [], []
+    for t, r in steps:
+        cx, cy = (r.x + r.w / 2) * size[0], (r.y + r.h / 2) * size[1]
+        xs.append((t, int(min(max(cx - cw / 2, 0), size[0] - cw)) // 2 * 2))
+        ys.append((t, int(min(max(cy - ch / 2, 0), size[1] - ch)) // 2 * 2))
+    return f"crop={cw}:{ch}:{_switch(xs)}:{_switch(ys)}"
+
+
+def video_filter(layout: Layout, size: tuple[int, int], ass_name: str,
+                 bg: str = "#000000") -> str:
     if layout.kind == "fill":
         return (f"scale={W}:{H}:force_original_aspect_ratio=increase,"
                 f"crop={W}:{H}:(iw-{W})*{layout.anchor:.4f}:0,ass={ass_name}")
-    if layout.kind == "zoom" and layout.region is not None:
-        r = layout.region
-        cw, ch = _even(r.w * size[0]), _even(r.h * size[1])
-        cx, cy = _even(r.x * size[0]), _even(r.y * size[1])
-        fg = f"[b]crop={cw}:{ch}:{cx}:{cy},scale={W}:-2[fg];"
-    else:
-        fg = f"[b]scale={W}:-2[fg];"
-    return f"{_background()}{fg}[bg][fg]overlay=(W-w)/2:(H-h)/2,ass={ass_name}"
+    pre = f"{_crop(layout, size)}," if layout.kind == "zoom" and layout.region else ""
+    pad = (f"scale={W}:{BAND_H}:force_original_aspect_ratio=decrease,"
+           f"pad={W}:{H}:({W}-iw)/2:{BAND_Y}+({BAND_H}-ih)/2:color={_pad_color(bg)}")
+    return f"{pre}{pad},ass={ass_name}"
 
 
 def _even(v: float) -> int:
@@ -100,11 +127,11 @@ def _even(v: float) -> int:
 
 def ffmpeg_args(ffmpeg: str, video: Path, start: float, end: float,
                 ass_name: str, out: Path, layout: Layout = Layout(),
-                size: tuple[int, int] = (W, H)) -> list[str]:
-    vf = video_filter(layout, size, ass_name)
+                size: tuple[int, int] = (W, H), bg: str = "#000000") -> list[str]:
+    vf = video_filter(layout, size, ass_name, bg)
     return [ffmpeg, "-y", "-loglevel", "error",
             "-ss", f"{start:.2f}", "-t", f"{end - start:.2f}", "-i", str(video),
-            "-filter_complex" if layout.kind != "fill" else "-vf", vf,
+            "-vf", vf,
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
             "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(out)]
 
@@ -127,7 +154,8 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
             clip_id=c["id"], ass_name=ass_name,
             ass_text=build_ass(transcript, c["start"], c["end"], theme, c.get("hook", "")),
             out=out, layout=chosen, size=size,
-            args=ffmpeg_args(ffmpeg, video, c["start"], c["end"], ass_name, out, chosen, size),
+            args=ffmpeg_args(ffmpeg, video, c["start"], c["end"], ass_name, out, chosen, size,
+                             theme["colors"]["bg"]),
         ))
     return jobs
 
@@ -138,8 +166,8 @@ def _resolve(size, layout, anchor, analyzer, video, start, end) -> Layout:
     elif layout == "zoom":
         # zoom manual precisa de região; sem análise cai no fit
         analysis = analyzer(video, start, end)
-        chosen = Layout("zoom", region=analysis.region) if analysis and analysis.region \
-            else Layout("fit")
+        chosen = Layout("zoom", region=analysis.region, steps=analysis.steps) \
+            if analysis and analysis.region else Layout("fit")
     else:
         chosen = Layout(layout)
     if anchor is not None and chosen.kind == "fill":
