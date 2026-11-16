@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "Diff conferido contra criteria.md, ADR-0001 e rules. SceneRenderer segue como único mapa type-\u003ecomponente, com variantes em styleScenes.ts (DUP-01). look.ink está em style.schema.json e source em scenes.schema.json (ARQ-06). render --dry-run não escreve nada: o write_json do props foi movido para depois do retorno do dry-run (ARQ-05). O id do tema usado no nome do .ass tem pattern validado no schema, então não há injeção no filtro ffmpeg (SEG-01). Fontes locais, sem rede; @remotion/fonts está fixado em 4.0.543 e a licença OFL das fontes foi adicionada (SEG-07). Na branch: pytest 141 passed, ruff ok, reel-studio validate ok. Observações não bloqueantes: o corpo do PR diz que 04-03 está fora do escopo, mas o diff a implementa; queue.json e status.md ficam desatualizados; check-render.mjs (C4) e C6 manual não foram executados nesta revisão."
+}

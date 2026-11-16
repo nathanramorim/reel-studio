@@ -4,7 +4,7 @@
   "source": { "url": "https://www.futurepedia.io/resources/ai-style-atlas/view", "ref": "Popular Explainer Looks" },
   "renderer": "manim",
   "best_for": "Números, gráficos e fórmulas",
-  "background": "own",
-  "look": { "bg": "#000000", "stroke": "#ffffff", "palette": ["#58c4dd", "#83c167", "#ffff00", "#fc6255", "#5cd0b3"], "font": "CMU Serif", "motion": "morph" },
+  "background": "theme",
+  "look": { "stroke": "text", "palette": ["accent", "accent2", "success", "warn", "bad"], "font": "CMU Serif", "motion": "morph" },
   "scene_types": ["title", "highlight", "chart", "compare", "cta"]
 }

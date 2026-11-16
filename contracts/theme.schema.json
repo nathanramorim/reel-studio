@@ -16,7 +16,11 @@
         "muted": { "$ref": "#/$defs/hex" },
         "accent": { "$ref": "#/$defs/hex" },
         "accent2": { "$ref": "#/$defs/hex" },
-        "success": { "$ref": "#/$defs/hex" }
+        "success": { "$ref": "#/$defs/hex" },
+        "warn": { "$ref": "#/$defs/hex" },
+        "bad": { "$ref": "#/$defs/hex" },
+        "glow": { "$ref": "#/$defs/hex", "description": "Brilho radial do fundo (50% x 25%)" },
+        "gradient": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "$ref": "#/$defs/hex" } }
       }
     },
     "fonts": {

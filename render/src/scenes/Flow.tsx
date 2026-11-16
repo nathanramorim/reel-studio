@@ -2,6 +2,8 @@ import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import { Theme, Style } from "../types";
 import { fadeIn } from "../motion";
+import { fontFamily } from "../fonts";
+import { SCALE } from "../scale";
 
 /** Passo a passo: caixas em coluna ligadas por setas, no acento do estilo/tema. */
 export const Flow: React.FC<{ steps: string[]; theme: Theme; style: Style }> = ({
@@ -24,18 +26,18 @@ export const Flow: React.FC<{ steps: string[]; theme: Theme; style: Style }> = (
               opacity, transform: `translateY(${(1 - opacity) * 20}px)`,
               background: theme.colors.surface, border: `2px solid ${accent}`,
               borderRadius: 16, padding: "18px 32px", color: theme.colors.text,
-              fontFamily: theme.fonts.title, fontWeight: 700, fontSize: 36,
+              fontFamily: fontFamily(theme.fonts.title), fontWeight: 700, fontSize: SCALE.body,
               display: "flex", alignItems: "center", gap: 16,
             }}>
               <span style={{
                 background: accent, color: theme.colors.bg, borderRadius: "50%",
-                width: 36, height: 36, display: "flex", alignItems: "center",
-                justifyContent: "center", fontSize: 20,
+                width: 72, height: 72, display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: SCALE.min,
               }}>{i + 1}</span>
               {step}
             </div>
             {i < steps.length - 1 && (
-              <div style={{ opacity, color: accent, fontSize: 28 }}>↓</div>
+              <div style={{ opacity, color: accent, fontSize: SCALE.min }}>↓</div>
             )}
           </React.Fragment>
         );

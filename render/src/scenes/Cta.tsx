@@ -1,5 +1,7 @@
 import React from "react";
 import { Theme, Style } from "../types";
+import { fontFamily } from "../fonts";
+import { SCALE } from "../scale";
 
 export const Cta: React.FC<{ text?: string; theme: Theme; style: Style }> = ({
   text, theme, style,
@@ -11,12 +13,12 @@ export const Cta: React.FC<{ text?: string; theme: Theme; style: Style }> = ({
       alignItems: "center", justifyContent: "center", gap: 20, padding: "0 100px", textAlign: "center",
     }}>
       <div style={{
-        fontFamily: theme.fonts.title, fontWeight: 800, fontSize: 56, color: theme.colors.text,
+        fontFamily: fontFamily(theme.fonts.title), fontWeight: 800, fontSize: SCALE.titleMax, color: theme.colors.text,
       }}>
         {text ?? theme.cta.text}
       </div>
       <div style={{
-        fontFamily: theme.fonts.title, fontWeight: 700, fontSize: 32, color: accent,
+        fontFamily: fontFamily(theme.fonts.title), fontWeight: 700, fontSize: SCALE.secondary, color: accent,
       }}>
         {theme.cta.handle ?? ""}
       </div>

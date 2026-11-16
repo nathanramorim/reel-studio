@@ -3,7 +3,8 @@ export type Theme = {
   name: string;
   colors: {
     bg: string; surface: string; text: string; muted: string;
-    accent: string; accent2?: string; success?: string;
+    accent: string; accent2?: string; success?: string; warn?: string; bad?: string;
+    glow?: string; gradient?: string[];
   };
   fonts: { title: string; body: string; mono?: string };
   caption: { style: "word-highlight" | "line"; position: string; size?: number; uppercase?: boolean };
@@ -16,7 +17,7 @@ export type Style = {
   name: string;
   renderer: "remotion" | "manim";
   background: "theme" | "own";
-  look: { bg?: string; stroke?: string; palette?: string[]; font?: string; motion?: string };
+  look: { bg?: string; ink?: string; stroke?: string; palette?: string[]; font?: string; motion?: string };
   scene_types: string[];
 };
 
@@ -37,4 +38,5 @@ export type ReelProps = {
   theme: Theme;
   style: Style;
   fps: number;
+  probe?: boolean;
 };

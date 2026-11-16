@@ -1,6 +1,7 @@
 import React from "react";
 import { Theme, Style } from "../types";
-import { fitFontSize } from "../text-fit";
+import { fontFamily } from "../fonts";
+import { titleSize } from "../scale";
 
 export const Quote: React.FC<{ text: string; theme: Theme; style: Style }> = ({
   text, theme, style,
@@ -12,8 +13,8 @@ export const Quote: React.FC<{ text: string; theme: Theme; style: Style }> = ({
       justifyContent: "center", padding: "0 120px",
     }}>
       <div style={{
-        fontFamily: theme.fonts.title, fontStyle: "italic", fontWeight: 600,
-        fontSize: fitFontSize(text, 800, 60, 36), color: theme.colors.text, textAlign: "center",
+        fontFamily: fontFamily(theme.fonts.title), fontStyle: "italic", fontWeight: 700,
+        fontSize: titleSize(text, 800), color: theme.colors.text, textAlign: "center",
       }}>
         <span style={{ color: accent, fontSize: "1.4em" }}>&ldquo;</span>
         {text}

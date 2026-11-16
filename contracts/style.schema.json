@@ -15,6 +15,7 @@
       "description": "Parâmetros visuais lidos pelos componentes",
       "properties": {
         "bg": { "type": "string" },
+        "ink": { "type": "string", "description": "Cor do texto sobre as superfícies do estilo" },
         "stroke": { "type": "string" },
         "palette": { "type": "array", "items": { "type": "string" } },
         "font": { "type": "string" },

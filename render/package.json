@@ -6,15 +6,19 @@
   "scripts": {
     "render": "remotion render src/index.ts Reel out/vsl.mp4",
     "studio": "remotion studio src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "node scripts/check-render.mjs"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",
+    "@remotion/fonts": "4.0.543",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "remotion": "^4.0.0"
   },
   "devDependencies": {
+    "@remotion/bundler": "4.0.543",
+    "@remotion/renderer": "4.0.543",
     "@types/react": "^18.3.0",
     "typescript": "^5.5.0"
   }

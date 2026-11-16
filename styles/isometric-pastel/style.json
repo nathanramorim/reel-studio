@@ -5,6 +5,6 @@
   "renderer": "remotion",
   "best_for": "Processos e fluxos",
   "background": "theme",
-  "look": { "bg": "#f6f1ea", "stroke": "none", "palette": ["#bfdbfe", "#c7f0db", "#fde2c8", "#e9d5ff", "#ff7f6e"], "font": "Montserrat", "motion": "slide" },
+  "look": { "stroke": "none", "palette": ["accent", "accent2", "success", "warn"], "font": "Montserrat", "motion": "slide" },
   "scene_types": ["title", "highlight", "flow", "list", "compare", "cta"]
 }
