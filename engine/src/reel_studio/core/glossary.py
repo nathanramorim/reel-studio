@@ -27,17 +27,28 @@ def _norm(word: str) -> str:
 
 
 def _clean(raw: object, origin: str) -> dict[str, str]:
+    """Valida o mapa e expande chaves com variantes (`a|b|c`) em uma entrada por variante."""
     if not isinstance(raw, dict):
         raise ReelError(f"Glossário inválido em {origin}: esperado um objeto JSON.")
     out: dict[str, str] = {}
+    seen: dict[str, tuple[str, str]] = {}
     for key, value in raw.items():
         if not isinstance(value, str):
             raise ReelError(f"Glossário inválido em {origin}: '{key}' deve ser texto.")
         if key.startswith("_"):
             continue
-        out[key] = value
+        for variant in (v.strip() for v in key.split("|")):
+            norm = "".join(_norm(p) for p in variant.split())
+            if not norm:
+                continue
+            prev = seen.get(norm)
+            if prev and prev[1] != value.strip():
+                raise ReelError(f"Glossário inválido em {origin}: a variante '{variant}' "
+                                f"tem dois valores ('{prev[1]}' e '{value.strip()}').")
+            seen[norm] = (variant, value.strip())
+            out[variant] = value
     if len(out) > MAX_ENTRIES:
-        raise ReelError(f"Glossário grande demais em {origin}: máximo {MAX_ENTRIES} entradas.")
+        raise ReelError(f"Glossário grande demais em {origin}: máximo {MAX_ENTRIES} variantes.")
     return out
 
 

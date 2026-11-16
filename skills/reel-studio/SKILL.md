@@ -28,7 +28,7 @@ Funciona em qualquer agente que leia skills (Claude Code, agy/Antigravity, Codex
    ```
    cd RAIZ/engine
    uv run reel-studio extract VIDEO
-   uv run reel-studio transcribe VIDEO
+   uv run reel-studio transcribe VIDEO   # --model medium|large-v3 p/ sotaque; --theme TEMA e --prompt TEXTO dão vocabulário
    ```
    Se faltar o extra, rode `uv sync --extra transcribe` (e `--extra voice` se o áudio tiver ruído de fundo, antes do extract com `--voice-only`).
 3. **Modo corte — você mesmo gera o JSON, sem chave e sem chamada de rede nova:**

@@ -1,6 +1,6 @@
 # Status — 03 Enquadramento automático do corte
 
-**Status:** feat-03-01 a 03-04 entregues e aprovadas pelo Reviewer; PR #2 aberto.
+**Status:** feat-03-01 a 03-04 entregues e aprovadas pelo Reviewer; feat-03-05 a 03-09 implementadas, aguardando revisão; PR #2 aberto.
 
 **Próximo passo:** validar com gravações reais no forge-sdd (C5); fixes novos entram como feature desta iniciativa.
 

@@ -151,3 +151,23 @@ def test_cut_dry_run_informa_glossario_e_nao_escreve(tmp_path, monkeypatch):
     assert "glossário: 1 correções" in res.output
     assert sorted(x.name for x in tmp_path.rglob("*")) == before
     assert json.loads(p.path("transcript.json").read_text())["segments"][0]["text"] == "as fitres"
+
+
+# --- variantes ---
+def test_variantes_corrigem_todas():
+    m = {"checaja|checage|checajem": "checagem"}
+    for v in ("checaja", "checage", "checajem"):
+        data, n = glossary.apply(_t("a", v), glossary._clean(m, "t"))
+        assert n == 1 and data["segments"][0]["words"][1]["word"] == "checagem"
+        assert data["segments"][0]["text"] == "a checagem"
+
+
+def test_variantes_conflito_e_rejeitado():
+    with pytest.raises(ReelError, match="Checaja"):
+        glossary._clean({"checaja|x": "a", "Checaja": "b"}, "arq.json")
+
+
+def test_variantes_limite_conta_variantes():
+    key = "|".join(f"v{i}" for i in range(glossary.MAX_ENTRIES + 1))
+    with pytest.raises(ReelError, match="grande demais"):
+        glossary._clean({key: "x"}, "t")

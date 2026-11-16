@@ -46,6 +46,7 @@
     },
     "logo": { "type": ["string", "null"] },
     "glossary": { "type": "object", "additionalProperties": { "type": "string" } },
+    "vocabulary": { "type": "array", "items": { "type": "string" } },
     "cta": {
       "type": "object",
       "required": ["text"],

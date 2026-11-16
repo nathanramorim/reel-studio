@@ -267,3 +267,34 @@ def test_folga_zoom_usa_start_com_folga(tmp_path, transcript):
 
     _plan(tmp_path, transcript, 10, 30, analyzer=analyzer)
     assert vistos == [pytest.approx((9.60, 30.70))]
+
+
+# --- preflight do filtro ass ---
+FILTROS_COM_ASS = " T.. ass               V->V       Render ASS subtitles.\n"
+FILTROS_SEM_ASS = " T.. scale             V->V       Scale the input video.\n"
+
+
+def _preflight(monkeypatch, filtros, rosetta=False):
+    monkeypatch.setattr(cutmod.proc, "capture", lambda _a: filtros)
+    monkeypatch.setattr(cutmod.proc, "under_rosetta", lambda: rosetta)
+
+
+def test_preflight_sem_ass_falha_antes_do_corte(monkeypatch, tmp_path):
+    _preflight(monkeypatch, FILTROS_SEM_ASS)
+    monkeypatch.setattr(cutmod.proc, "require_bin", lambda *_: "ffmpeg")
+    ran = []
+    monkeypatch.setattr(cutmod.proc, "run", lambda *a, **k: ran.append(a))
+    with pytest.raises(ReelError, match="ffmpeg-full") as e:
+        cutmod.execute([], tmp_path)
+    assert "arm64" not in str(e.value) and not ran
+
+
+def test_preflight_com_ass_segue(monkeypatch):
+    _preflight(monkeypatch, FILTROS_COM_ASS)
+    cutmod.preflight("ffmpeg")
+
+
+def test_preflight_sob_rosetta_sugere_arm64(monkeypatch):
+    _preflight(monkeypatch, FILTROS_SEM_ASS, rosetta=True)
+    with pytest.raises(ReelError, match="arch -arm64 brew install ffmpeg-full"):
+        cutmod.preflight("ffmpeg")

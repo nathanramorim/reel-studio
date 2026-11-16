@@ -54,4 +54,24 @@ def probe_duration(video: Path) -> float:
         raise ReelError(f"Não consegui ler a duração de {video.name}.") from None
 
 
-FFMPEG_HINT = "Instale o ffmpeg (macOS: brew install ffmpeg; Windows: winget install ffmpeg)."
+FFMPEG_HINT = ("Instale o ffmpeg (macOS: brew install ffmpeg-full; "
+               "Windows: winget install ffmpeg).")
+
+
+def has_filter(ffmpeg: str, name: str) -> bool:
+    """Se o ffmpeg tem o filtro `name` (ex.: `ass`, que depende do libass)."""
+    for line in capture([ffmpeg, "-hide_banner", "-filters"]).splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == name:
+            return True
+    return False
+
+
+def under_rosetta() -> bool:
+    """True num Mac Apple Silicon rodando o terminal sob Rosetta (sysctl, sem shell)."""
+    sysctl = shutil.which("sysctl")
+    if not sysctl:
+        return False
+    result = subprocess.run([sysctl, "-n", "sysctl.proc_translated"],
+                            capture_output=True, text=True, check=False)
+    return result.returncode == 0 and result.stdout.strip() == "1"

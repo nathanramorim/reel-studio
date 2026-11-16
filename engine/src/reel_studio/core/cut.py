@@ -221,8 +221,20 @@ def _resolve(size, layout, anchor, analyzer, video, start, end) -> Layout:
     return chosen
 
 
+def preflight(ffmpeg: str) -> None:
+    """Falha cedo se o ffmpeg não tem o filtro `ass` (libass), usado na legenda do tema."""
+    if proc.has_filter(ffmpeg, "ass"):
+        return
+    mac = "brew install ffmpeg-full"
+    if proc.under_rosetta():
+        mac = f"arch -arm64 {mac}"
+    raise ReelError(
+        "Este ffmpeg não tem o filtro 'ass' (libass), que a legenda do tema precisa.\n"
+        f"macOS: {mac}\nWindows: winget install ffmpeg")
+
+
 def execute(jobs: list[CutJob], workdir: Path) -> list[Path]:
-    proc.require_bin("ffmpeg", proc.FFMPEG_HINT)
+    preflight(proc.require_bin("ffmpeg", proc.FFMPEG_HINT))
     (workdir / "output").mkdir(exist_ok=True)
     done = []
     for job in jobs:
