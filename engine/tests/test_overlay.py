@@ -158,3 +158,21 @@ def test_camada_entrega_poster_no_quadro_0(tmp_path, transcript, monkeypatch):
     juntas = [" ".join(map(str, c)) for c in chamadas]
     assert any("-frames:v" in c and "-poster.jpg" in c for c in juntas)
     assert any("overlay=enable='eq(n,0)'" in c for c in juntas)
+
+
+def test_moldura_rente_ao_video_no_fit_e_ausente_no_fill():
+    from reel_studio.core.cut import Layout, video_rect
+    rect = video_rect(Layout(kind="fit"), (2860, 1776))
+    assert rect["left"] == 0 and rect["width"] == 1080 and rect["height"] < 920
+    assert rect["top"] == 320 + (920 - rect["height"]) // 2
+    quadrado = video_rect(Layout(kind="fit"), (1000, 1000))
+    assert quadrado["width"] == 920 and quadrado["left"] == 80 and quadrado["top"] == 320
+    assert video_rect(Layout(kind="fill"), (1920, 1080)) is None
+
+
+def test_layer_props_leva_o_retangulo_do_video(tmp_path, transcript):
+    from reel_studio.core.cut import Layout
+    job = _jobs(tmp_path, transcript)[0]
+    assert overlay.layer_props(job, load_theme("forge"))["frame"] is None
+    fit = type(job)(**{**job.__dict__, "layout": Layout(kind="fit"), "size": (2860, 1776)})
+    assert overlay.layer_props(fit, load_theme("forge"))["frame"]["width"] == 1080

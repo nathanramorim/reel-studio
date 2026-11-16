@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import contracts, contrast, deliver, paths, proc, render
-from .cut import CutJob
+from .cut import CutJob, video_rect
 from .errors import ReelError
 
 COMPOSITION = "Overlay"
@@ -56,7 +56,8 @@ def layer_props(job: CutJob, theme: dict) -> dict:
     adjusted = with_assets(contrast.resolve(theme, style)[0])
     return {"overlays": list(job.overlays), "theme": adjusted,
             "style": render.resolved_style(style, adjusted), "fps": render.FPS,
-            "length": round(job.end - job.start, 3)}
+            "length": round(job.end - job.start, 3),
+            "frame": video_rect(job.layout, job.size)}
 
 
 def render_args(npx: str, props_file: Path, layer: Path) -> list[str]:

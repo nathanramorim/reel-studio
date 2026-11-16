@@ -147,6 +147,20 @@ def _crop(layout: Layout, size: tuple[int, int]) -> str:
     return f"crop={cw}:{ch}:{_switch(xs)}:{_switch(ys)}"
 
 
+def video_rect(layout: Layout, size: tuple[int, int]) -> dict | None:
+    """Retângulo que o vídeo ocupa no quadro 1080x1920 (fit e zoom); `None` no fill (tela cheia)."""
+    if layout.kind == "fill":
+        return None
+    sw, sh = size
+    if layout.kind == "zoom" and layout.region:
+        steps = _steps(layout)
+        sw = _even(max(r.w for _, r in steps) * size[0])
+        sh = _even(max(r.h for _, r in steps) * size[1])
+    scale = min(W / sw, BAND_H / sh)
+    w, h = _even(sw * scale), _even(sh * scale)
+    return {"left": (W - w) // 2, "top": BAND_Y + (BAND_H - h) // 2, "width": w, "height": h}
+
+
 def video_filter(layout: Layout, size: tuple[int, int], ass_name: str,
                  bg: str = "#000000") -> str:
     if layout.kind == "fill":

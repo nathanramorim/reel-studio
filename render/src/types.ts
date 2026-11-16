@@ -64,4 +64,6 @@ export type OverlayItem = {
 /** Props da composição `Overlay` (camada transparente sobre o corte); `length` em segundos. */
 export type OverlayProps = {
   overlays: OverlayItem[]; theme: Theme; style: Style; fps: number; length: number; probe?: boolean;
+  /** Retângulo do vídeo no quadro (core/cut.py `video_rect`); ausente no fill (tela cheia): sem moldura. */
+  frame?: { left: number; top: number; width: number; height: number } | null;
 };

@@ -10,8 +10,6 @@ export const CAPTION = { top: 1180, bottom: 1360 } as const;
 export const REGIONS = {
   /** Topo: gancho e título. */
   hook: { top: SAFE.top + 20, height: 260 },
-  /** Moldura ao redor da faixa do conteúdo (mesma faixa do `fit` e do `zoom` em core/cut.py). */
-  frame: { top: 320, height: 920 },
   /** Faixa acima da legenda: chips e callouts empilham de baixo para cima. */
   strip: { bottom: CAPTION.top - 10, slot: 110 },
   /** Faixa abaixo do gancho (`pos: "top"`): chips e callouts empilham de cima para baixo. */

@@ -32,13 +32,16 @@ const accentAt = (style: Style, theme: Theme, i: number): string => {
   return palette[i % palette.length];
 };
 
-const Frame: React.FC<{ theme: Theme; accent: string }> = ({ theme, accent }) => {
+type Rect = { left: number; top: number; width: number; height: number };
+
+/** Moldura rente ao vídeo (mesmo retângulo do corte): nunca fica mais estreita nem mais alta que ele. */
+const Frame: React.FC<{ theme: Theme; accent: string; rect: Rect }> = ({ theme, accent, rect }) => {
   const spec = panelSpec(theme);
   const dots = [theme.colors.bad ?? accent, theme.colors.warn ?? accent, theme.colors.success ?? accent];
   return (
     <div style={{
-      position: "absolute", left: 40, width: WIDTH - 80, top: REGIONS.frame.top, height: REGIONS.frame.height,
-      border: `3px solid ${spec.border}`, borderRadius: spec.radius,
+      position: "absolute", left: rect.left, width: rect.width, top: rect.top, height: rect.height, boxSizing: "border-box",
+      border: `3px solid ${spec.border}`, borderRadius: 0,
     }}>
       {spec.bar && dots.slice(0, spec.dots).map((c, i) => (
         <div key={i} style={{
@@ -49,7 +52,7 @@ const Frame: React.FC<{ theme: Theme; accent: string }> = ({ theme, accent }) =>
   );
 };
 
-export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, probe }) => {
+export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, probe, frame: videoRect }) => {
   useThemeFonts(theme);
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
@@ -63,7 +66,7 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
   return (
     <AbsoluteFill id="probe-root">
       {probe && <Probe families={families} />}
-      {overlays.length > 0 && <Frame theme={theme} accent={accentAt(style, theme, 0)} />}
+      {overlays.length > 0 && videoRect && <Frame theme={theme} accent={accentAt(style, theme, 0)} rect={videoRect} />}
       {active.map(({ o, i, p }) => {
         const accent = accentAt(style, theme, i);
         if (o.type === "hook") {
