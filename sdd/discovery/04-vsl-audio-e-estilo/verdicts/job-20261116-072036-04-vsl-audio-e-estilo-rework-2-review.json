@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "O achado anterior (DUP-01) foi corrigido: o commit ec06ed9 registra Contraste (core/contrast.py) e Paleta do estilo (core/palette.py) em sdd/spec/concepts.md, com o contrato público de cada um. Na branch: pytest 156 passed, ruff ok, reel-studio validate ok. Não executei C1 (tsc) nem C4 (check-render.mjs) nesta revisão; C5 e C6 são manuais."
+}

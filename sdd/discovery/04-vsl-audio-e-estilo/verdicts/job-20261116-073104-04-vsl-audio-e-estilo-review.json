@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "PR #3 conforme: pytest (156) e ruff passam, `reel-studio validate` ok. look.ink entra em style.schema.json (ARQ-06). SceneRenderer segue como único mapa type-\u003ecomponente, com variantes em registro (styleScenes.ts, DUP-01). Dry-run não escreve props nem arquivos (ARQ-05). Fontes locais em public/fonts com licença OFL, sem rede. ffmpeg e npx rodam por lista de argumentos, sem shell. @remotion/fonts está fixado em 4.0.543. O estilo isometric-pastel ficou em background theme, diferente da tabela do criteria.md, mas a feat-04-02/04-05 registra isso como decisão do humano. Não verifiquei C1 (tsc) e C4 (check-render.mjs) porque render/node_modules não está instalado neste ambiente. C5 e C6 são manuais."
+}

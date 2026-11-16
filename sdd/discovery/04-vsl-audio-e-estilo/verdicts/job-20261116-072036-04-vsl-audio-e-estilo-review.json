@@ -1,0 +1,17 @@
+{
+  "veredito": "violacao",
+  "achados": [
+    {
+      "verificacao": "S-07",
+      "regra": "DUP-01",
+      "classificacao": "violacao",
+      "severidade": "baixa",
+      "arquivo": "sdd/spec/concepts.md",
+      "linha": 3,
+      "evidencia": "engine/src/reel_studio/core/contrast.py: \"\"\"Contraste WCAG 2.x das cores do tema sobre o fundo efetivo (dono do conceito, DUP-01).\"\"\"; palette.py também é dono de um conceito, mas o PR não altera sdd/spec/concepts.md e o catálogo não tem entrada para contraste nem paleta.",
+      "explicacao": "DUP-01 exige que cada conceito central tenha um único módulo dono registrado em concepts.md. O código afirma ser dono do conceito de contraste e de paleta, e os dois não estão registrados.",
+      "correcao": "Adicionar em sdd/spec/concepts.md as linhas de Contraste (core/contrast.py) e Paleta do estilo (core/palette.py), com o contrato público de cada um."
+    }
+  ],
+  "resumo": "Critérios C1 a C4 verificados: tsc limpo, 156 testes e ruff passam, validate ok e check-render ok. O dry-run não escreve props, o SceneRenderer segue como único mapa type-\u003ecomponente, e as fontes são locais e o contrato de estilo recebeu look.ink. O único achado é o registro dos novos conceitos (contraste e paleta) em concepts.md."
+}
