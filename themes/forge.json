@@ -1,0 +1,9 @@
+{
+  "id": "forge",
+  "name": "Forge SDD",
+  "colors": { "bg": "#0d0f14", "surface": "#12151d", "text": "#e9ecf4", "muted": "#99a2b8", "accent": "#4f8ef7", "accent2": "#8aa4ff", "success": "#3ecf8e" },
+  "fonts": { "title": "Montserrat", "body": "Montserrat", "mono": "JetBrains Mono" },
+  "caption": { "style": "word-highlight", "position": "lower-third", "size": 72, "uppercase": false },
+  "logo": null,
+  "cta": { "text": "npx @nathanramorim/forge-sdd init" }
+}

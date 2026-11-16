@@ -1,0 +1,10 @@
+{
+  "id": "whiteboard-explainer",
+  "name": "Whiteboard Explainer",
+  "source": { "url": "https://www.futurepedia.io/resources/ai-style-atlas/view", "ref": "Popular Explainer Looks" },
+  "renderer": "remotion",
+  "best_for": "Raciocínio passo a passo",
+  "background": "own",
+  "look": { "bg": "#f7f7f4", "stroke": "#1f2937", "palette": ["#1f2937", "#2563eb", "#dc2626", "#16a34a"], "font": "Caveat", "motion": "draw" },
+  "scene_types": ["title", "highlight", "flow", "list", "compare", "cta"]
+}

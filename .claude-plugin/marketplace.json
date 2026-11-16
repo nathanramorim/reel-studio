@@ -1,0 +1,11 @@
+{
+  "name": "reel-studio",
+  "owner": { "name": "reel-studio" },
+  "plugins": [
+    {
+      "name": "reel-studio",
+      "source": "./",
+      "description": "Reels verticais a partir dos seus vídeos, com a sua marca, rodando local."
+    }
+  ]
+}

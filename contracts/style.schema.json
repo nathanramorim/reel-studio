@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "style",
+  "type": "object",
+  "required": ["id", "name", "renderer", "scene_types", "look"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "name": { "type": "string" },
+    "source": { "type": "object", "properties": { "url": { "type": "string" }, "ref": { "type": "string" } } },
+    "renderer": { "enum": ["remotion", "manim"] },
+    "best_for": { "type": "string" },
+    "background": { "enum": ["theme", "own"], "description": "theme = usa o fundo do tema; own = o estilo impõe o próprio fundo" },
+    "look": {
+      "type": "object",
+      "description": "Parâmetros visuais lidos pelos componentes",
+      "properties": {
+        "bg": { "type": "string" },
+        "stroke": { "type": "string" },
+        "palette": { "type": "array", "items": { "type": "string" } },
+        "font": { "type": "string" },
+        "motion": { "enum": ["pop", "draw", "slide", "morph"] }
+      }
+    },
+    "scene_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "enum": ["title", "highlight", "flow", "list", "compare", "chart", "quote", "cta"] }
+    }
+  }
+}

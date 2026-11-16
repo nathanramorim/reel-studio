@@ -1,0 +1,9 @@
+{
+  "id": "busize",
+  "name": "Busize",
+  "colors": { "bg": "#ffffff", "surface": "#f1f5f9", "text": "#0f172a", "muted": "#475569", "accent": "#2563eb", "accent2": "#60a5fa" },
+  "fonts": { "title": "Montserrat", "body": "Montserrat" },
+  "caption": { "style": "word-highlight", "position": "lower-third", "size": 72, "uppercase": false },
+  "logo": null,
+  "cta": { "text": "Fale com a Busize" }
+}

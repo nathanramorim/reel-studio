@@ -1,0 +1,29 @@
+# Mídia e saídas: nunca versionar
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.reel/
+output/
+render/out/
+
+# Node / Remotion
+render/node_modules/
+render/.remotion/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+engine/.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Segredos
+.env
+.env.*
+!.env.example
+
+# SO
+.DS_Store

@@ -1,0 +1,12 @@
+{
+  "project": "reel-studio",
+  "version": "4.8.0",
+  "agents": ["claude"],
+  "telemetry": {
+    "enabled": false,
+    "anonymous": true,
+    "endpoint": "local"
+  },
+  "lang": "pt-BR",
+  "naming_convention": "sequencial"
+}

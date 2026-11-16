@@ -1,0 +1,9 @@
+{
+  "id": "exemplo",
+  "name": "Sua marca",
+  "colors": { "bg": "#111111", "surface": "#1c1c1c", "text": "#ffffff", "muted": "#a3a3a3", "accent": "#f97316" },
+  "fonts": { "title": "Montserrat", "body": "Montserrat" },
+  "caption": { "style": "line", "position": "bottom", "size": 64, "uppercase": true },
+  "logo": null,
+  "cta": { "text": "Siga para mais", "handle": "@seuperfil" }
+}

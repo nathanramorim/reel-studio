@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "theme",
+  "type": "object",
+  "required": ["id", "name", "colors", "fonts", "caption", "cta"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "name": { "type": "string" },
+    "colors": {
+      "type": "object",
+      "required": ["bg", "surface", "text", "muted", "accent"],
+      "properties": {
+        "bg": { "$ref": "#/$defs/hex" },
+        "surface": { "$ref": "#/$defs/hex" },
+        "text": { "$ref": "#/$defs/hex" },
+        "muted": { "$ref": "#/$defs/hex" },
+        "accent": { "$ref": "#/$defs/hex" },
+        "accent2": { "$ref": "#/$defs/hex" },
+        "success": { "$ref": "#/$defs/hex" }
+      }
+    },
+    "fonts": {
+      "type": "object",
+      "required": ["title", "body"],
+      "properties": { "title": { "type": "string" }, "body": { "type": "string" }, "mono": { "type": "string" } }
+    },
+    "caption": {
+      "type": "object",
+      "required": ["style", "position"],
+      "properties": {
+        "style": { "enum": ["word-highlight", "line"] },
+        "position": { "enum": ["bottom", "center", "lower-third"] },
+        "size": { "type": "integer", "minimum": 40, "maximum": 120 },
+        "uppercase": { "type": "boolean" }
+      }
+    },
+    "logo": { "type": ["string", "null"] },
+    "cta": {
+      "type": "object",
+      "required": ["text"],
+      "properties": { "text": { "type": "string" }, "handle": { "type": "string" } }
+    }
+  },
+  "$defs": { "hex": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" } }
+}

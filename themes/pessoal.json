@@ -1,0 +1,9 @@
+{
+  "id": "pessoal",
+  "name": "Nathan Amorim",
+  "colors": { "bg": "#0d0f14", "surface": "#141925", "text": "#f5f7fb", "muted": "#c3cad8", "accent": "#4f8ef7", "accent2": "#8fb6ff" },
+  "fonts": { "title": "Montserrat", "body": "Montserrat", "mono": "JetBrains Mono" },
+  "caption": { "style": "word-highlight", "position": "lower-third", "size": 72, "uppercase": false },
+  "logo": null,
+  "cta": { "text": "Me segue para mais", "handle": "@nathanramorim" }
+}

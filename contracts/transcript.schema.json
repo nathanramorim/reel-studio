@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "transcript",
+  "type": "object",
+  "required": ["language", "duration", "segments"],
+  "properties": {
+    "language": { "type": "string" },
+    "duration": { "type": "number", "minimum": 0 },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "text"],
+        "properties": {
+          "start": { "type": "number", "minimum": 0 },
+          "end": { "type": "number", "minimum": 0 },
+          "text": { "type": "string" },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["start", "end", "word"],
+              "properties": {
+                "start": { "type": "number" },
+                "end": { "type": "number" },
+                "word": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

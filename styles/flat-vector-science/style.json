@@ -1,0 +1,10 @@
+{
+  "id": "flat-vector-science",
+  "name": "Flat Vector Science",
+  "source": { "url": "https://www.futurepedia.io/resources/ai-style-atlas/view", "ref": "Popular Explainer Looks" },
+  "renderer": "remotion",
+  "best_for": "Conceitos e metáforas",
+  "background": "own",
+  "look": { "bg": "linear-gradient(180deg,#141a3c,#3b2a6b)", "stroke": "none", "palette": ["#7dd3fc", "#c4b5fd", "#fde68a", "#f9a8d4"], "font": "Montserrat", "motion": "pop" },
+  "scene_types": ["title", "highlight", "flow", "list", "compare", "cta"]
+}

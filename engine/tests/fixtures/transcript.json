@@ -1,0 +1,18 @@
+{
+  "language": "pt",
+  "duration": 12.0,
+  "segments": [
+    {"start": 0.0, "end": 3.2, "text": "Hoje eu vou mostrar como automatizar esse processo.",
+     "words": [{"start":0.0,"end":0.4,"word":"Hoje"},{"start":0.4,"end":0.6,"word":"eu"},
+               {"start":0.6,"end":0.8,"word":"vou"},{"start":0.8,"end":1.3,"word":"mostrar"},
+               {"start":1.3,"end":1.6,"word":"como"},{"start":1.6,"end":2.4,"word":"automatizar"},
+               {"start":2.4,"end":2.7,"word":"esse"},{"start":2.7,"end":3.2,"word":"processo."}]},
+    {"start": 3.2, "end": 7.0, "text": "O primeiro passo é extrair o áudio do vídeo.",
+     "words": [{"start":3.2,"end":3.6,"word":"O"},{"start":3.6,"end":4.1,"word":"primeiro"},
+               {"start":4.1,"end":4.5,"word":"passo"},{"start":4.5,"end":4.7,"word":"é"},
+               {"start":4.7,"end":5.3,"word":"extrair"},{"start":5.3,"end":5.5,"word":"o"},
+               {"start":5.5,"end":6.0,"word":"áudio"},{"start":6.0,"end":6.3,"word":"do"},
+               {"start":6.3,"end":7.0,"word":"vídeo."}]},
+    {"start": 7.0, "end": 12.0, "text": "Depois disso, transcrevemos tudo localmente, sem mandar nada para a nuvem."}
+  ]
+}

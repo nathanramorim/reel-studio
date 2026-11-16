@@ -1,0 +1,21 @@
+{
+  "name": "reel-studio-render",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Render Remotion do reel-studio: cenas por estilo e tema.",
+  "scripts": {
+    "render": "remotion render src/index.ts Reel out/vsl.mp4",
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.5.0"
+  }
+}
