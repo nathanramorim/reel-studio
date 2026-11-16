@@ -1,8 +1,8 @@
 {
-  "feature_id": "feat-04-04",
+  "feature_id": "feat-04-05",
   "branch": "feat/04-vsl-audio-e-estilo",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-16T07:21:41Z",
+  "updated_at": "2026-11-16T07:31:03Z",
   "items": [
     {
       "task_id": "feat-04-01-fontes-e-escala",
@@ -58,6 +58,21 @@
         "ARQ-05",
         "ARQ-06",
         "ARQ-10",
+        "DUP-01",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-04-05-cores-do-design-system",
+      "title": "feat-04-05-cores-do-design-system — Estilo só anima; as cores vêm do design system do projeto",
+      "spec_path": "sdd/discovery/04-vsl-audio-e-estilo/features/feat-04-05-cores-do-design-system.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "ARQ-06",
         "DUP-01",
         "DUP-03",
         "TST-01"
