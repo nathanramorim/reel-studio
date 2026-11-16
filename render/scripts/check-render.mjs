@@ -69,6 +69,8 @@ const OVERLAY_SAMPLE = [
   { at: 0, dur: 6, type: "step", text: "Gravar a tela" },
   { at: 0, dur: 6, type: "step", text: "Gerar o reel" },
   { at: 0, dur: 6, type: "callout", text: "Tudo roda local" },
+  { at: 0, dur: 6, type: "keyword", text: "`no-topo`", pos: "top" },
+  { at: 0, dur: 6, type: "step", text: "Passo no topo", pos: "top" },
   { at: 0, dur: 6, type: "progress" },
   { at: 0, dur: 6, type: "cta", text: "npx @nathanramorim/forge-sdd init" },
   { at: 0, dur: 6, type: "logo" },

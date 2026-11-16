@@ -14,6 +14,8 @@ export const REGIONS = {
   frame: { top: 320, height: 920 },
   /** Faixa acima da legenda: chips e callouts empilham de baixo para cima. */
   strip: { bottom: CAPTION.top - 10, slot: 110 },
+  /** Faixa abaixo do gancho (`pos: "top"`): chips e callouts empilham de cima para baixo. */
+  topStrip: { top: SAFE.top + 20 + 260 + 10, slot: 110 },
   /** Rodapé abaixo da legenda: barra de progresso, logo e CTA. */
   footer: { top: CAPTION.bottom + 20, height: 140 },
 } as const;

@@ -57,6 +57,7 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
   const logoUri = theme.brand?.logoUri;
   const active = overlays.map((o, i) => ({ o, i, p: presence(o, frame, fps) })).filter((a) => a.p > 0);
   const strip = active.filter((a) => STRIP_TYPES.includes(a.o.type));
+  const onTop = (o: OverlayItem): boolean => o.pos === "top";
   const families = [...new Set([theme.fonts.title, theme.fonts.body, monoFont(theme)])].filter((f): f is string => !!f);
   const hasLogo = active.some((a) => a.o.type === "logo");
   return (
@@ -85,8 +86,11 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
           );
         }
         if (STRIP_TYPES.includes(o.type)) {
-          const slot = strip.findIndex((a) => a.i === i);
-          const top = REGIONS.strip.bottom - (slot + 1) * REGIONS.strip.slot;
+          const group = strip.filter((a) => onTop(a.o) === onTop(o));
+          const slot = group.findIndex((a) => a.i === i);
+          const top = onTop(o)
+            ? REGIONS.topStrip.top + slot * REGIONS.topStrip.slot
+            : REGIONS.strip.bottom - (slot + 1) * REGIONS.strip.slot;
           return (
             <div key={i} style={{
               position: "absolute", left: SIDE, width: CONTENT_W, top, height: REGIONS.strip.slot - 12,

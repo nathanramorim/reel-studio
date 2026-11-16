@@ -57,7 +57,7 @@ export type ReelProps = {
 };
 
 export type OverlayItem = {
-  at: number; dur: number; text?: string;
+  at: number; dur: number; text?: string; pos?: "top" | "bottom";
   type: "hook" | "keyword" | "step" | "callout" | "progress" | "cta" | "logo";
 };
 
