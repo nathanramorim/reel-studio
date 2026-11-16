@@ -1,0 +1,10 @@
+{
+  "id": "forge-motion",
+  "name": "Forge Motion",
+  "source": { "ref": "forge-sdd/docs/video-pipeline/video.html" },
+  "renderer": "remotion",
+  "best_for": "VSL técnico com painéis de terminal, pacotes luminosos e texto em degradê",
+  "background": "theme",
+  "look": { "palette": ["accent", "accent2", "success"], "font": "Montserrat", "motion": "forge" },
+  "scene_types": ["title", "highlight", "flow", "list", "compare", "cta"]
+}

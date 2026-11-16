@@ -15,6 +15,9 @@ const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const styleId = args.includes("--style") ? args[args.indexOf("--style") + 1] : null;
 const all = !flag("fonts") && !flag("scale") && !flag("safe-zone") && !styleId;
+/** `--style X` roda todas as checagens de cena do estilo; as flags isoladas restringem. */
+const want = (n) => all || flag(n) || (!!styleId && !flag("fonts") && !flag("scale") && !flag("safe-zone"));
+const SAFE_STYLES = ["isometric-pastel", "forge-motion"];
 const readJson = (p) => JSON.parse(readFileSync(p, "utf8"));
 
 // Mesmos limites de render/src/safeZone.ts (DUP-03: o script lê o arquivo, sem cópia).
@@ -23,7 +26,7 @@ const SAFE = Object.fromEntries([...readFileSync(path.join(root, "src/safeZone.t
 const WIDTH = 1080;
 
 const theme = readJson(path.join(repo, "themes/forge.json"));
-const SCENES = [
+const SCENES_ALL = [
   { type: "title", dur: 3, narration: "", text: "Automatize esse processo de ponta a ponta" },
   { type: "highlight", dur: 3, narration: "", text: "Tudo roda local, sem enviar nada" },
   { type: "flow", dur: 5, narration: "", steps: ["Extrair áudio", "Transcrever local", "Escolher trechos", "Gerar reel"] },
@@ -33,6 +36,7 @@ const SCENES = [
     right: { label: "Depois", points: ["Pipeline local", "Minutos por vídeo"] } },
   { type: "cta", dur: 3, narration: "", text: "Quer ver mais?" },
 ];
+const scenesFor = (style) => SCENES_ALL.filter((s) => style.scene_types.includes(s.type));
 /** Props como o motor entrega ao render (paleta e contraste resolvidos em core/render.py, DUP-01). */
 const engineProps = (scenes, themeId, styleId) => {
   const code = "import json,sys;from reel_studio.core import contracts,render;"
@@ -99,8 +103,9 @@ const check = (ok, msg) => { if (!ok) failures.push(msg); console.log(`${ok ? "o
 const serveUrl = await bundle({ entryPoint: path.join(root, "src/index.ts"), publicDir: path.join(root, "public") });
 const tmp = mkdtempSync(path.join(tmpdir(), "check-render-"));
 try {
-  for (const sid of all ? ["__default__", STYLES[0]] : styleId ? [styleId] : flag("safe-zone") ? [STYLES[0]] : ["__default__"]) {
+  for (const sid of all ? ["__default__", STYLES[0], "forge-motion"] : styleId ? [styleId] : flag("safe-zone") ? SAFE_STYLES : ["__default__"]) {
     const style = sid === "__default__" ? readJson(path.join(repo, "styles", STYLES[2], "style.json")) : readJson(path.join(repo, "styles", sid, "style.json"));
+    const SCENES = scenesFor(style);
     for (let i = 0; i < SCENES.length; i++) {
       const scene = SCENES[i];
       const logs = [];
@@ -113,15 +118,15 @@ try {
       });
       const tag = `${style.id}/${scene.type}`;
       const probe = JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8));
-      if (all || flag("fonts")) {
+      if (want("fonts")) {
         check(!logs.some((t) => t.includes("[font-fallback]")), `${tag}: sem fallback de fonte`);
         check((probe.fonts ?? []).length > 0 && probe.fonts.every((f) => f.loaded && f.width !== f.serifWidth),
           `${tag}: texto em ${(probe.fonts ?? []).map((f) => f.family).join("+")} (largura difere da serifa)`);
       }
-      if (all || flag("scale")) {
+      if (want("scale")) {
         check(probe.minSize >= 44, `${tag}: menor texto ${probe.minSize}px >= 44px`);
       }
-      if ((all || flag("safe-zone")) && style.id === "isometric-pastel") {
+      if (want("safe-zone") && SAFE_STYLES.includes(style.id)) {
         const bad = (probe.boxes ?? []).filter((b) => b.top < SAFE.top - 0.5 || b.bottom > SAFE.bottom + 0.5
           || (b.bottom > SAFE.lowerHalf && b.right > WIDTH - SAFE.rightGuard + 0.5));
         check((probe.boxes ?? []).length > 0 && bad.length === 0,
@@ -131,6 +136,10 @@ try {
       if (all || styleId) {
         const palette = [...inputProps.style.look.palette.map(hex), hex(theme.colors.accent)];
         const a = analyze(decodePng(readFileSync(out)), hex(theme.colors.bg), palette);
+        if (style.id === "forge-motion") {
+          check(a.corner.every((v, k) => Math.abs(v - hex(theme.colors.bg)[k]) <= 8), `${tag}: fundo do tema ${theme.id}`);
+          check(a.colors >= 2, `${tag}: ${a.colors} cores dos tokens do tema (>= 2)`);
+        }
         if (style.id === "isometric-pastel") {
           if (scene.type === "flow") check(a.coverage >= 0.7, `${tag}: cobertura vertical ${(a.coverage * 100).toFixed(0)}% >= 70%`);
           check(a.gap <= 0.25, `${tag}: maior faixa vazia ${(a.gap * 100).toFixed(0)}% <= 25%`);

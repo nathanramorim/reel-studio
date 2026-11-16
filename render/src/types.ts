@@ -9,7 +9,16 @@ export type Theme = {
   fonts: { title: string; body: string; mono?: string };
   caption: { style: "word-highlight" | "line"; position: string; size?: number; uppercase?: boolean };
   logo: string | null;
+  brand?: Brand;
   cta: { text: string; handle?: string };
+};
+
+/** Kit da marca (contracts/theme.schema.json); `logoSvg` e `mascotSvg` são o markup lido pelo motor. */
+export type Brand = {
+  logo?: string | null; mascot?: string | null; mono?: string;
+  logoSvg?: string; mascotSvg?: string;
+  panel?: { radius?: number; border?: string; bar?: boolean; dots?: number };
+  packet?: { glow?: boolean; radius?: number };
 };
 
 export type Style = {
