@@ -5,6 +5,8 @@ No modo VSL (clip-05 da gravação 14.33.02, tema forge, estilo `isometric-paste
 - **11. Sem áudio:** o mp4 sai só com vídeo. O `Reel.tsx` não tem `<Audio>`, o `render.py` não passa áudio, e a `narration` das cenas não vira fala nem legenda.
 - **12. Estilo sem identidade:** fundo preto liso (`background: "theme"` + tema escuro), fonte em serifa (nenhum código carrega a Montserrat), fonte pequena para 1080×1920 (36 a 56 px), bloco no meio com o resto vazio, `flow` só com caixas e setas verticais, nada isométrico nem pastel.
 
+- **13. Contraste:** estilo com fundo próprio claro (`whiteboard-explainer` `#f7f7f4`) com tema escuro (`forge`, texto `#e9ecf4`) rende texto claro sobre claro: `list`, `highlight` e `cta` ilegíveis no clip-05.
+
 ## Para quem
 Quem usa o modo VSL (vídeo ou áudio ruim) e espera um vídeo que se entenda sem o original.
 
