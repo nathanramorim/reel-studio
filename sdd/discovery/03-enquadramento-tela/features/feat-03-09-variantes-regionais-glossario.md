@@ -24,7 +24,6 @@ SEG-01, ARQ-06, DUP-01, TST-01
 
 ## Escopo
 - Chave com variantes separadas por `|` (`"checaja|checage|checajem": "checagem"`), cada uma casada com as regras da `03-03` (palavras inteiras, sem caixa nem pontuação).
-- Valor também pode ser lista de uma variante (`"checagem": ["checaja", "checage"]` na forma inversa fica fora de escopo).
 - Conflito (mesma variante com dois valores) é erro claro com o arquivo e a variante (`SEG-01`).
 - O limite de 2000 entradas conta variantes.
 - Contrato do `correcoes.json` documentado na skill e no README (`ARQ-06`); `checaja` entra no exemplo.
