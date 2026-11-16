@@ -193,7 +193,7 @@ def cut_cmd(video: Video, theme: str = "pessoal",
     jobs = cut.plan(p.video, p.dir, clips, transcript, th,
                     layout=layout, anchor=cut.parse_anchor(anchor))
     for j in jobs:
-        typer.echo(f"{j.clip_id} layout: {j.layout.describe(j.size)}")
+        typer.echo(f"{j.clip_id} {j.start:.2f}-{j.end:.2f}s layout: {j.layout.describe(j.size)}")
     if dry_run:
         for j in jobs:
             typer.echo(f"dry-run {j.clip_id}: {j.out.name}")

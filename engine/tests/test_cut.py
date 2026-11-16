@@ -112,7 +112,6 @@ def test_frames_sem_opencv_devolve_none(monkeypatch):
 def test_dry_run_mostra_layout_e_nao_escreve(tmp_path, monkeypatch, transcript):
     from typer.testing import CliRunner
 
-    from reel_studio.core import cut as cutmod
     video = tmp_path / "v.mov"
     video.write_bytes(b"x")
     monkeypatch.setattr(cutmod.proc, "probe_size", lambda _v: TELA)
@@ -191,3 +190,80 @@ def test_faixa_termina_acima_da_legenda_lower_third():
     topo_legenda = H - MARGIN_V["lower-third"] - theme["caption"]["size"]
     assert BAND_Y + BAND_H <= topo_legenda
     assert f"{BAND_Y}+({BAND_H}-ih)/2" in video_filter(Layout("fit"), TELA, "c.ass")
+
+
+# --- folga de fala e fade (feat-03-04) ---
+from reel_studio.core import cut as cutmod  # noqa: E402
+from reel_studio.core.contracts import validate  # noqa: E402
+from reel_studio.core.cut import fade_filters, pad_window  # noqa: E402
+from reel_studio.core.errors import ContractError  # noqa: E402
+
+
+def _plan(tmp_path, transcript, start, end, theme=None, analyzer=lambda *_: None):
+    clips = {"clips": [{"id": "clip-01", "start": start, "end": end}]}
+    return plan(Path("v.mov"), tmp_path, clips, transcript, theme or load_theme("pessoal"),
+                size=TELA, analyzer=analyzer)[0]
+
+
+def test_folga_soma_antes_e_depois():
+    assert pad_window(10, 30, 100, 0.40, 0.70) == pytest.approx((9.60, 30.70))
+
+
+def test_folga_inicio_nao_fica_negativo():
+    assert pad_window(0.2, 5, 100, 0.40, 0.70)[0] == 0
+
+
+def test_folga_fim_limitado_a_duracao():
+    assert pad_window(50, 99.8, 100, 0.40, 0.70)[1] == 100
+
+
+def test_folga_estouro_de_60s_reduz_o_depois_primeiro():
+    s, e = pad_window(10, 69.8, 100, 0.40, 0.70)
+    assert e - s == pytest.approx(60) and s == pytest.approx(9.80)
+    s, e = pad_window(10, 70, 100, 0.40, 0.70)
+    assert e - s == pytest.approx(60) and s == pytest.approx(10)
+
+
+def test_folga_aplicada_no_plan(tmp_path, transcript):
+    job = _plan(tmp_path, transcript, 10, 30)
+    assert (job.start, job.end) == pytest.approx((9.60, 30.70))
+    assert "9.60" in job.args and "21.10" in job.args
+
+
+def test_fade_no_video_e_no_audio(tmp_path, transcript):
+    job = _plan(tmp_path, transcript, 10, 30)
+    vf = job.args[job.args.index("-vf") + 1]
+    af = job.args[job.args.index("-af") + 1]
+    assert "fade=t=in:d=0.25" in vf and "fade=t=out:st=20.65:d=0.45" in vf
+    assert "afade=t=in:d=0.25" in af and "afade=t=out:st=20.65:d=0.45" in af
+
+
+def test_fade_corte_curto_reduz_proporcionalmente():
+    vf, _ = fade_filters(0.35, 0.25, 0.45)
+    assert "fade=t=in:d=0.12" in vf and "fade=t=out:st=0.12:d=0.23" in vf
+
+
+def test_fade_zero_nao_gera_filtro():
+    assert fade_filters(10, 0, 0) == ("", "")
+
+
+def test_tema_cut_sobrescreve_os_padroes(tmp_path, transcript):
+    theme = {**load_theme("pessoal"), "cut": {"pad_before": 1.0, "pad_after": 0.0, "fade_in": 0}}
+    job = _plan(tmp_path, transcript, 10, 30, theme)
+    assert (job.start, job.end) == (9.0, 30.0)
+    assert "fade=t=in" not in job.args[job.args.index("-vf") + 1]
+
+
+def test_tema_cut_negativo_e_rejeitado():
+    with pytest.raises(ContractError):
+        validate("theme", {**load_theme("pessoal"), "cut": {"pad_before": -1}})
+
+
+def test_folga_zoom_usa_start_com_folga(tmp_path, transcript):
+    vistos = []
+
+    def analyzer(_v, start, end):
+        vistos.append((start, end))
+
+    _plan(tmp_path, transcript, 10, 30, analyzer=analyzer)
+    assert vistos == [pytest.approx((9.60, 30.70))]

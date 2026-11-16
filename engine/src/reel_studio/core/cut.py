@@ -16,6 +16,8 @@ LAYOUTS = ("fill", "zoom", "fit")
 BAND_Y = 320   # faixa do conteúdo (zoom e fit): acima da legenda lower-third
 BAND_H = 920
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
+MAX_CLIP = 60.0   # duração máxima do corte final (discovery 01)
+CUT_DEFAULTS = {"pad_before": 0.40, "pad_after": 0.70, "fade_in": 0.25, "fade_out": 0.45}
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,8 @@ class CutJob:
     args: list[str]
     layout: Layout = Layout()
     size: tuple[int, int] = (W, H)
+    start: float = 0.0
+    end: float = 0.0
 
 
 ANCHORS = {"left": 0.0, "center": 0.5, "right": 1.0}
@@ -78,6 +82,38 @@ def choose_layout(size: tuple[int, int], analysis: Analysis | None) -> Layout:
     if analysis.region is not None:
         return Layout("zoom", region=analysis.region, steps=analysis.steps)
     return Layout("fit")
+
+
+def cut_settings(theme: dict) -> dict[str, float]:
+    """Folga e fade: padrões de `CUT_DEFAULTS`, sobrescritos por `theme["cut"]` (já validado)."""
+    return {**CUT_DEFAULTS, **theme.get("cut", {})}
+
+
+def pad_window(start: float, end: float, duration: float,
+               before: float, after: float) -> tuple[float, float]:
+    """Aplica a folga sem passar do vídeo nem de 60 s; reduz primeiro o depois, depois o antes."""
+    new_start = max(0.0, start - before)
+    new_end = min(duration, end + after)
+    if new_end - new_start > MAX_CLIP:
+        new_end = max(min(end, duration), new_start + MAX_CLIP)
+        new_start = min(max(new_start, new_end - MAX_CLIP), start)
+    return new_start, new_end
+
+
+def fade_filters(length: float, fade_in: float, fade_out: float) -> tuple[str, str]:
+    """Filtros de vídeo e áudio com fade; reduz os fades se o corte for curto."""
+    total = fade_in + fade_out
+    if total > length > 0:
+        fade_in, fade_out = fade_in * length / total, fade_out * length / total
+    vf, af = [], []
+    if fade_in > 0:
+        vf.append(f"fade=t=in:d={fade_in:.2f}")
+        af.append(f"afade=t=in:d={fade_in:.2f}")
+    if fade_out > 0:
+        st = f"{length - fade_out:.2f}"
+        vf.append(f"fade=t=out:st={st}:d={fade_out:.2f}")
+        af.append(f"afade=t=out:st={st}:d={fade_out:.2f}")
+    return ",".join(vf), ",".join(af)
 
 
 def _pad_color(bg: str) -> str:
@@ -127,11 +163,17 @@ def _even(v: float) -> int:
 
 def ffmpeg_args(ffmpeg: str, video: Path, start: float, end: float,
                 ass_name: str, out: Path, layout: Layout = Layout(),
-                size: tuple[int, int] = (W, H), bg: str = "#000000") -> list[str]:
+                size: tuple[int, int] = (W, H), bg: str = "#000000",
+                fades: tuple[float, float] = (CUT_DEFAULTS["fade_in"], CUT_DEFAULTS["fade_out"]),
+                ) -> list[str]:
     vf = video_filter(layout, size, ass_name, bg)
+    fade_v, fade_a = fade_filters(end - start, *fades)
+    if fade_v:
+        vf = f"{vf},{fade_v}"
+    audio = ["-af", fade_a] if fade_a else []
     return [ffmpeg, "-y", "-loglevel", "error",
             "-ss", f"{start:.2f}", "-t", f"{end - start:.2f}", "-i", str(video),
-            "-vf", vf,
+            "-vf", vf, *audio,
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
             "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(out)]
 
@@ -140,22 +182,26 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
          ffmpeg: str = "ffmpeg", size: tuple[int, int] | None = None,
          layout: str | None = None, anchor: float | None = None,
          analyzer: Callable[[Path, float, float], Analysis | None] = frames.analyze,
-         ) -> list[CutJob]:
+         duration: float | None = None) -> list[CutJob]:
     validate_layout(layout)
     if anchor is not None and not 0.0 <= anchor <= 1.0:
         raise ReelError("anchor fora de 0 a 1.")
     size = size or proc.probe_size(video)
+    cfg = cut_settings(theme)
+    duration = duration if duration is not None else proc.probe_duration(video)
     jobs = []
     for c in clips["clips"]:
+        start, end = pad_window(c["start"], c["end"], duration,
+                                cfg["pad_before"], cfg["pad_after"])
         ass_name = f"{c['id']}.ass"
         out = workdir / "output" / f"{c['id']}-{theme['id']}.mp4"
-        chosen = _resolve(size, layout, anchor, analyzer, video, c["start"], c["end"])
+        chosen = _resolve(size, layout, anchor, analyzer, video, start, end)
         jobs.append(CutJob(
             clip_id=c["id"], ass_name=ass_name,
-            ass_text=build_ass(transcript, c["start"], c["end"], theme, c.get("hook", "")),
-            out=out, layout=chosen, size=size,
-            args=ffmpeg_args(ffmpeg, video, c["start"], c["end"], ass_name, out, chosen, size,
-                             theme["colors"]["bg"]),
+            ass_text=build_ass(transcript, start, end, theme, c.get("hook", "")),
+            out=out, layout=chosen, size=size, start=start, end=end,
+            args=ffmpeg_args(ffmpeg, video, start, end, ass_name, out, chosen, size,
+                             theme["colors"]["bg"], (cfg["fade_in"], cfg["fade_out"])),
         ))
     return jobs
 

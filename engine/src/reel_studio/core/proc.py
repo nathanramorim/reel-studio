@@ -43,4 +43,15 @@ def probe_size(video: Path) -> tuple[int, int]:
     return w, h
 
 
+def probe_duration(video: Path) -> float:
+    """Duração do contêiner em segundos, via ffprobe."""
+    ffprobe = require_bin("ffprobe", FFMPEG_HINT)
+    out = capture([ffprobe, "-v", "error", "-show_entries", "format=duration",
+                   "-of", "csv=p=0", str(video)])
+    try:
+        return float(out.strip())
+    except ValueError:
+        raise ReelError(f"Não consegui ler a duração de {video.name}.") from None
+
+
 FFMPEG_HINT = "Instale o ffmpeg (macOS: brew install ffmpeg; Windows: winget install ffmpeg)."
