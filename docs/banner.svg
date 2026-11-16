@@ -48,9 +48,9 @@
   <text x="1110" y="140" fill="#6b7489">tema +</text>
   <text x="1110" y="158" fill="#6b7489">estilo</text>
   <rect x="1104" y="172" width="86" height="30" rx="8" fill="#141925" stroke="#4f8ef7"/>
-  <text x="1147" y="192" fill="#8fb6ff" text-anchor="middle">busize</text>
+  <text x="1147" y="192" fill="#8fb6ff" text-anchor="middle">sua marca</text>
   <rect x="1104" y="210" width="86" height="30" rx="8" fill="#141925" stroke="#4f8ef7"/>
-  <text x="1147" y="230" fill="#8fb6ff" text-anchor="middle">forge</text>
+  <text x="1147" y="230" fill="#8fb6ff" text-anchor="middle">seu estilo</text>
 </g>
 
 </svg>
