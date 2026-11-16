@@ -10,6 +10,7 @@ import typer
 
 from .core import audio, contracts, cut, paths, proc, render
 from .core import glossary as glossary_mod
+from .core import overlay as overlay_mod
 from .core.compact import compact, estimate_tokens
 from .core.errors import ReelError
 from .core.llm import LLMClient
@@ -223,24 +224,34 @@ def cut_cmd(video: Video, theme: str = "pessoal",
             anchor: Annotated[str | None, typer.Option(
                 help="Override raro do fill: left, center, right ou 0 a 1")] = None,
             glossary: Glossary = None,
+            overlays: Annotated[str, typer.Option(
+                help="auto: componentes de `overlays` (clips.json) sobre o corte; none: ignora")
+            ] = "auto",
             dry_run: Annotated[bool, typer.Option(help="Só mostra o plano")] = False):
     """Recorta os clips aprovados, em 9:16, com legenda no tema."""
+    overlay_mod.validate_mode(overlays)
     p = Project.open(video)
     clips = contracts.load("clips", p.require("clips.json", f"reel-studio suggest {video}"))
     th = contracts.load_theme(theme)
     transcript, note = _corrected(p, glossary, th)
     if note:
         typer.echo(note)
-    jobs = cut.plan(p.video, p.dir, clips, transcript, th,
-                    layout=layout, anchor=cut.parse_anchor(anchor))
+    jobs = cut.plan(p.video, p.dir, clips, transcript, th, layout=layout,
+                    anchor=cut.parse_anchor(anchor), overlays=overlays == "auto")
+    layers = overlay_mod.plan(jobs, p.dir)
     for j in jobs:
         typer.echo(f"{j.clip_id} {j.start:.2f}-{j.end:.2f}s layout: {j.layout.describe(j.size)}")
     if dry_run:
         for j in jobs:
             typer.echo(f"dry-run {j.clip_id}: {j.out.name}")
+        for layer in layers:
+            typer.echo(f"dry-run {layer.clip_id}: camada de {layer.count} "
+                       f"componentes, {layer.length:.2f}s -> {layer.out.name}")
         return
     for out in cut.execute(jobs, p.dir):
         typer.echo(f"reel: {out}")
+    for out in overlay_mod.execute(layers, jobs, th, p.dir):
+        typer.echo(f"reel com componentes: {out}")
 
 
 @app.command(name="render")

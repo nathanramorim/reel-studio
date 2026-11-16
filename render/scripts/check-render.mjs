@@ -47,6 +47,36 @@ const engineProps = (scenes, themeId, styleId) => {
   if (r.status !== 0) throw new Error(r.stderr);
   return JSON.parse(r.stdout);
 };
+/** Props da camada `Overlay` como o motor entrega (core/overlay.py). */
+const overlayProps = (overlays, length) => {
+  const code = "import json,sys;from pathlib import Path;from reel_studio.core import contracts,overlay;"
+    + "from reel_studio.core.cut import CutJob;o=json.loads(sys.argv[1]);"
+    + "j=CutJob('clip-01','c.ass','',Path('o.mp4'),[],end=float(sys.argv[2]),overlays=tuple(o));"
+    + "print(json.dumps(overlay.layer_props(j,contracts.load_theme('forge'))))";
+  const r = spawnSync("uv", ["run", "python", "-c", code, JSON.stringify(overlays), String(length)],
+    { cwd: path.join(repo, "engine"), encoding: "utf8" });
+  if (r.status !== 0) throw new Error(r.stderr);
+  return JSON.parse(r.stdout);
+};
+// Todos os tipos de componente visíveis ao mesmo tempo: pior caso de sobreposição das faixas.
+const OVERLAY_SAMPLE = [
+  { at: 0, dur: 6, type: "hook", text: "Pare de editar vídeo na mão" },
+  { at: 0, dur: 6, type: "keyword", text: "`forge-sdd`" },
+  { at: 0, dur: 6, type: "step", text: "Gravar a tela" },
+  { at: 0, dur: 6, type: "step", text: "Gerar o reel" },
+  { at: 0, dur: 6, type: "callout", text: "Tudo roda local" },
+  { at: 0, dur: 6, type: "progress" },
+  { at: 0, dur: 6, type: "cta", text: "npx @nathanramorim/forge-sdd init" },
+  { at: 0, dur: 6, type: "logo" },
+];
+/** Faixa da legenda lida das mesmas constantes do motor (DUP-03), não de números soltos aqui. */
+const captionBand = () => {
+  const margin = Number(/"lower-third": (\d+)/.exec(readFileSync(path.join(repo, "engine/src/reel_studio/core/captions.py"), "utf8"))[1]);
+  const bottom = 1920 - margin, top = bottom - 2 * theme.caption.size * 1.25;
+  const region = Object.fromEntries([...readFileSync(path.join(root, "src/overlay/regions.ts"), "utf8")
+    .matchAll(/CAPTION = \{ top: (\d+), bottom: (\d+) \}/g)].flatMap((m) => [["top", Number(m[1])], ["bottom", Number(m[2])]]));
+  return { top: Math.min(top, region.top), bottom: Math.max(bottom, region.bottom), declared: region };
+};
 const STYLES = ["isometric-pastel", "flat-vector-science", "whiteboard-explainer"];
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -148,6 +178,29 @@ try {
         }
       }
     }
+  }
+  if (want("safe-zone")) {
+    const props = { ...overlayProps(OVERLAY_SAMPLE, 6), probe: true };
+    const composition = await selectComposition({ serveUrl, id: "Overlay", inputProps: props });
+    const logs = [];
+    await renderStill({ composition, serveUrl, output: path.join(tmp, "overlay.png"), inputProps: props,
+      frame: 90, imageFormat: "png", onBrowserLog: (l) => logs.push(l.text) });
+    const probe = JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8));
+    const boxes = probe.boxes ?? [];
+    const bad = boxes.filter((b) => b.top < SAFE.top - 0.5 || b.bottom > SAFE.bottom + 0.5
+      || (b.bottom > SAFE.lowerHalf && b.right > WIDTH - SAFE.rightGuard + 0.5));
+    check(boxes.length > 0 && bad.length === 0, `overlay: texto na zona segura (y ${SAFE.top}-${SAFE.bottom}, guarda ${SAFE.rightGuard}px)`
+      + (bad.length ? ` fora: ${JSON.stringify(bad[0])}` : ""));
+    const cap = captionBand();
+    const mid = boxes.filter((b) => b.bottom > SAFE.lowerHalf);
+    const hit = mid.filter((b) => b.top < cap.bottom && b.bottom > cap.top);
+    check(hit.length === 0, `overlay: nenhum texto cobre a legenda (y ${cap.top.toFixed(0)}-${cap.bottom})`
+      + (hit.length ? ` cobre: ${JSON.stringify(hit[0])}` : ""));
+    const hits = (x, y) => x.left < y.right - 2 && y.left < x.right - 2 && x.top < y.bottom - 2 && y.top < x.bottom - 2;
+    const overlap = boxes.some((x, i) => boxes.slice(i + 1).some((y) => hits(x, y)));
+    check(!overlap, "overlay: faixas empilhadas sem sobreposição de texto");
+    check(probe.minSize >= 44, `overlay: menor texto ${probe.minSize}px >= 44px`);
+    check((probe.fonts ?? []).every((f) => f.loaded), "overlay: fontes carregadas");
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });

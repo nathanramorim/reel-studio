@@ -42,6 +42,7 @@ class CutJob:
     size: tuple[int, int] = (W, H)
     start: float = 0.0
     end: float = 0.0
+    overlays: tuple[dict, ...] = ()
 
 
 ANCHORS = {"left": 0.0, "center": 0.5, "right": 1.0}
@@ -182,7 +183,7 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
          ffmpeg: str = "ffmpeg", size: tuple[int, int] | None = None,
          layout: str | None = None, anchor: float | None = None,
          analyzer: Callable[[Path, float, float], Analysis | None] = frames.analyze,
-         duration: float | None = None) -> list[CutJob]:
+         duration: float | None = None, overlays: bool = True) -> list[CutJob]:
     validate_layout(layout)
     if anchor is not None and not 0.0 <= anchor <= 1.0:
         raise ReelError("anchor fora de 0 a 1.")
@@ -200,10 +201,17 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
             clip_id=c["id"], ass_name=ass_name,
             ass_text=build_ass(transcript, start, end, theme, c.get("hook", "")),
             out=out, layout=chosen, size=size, start=start, end=end,
+            overlays=_layer(c, start) if overlays else (),
             args=ffmpeg_args(ffmpeg, video, start, end, ass_name, out, chosen, size,
                              theme["colors"]["bg"], (cfg["fade_in"], cfg["fade_out"])),
         ))
     return jobs
+
+
+def _layer(clip: dict, window_start: float) -> tuple[dict, ...]:
+    """`overlays` do clipe, com `at` deslocado para a janela do corte (que começa com folga)."""
+    return tuple({**o, "at": round(o["at"] + clip["start"] - window_start, 3)}
+                 for o in clip.get("overlays", []))
 
 
 def _resolve(size, layout, anchor, analyzer, video, start, end) -> Layout:
