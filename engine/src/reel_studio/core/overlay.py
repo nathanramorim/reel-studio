@@ -6,7 +6,7 @@ import base64
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import contracts, contrast, paths, proc, render
+from . import contracts, contrast, deliver, paths, proc, render
 from .cut import CutJob
 from .errors import ReelError
 
@@ -106,6 +106,8 @@ def execute(plans: list[LayerPlan], jobs: list[CutJob], theme: dict, workdir: Pa
             paths.write_json(p.props_file, layer_props(by_id[p.clip_id], theme))
             proc.run([npx, *p.render_args[1:]], cwd=rdir)
             proc.run(p.compose_args, cwd=workdir)
+            deliver.apply_poster(p.compose_args[0], p.out, p.length,
+                                 p.out.with_name(f"{p.out.stem}-poster.jpg"))
         finally:
             p.layer.unlink(missing_ok=True)
             p.props_file.unlink(missing_ok=True)

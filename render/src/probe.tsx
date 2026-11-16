@@ -20,7 +20,7 @@ export const Probe: React.FC<{ families: string[] }> = ({ families }) => {
         serifWidth: textWidth("serif", "700"),
       }));
       const sizes: number[] = [];
-      const boxes: { top: number; bottom: number; left: number; right: number }[] = [];
+      const boxes: { top: number; bottom: number; left: number; right: number; scene?: number; presence?: number }[] = [];
       document.querySelectorAll<HTMLElement>("#probe-root *").forEach((el) => {
         const texts = [...el.childNodes].filter((n) => n.nodeType === 3 && n.textContent?.trim());
         if (!texts.length) return;
@@ -29,11 +29,21 @@ export const Probe: React.FC<{ families: string[] }> = ({ families }) => {
           const range = document.createRange();
           range.selectNodeContents(node);
           const r = range.getBoundingClientRect();
-          boxes.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
+          const holder = el.closest<HTMLElement>("[data-presence]");
+          boxes.push({
+            top: r.top, bottom: r.bottom, left: r.left, right: r.right,
+            scene: holder ? Number(holder.dataset.scene) : undefined,
+            presence: holder ? Number(holder.dataset.presence) : undefined,
+          });
         });
       });
+      const rect = (el: Element) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; };
+      const reveals = [...document.querySelectorAll<HTMLElement>("#probe-root [data-reveal-at]")].map((el) => ({
+        at: Number(el.dataset.revealAt), opacity: Number(getComputedStyle(el).opacity), text: el.textContent ?? "",
+      }));
+      const media = [...document.querySelectorAll("#probe-root [data-media-box]")].map(rect);
       const minSize = sizes.length ? Math.min(...sizes) : null;
-      console.log(`[probe] ${JSON.stringify({ fonts, minSize, boxes })}`);
+      console.log(`[probe] ${JSON.stringify({ fonts, minSize, boxes, reveals, media })}`);
       continueRender(handle);
     });
   }, []);

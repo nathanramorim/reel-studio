@@ -65,3 +65,59 @@ def _run_raising(*args):
     res = _run(*args)
     if res.exception:
         raise res.exception
+
+
+# --- 05: entradas sem vídeo, voz e trilha ---
+def test_conteudo_prompt_sem_video(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    post = tmp_path / "post.md"
+    post.write_text("# Ideia\nAutomatize reels.", encoding="utf-8")
+    r = CliRunner().invoke(app, ["prompt-script", "--content", str(post),
+                                 "--style", "isometric-pastel", "--tone", "deadpan"])
+    assert r.exit_code == 0, r.output
+    assert "<conteudo>" in r.output and "--project ideia" not in r.output
+    assert "save-scenes --project" in r.output
+    assert (tmp_path / "reel-projects" / "post").is_dir()
+
+
+def test_conteudo_com_segredo_avisa_sem_vazar(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    segredo = "AKI" + "AABCDEFGHIJKLMNOP"
+    r = CliRunner().invoke(app, ["prompt-script", "--idea", f"use a chave {segredo}",
+                                 "--style", "isometric-pastel"])
+    avisos = [ln for ln in r.output.splitlines() if ln.startswith("aviso:")]
+    assert avisos and all(segredo not in a for a in avisos)
+
+
+def test_idea_e_conteudo_juntos_falham(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    r = CliRunner().invoke(app, ["prompt-script", "--idea", "x", "--content", "y.md",
+                                 "--style", "isometric-pastel"])
+    assert r.exit_code != 0
+
+
+def test_voz_clone_sem_consentimento_ou_referencia_falha(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from reel_studio.core.project import Project
+    p = Project.open_text("v")
+    (p.dir / "scenes.json").write_text(json.dumps({"style": "forge-motion", "scenes": [
+        {"type": "title", "dur": 3, "narration": "oi", "text": "x"}]}))
+    base = ["render", "--project", "v", "--theme", "forge", "--voice", "clone", "--dry-run"]
+    sem_flag = CliRunner().invoke(app, [*base, "--voice-ref", "ref.wav"])
+    assert sem_flag.exit_code != 0 and "--confirm-own-voice" in str(sem_flag.exception)
+    sem_ref = CliRunner().invoke(app, [*base, "--confirm-own-voice"])
+    assert sem_ref.exit_code != 0 and "--voice-ref" in str(sem_ref.exception)
+
+
+def test_dry_run_sem_video_nao_escreve_nada(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from reel_studio.core.project import Project
+    p = Project.open_text("w")
+    cena = {"type": "title", "dur": 3, "narration": "oi", "text": "x"}
+    (p.dir / "scenes.json").write_text(json.dumps({
+        "style": "forge-motion", "tone": "cinematic", "share": "Um reel.", "scenes": [cena]}))
+    antes = sorted(q.name for q in p.dir.rglob("*"))
+    r = CliRunner().invoke(app, ["render", "--project", "w", "--theme", "forge", "--dry-run"])
+    assert r.exit_code == 0, r.output
+    assert "trilha 100 BPM" in r.output and "share-copy.txt" in r.output
+    assert sorted(q.name for q in p.dir.rglob("*")) == antes

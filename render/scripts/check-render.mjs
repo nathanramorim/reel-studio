@@ -1,8 +1,9 @@
 // Verifica stills de cada cena: fonte carregada, escala mínima, cobertura e paleta.
-// Uso: node scripts/check-render.mjs [--fonts] [--scale] [--safe-zone] [--style <id>]
+// Uso: node scripts/check-render.mjs [--fonts] [--scale] [--safe-zone] [--transitions] [--words] [--media]
+//        [--style <id>] [--all]
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
-import { readFileSync, mkdtempSync, rmSync } from "node:fs";
+import { readFileSync, mkdtempSync, rmSync, mkdirSync, readdirSync, symlinkSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { inflateSync } from "node:zlib";
 import { tmpdir } from "node:os";
@@ -14,9 +15,12 @@ const repo = path.resolve(root, "..");
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const styleId = args.includes("--style") ? args[args.indexOf("--style") + 1] : null;
-const all = !flag("fonts") && !flag("scale") && !flag("safe-zone") && !styleId;
-/** `--style X` roda todas as checagens de cena do estilo; as flags isoladas restringem. */
-const want = (n) => all || flag(n) || (!!styleId && !flag("fonts") && !flag("scale") && !flag("safe-zone"));
+const FLAGS = ["fonts", "scale", "safe-zone", "transitions", "words", "media"];
+const picked = FLAGS.some(flag);
+const all = flag("all") || (!picked && !styleId);
+/** `--style X` roda as checagens de cena do estilo; as flags isoladas restringem. */
+const want = (n) => all || flag(n) || (!!styleId && !picked);
+const sceneChecks = all || ["fonts", "scale", "safe-zone"].some(flag) || (!!styleId && !picked);
 const SAFE_STYLES = ["isometric-pastel", "forge-motion"];
 const readJson = (p) => JSON.parse(readFileSync(p, "utf8"));
 
@@ -133,7 +137,7 @@ const check = (ok, msg) => { if (!ok) failures.push(msg); console.log(`${ok ? "o
 const serveUrl = await bundle({ entryPoint: path.join(root, "src/index.ts"), publicDir: path.join(root, "public") });
 const tmp = mkdtempSync(path.join(tmpdir(), "check-render-"));
 try {
-  for (const sid of all ? ["__default__", STYLES[0], "forge-motion"] : styleId ? [styleId] : flag("safe-zone") ? SAFE_STYLES : ["__default__"]) {
+  for (const sid of !sceneChecks ? [] : all ? ["__default__", STYLES[0], "forge-motion"] : styleId ? [styleId] : flag("safe-zone") ? SAFE_STYLES : ["__default__"]) {
     const style = sid === "__default__" ? readJson(path.join(repo, "styles", STYLES[2], "style.json")) : readJson(path.join(repo, "styles", sid, "style.json"));
     const SCENES = scenesFor(style);
     for (let i = 0; i < SCENES.length; i++) {
@@ -179,7 +183,7 @@ try {
       }
     }
   }
-  if (want("safe-zone")) {
+  if (sceneChecks && want("safe-zone")) {
     const props = { ...overlayProps(OVERLAY_SAMPLE, 6), probe: true };
     const composition = await selectComposition({ serveUrl, id: "Overlay", inputProps: props });
     const logs = [];
@@ -201,6 +205,97 @@ try {
     check(!overlap, "overlay: faixas empilhadas sem sobreposição de texto");
     check(probe.minSize >= 44, `overlay: menor texto ${probe.minSize}px >= 44px`);
     check((probe.fonts ?? []).every((f) => f.loaded), "overlay: fontes carregadas");
+  }
+  const forge = readJson(path.join(repo, "styles/forge-motion/style.json"));
+  /** Props do render com a cena trocada, e o probe de um quadro da linha do tempo. */
+  const probeAt = async (inputProps, frame, url = serveUrl) => {
+    const composition = await selectComposition({ serveUrl: url, id: "Reel", inputProps });
+    const logs = [];
+    const output = path.join(tmp, `f${frame}-${Math.random().toString(36).slice(2)}.png`);
+    await renderStill({ composition, serveUrl: url, output, inputProps, frame, imageFormat: "png",
+      onBrowserLog: (l) => logs.push(l.text) });
+    return { probe: JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8)), output };
+  };
+  if (want("transitions")) {
+    // Os limites vêm de render/src/timeline.ts (DUP-03): o script lê a duração, sem cópia.
+    const seconds = Number(/TRANSITION_SECONDS = ([\d.]+)/.exec(readFileSync(path.join(root, "src/timeline.ts"), "utf8"))[1]);
+    const half = Math.max(1, Math.round((seconds / 2) * 30)), end = 90;
+    const frames = [end - half, end - Math.ceil(half / 2), end - 1, end, end + Math.floor(half / 2), end + half - 1];
+    for (const kind of ["dip", "wipe", "slide"]) {
+      const scenes = [
+        { type: "title", dur: 3, narration: "", text: "Primeira cena do reel", transition: kind },
+        { type: "highlight", dur: 3, narration: "", text: "Segunda cena do reel" },
+      ];
+      const inputProps = { ...engineProps(scenes, theme.id, forge.id), probe: true };
+      let worst = 0, overlap = false, gap = 0;
+      for (const frame of frames) {
+        const { probe } = await probeAt(inputProps, frame);
+        const boxes = (probe.boxes ?? []).filter((b) => b.presence !== undefined);
+        const byScene = new Map();
+        for (const b of boxes) byScene.set(b.scene, Math.max(byScene.get(b.scene) ?? 0, b.presence));
+        worst = Math.max(worst, [...byScene.values()].reduce((a, v) => a + v, 0));
+        const seen = boxes.filter((b) => b.presence > 0.05);
+        const hits = (x, y) => x.left < y.right - 2 && y.left < x.right - 2 && x.top < y.bottom - 2 && y.top < x.bottom - 2;
+        overlap ||= seen.some((x, i) => seen.slice(i + 1).some((y) => x.scene !== y.scene && hits(x, y)));
+        if (frame === end - 1 || frame === end) gap = Math.max(gap, ...[...byScene.values(), 0]);
+      }
+      check(worst <= 1.05, `transição ${kind}: soma das presenças ${worst.toFixed(2)} <= 1.05 (sem dupla exposição)`);
+      check(!overlap, `transição ${kind}: texto de cenas diferentes sem sobreposição`);
+      check(gap <= 0.1, `transição ${kind}: passa pelo fundo entre as cenas (presença ${gap.toFixed(2)} <= 0.1)`);
+    }
+  }
+  if (want("words")) {
+    const words = (texts, start, step) => texts.flatMap((w, k) => [{ word: w, start: start + k * step, end: start + (k + 1) * step }]);
+    const cases = [
+      { type: "title", dur: 4, narration: "", text: "Automatize esse processo de ponta a ponta",
+        words: words(["Automatize", "esse", "processo", "de", "ponta", "a", "ponta"], 0.5, 0.3) },
+      { type: "list", dur: 4, narration: "", items: ["Sem nuvem", "Sem custo", "Controle total"],
+        words: words(["Sem", "nuvem", "custo", "controle", "total"], 0.5, 0.4) },
+    ];
+    for (const scene of cases) {
+      const inputProps = { ...engineProps([{ ...scene, words: undefined }], theme.id, forge.id), probe: true };
+      inputProps.scenes[0].words = scene.words;
+      let early = 0, late = 0, total = 0;
+      for (const frame of [12, 27, 60, Math.round(scene.dur * 30) - 5]) {
+        const t = frame / 30;
+        const { probe } = await probeAt(inputProps, frame);
+        for (const r of probe.reveals ?? []) {
+          total += 1;
+          if (t < r.at && r.opacity > 0.02) early += 1;
+          if (t >= r.at + 1.0 && r.opacity < 0.95) late += 1;
+        }
+      }
+      check(total > 0, `${scene.type}: palavras marcadas para revelar (${total} leituras)`);
+      check(early === 0, `${scene.type}: nenhuma palavra visível antes do seu tempo`);
+      check(late === 0, `${scene.type}: todas visíveis depois do seu tempo`);
+    }
+  }
+  if (want("media")) {
+    const pub = path.join(tmp, "public");
+    mkdirSync(pub);
+    for (const f of readdirSync(path.join(root, "public"))) symlinkSync(path.join(root, "public", f), path.join(pub, f));
+    const made = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=duration=3:size=640x360:rate=30",
+      "-pix_fmt", "yuv420p", path.join(pub, "clip.mp4")], { encoding: "utf8" });
+    check(made.status === 0, "ffmpeg gerou o vídeo de teste");
+    const url = await bundle({ entryPoint: path.join(root, "src/index.ts"), publicDir: pub });
+    const scene = { type: "highlight", dur: 3, narration: "", text: "Tela real dentro da janela" };
+    const inputProps = { ...engineProps([scene], theme.id, forge.id), probe: true };
+    inputProps.scenes[0].media = { file: "clip.mp4", start: 0, end: 3, region: { x: 0, y: 0, w: 1, h: 1 } };
+    const { probe, output } = await probeAt(inputProps, 45, url);
+    const box = (probe.media ?? [])[0];
+    check(!!box, "media: janela com a tela real presente");
+    if (box) {
+      check(box.top >= SAFE.top && box.bottom <= SAFE.bottom && box.right <= WIDTH - SAFE.rightGuard + 0.5,
+        `media: janela na zona segura (y ${box.top.toFixed(0)}-${box.bottom.toFixed(0)})`);
+      const img = decodePng(readFileSync(output));
+      const px = (x, y) => [0, 1, 2].map((k) => img.px[(Math.round(y) * img.w + Math.round(x)) * img.ch + k]);
+      const far = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) > 40;
+      const samples = [0.2, 0.5, 0.8].map((f) => px(box.left + (box.right - box.left) * f, box.top + (box.bottom - box.top) * 0.5));
+      check(samples.some((c) => far(c, hex(theme.colors.bg)) && far(c, hex(theme.colors.surface))),
+        "media: a tela real aparece dentro da janela (pixels do vídeo, não do fundo)");
+    }
+    const { probe: p2 } = await probeAt({ ...engineProps([scene], theme.id, forge.id), probe: true }, 45);
+    check((p2.media ?? []).length === 0, "media: cena sem `media` não mostra janela de vídeo");
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });

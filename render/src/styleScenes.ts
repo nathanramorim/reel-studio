@@ -1,6 +1,7 @@
 import React from "react";
 import { Scene, Theme, Style } from "./types";
 import { ForgePhrase, ForgeFlow, ForgeList, ForgeCompare, ForgeCta } from "./forge/ForgeScenes";
+import { MediaScene } from "./forge/MediaScene";
 import { IsoPhrase, IsoFlow, IsoList, IsoCompare } from "./iso/scenes";
 
 export type SceneComponent = React.FC<{ scene: Scene; theme: Theme; style: Style }>;
@@ -23,4 +24,9 @@ export const styleScenes: Record<string, Partial<Record<Scene["type"], SceneComp
     compare: ForgeCompare,
     cta: ForgeCta,
   },
+};
+
+/** Cena com `media` (trecho real da gravação): variante por estilo, escolhida antes do mapa por tipo. */
+export const styleMedia: Record<string, SceneComponent> = {
+  "forge-motion": MediaScene,
 };

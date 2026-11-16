@@ -1,6 +1,6 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
-import { Scene, Theme, Style } from "../types";
+import { Scene, Theme, Style, Word } from "../types";
 import { fontFamily } from "../fonts";
 import { SCALE, titleSize } from "../scale";
 import { CAMERA_MARGIN, SAFE, SIDE_MARGIN } from "../safeZone";
@@ -9,7 +9,7 @@ import { easeOut, springForge, stagger } from "../motion";
 import { Camera } from "./Camera";
 import { Card } from "./Card";
 import { Chip } from "./Chip";
-import { GradText } from "./GradText";
+import { GradWords, startOf } from "./GradText";
 import { Packet } from "./Packet";
 import { Pane } from "./Pane";
 import { monoFont } from "./panel";
@@ -22,6 +22,7 @@ const AREA_TOP = SAFE.top + CAMERA_MARGIN;
 const AREA_H = SAFE.bottom - SAFE.top - 2 * CAMERA_MARGIN;
 const GAP = 28;
 const PACKET_SECONDS = 1.2;
+const STEP = 0.18;
 
 const accents = (theme: Theme, style: Style): string[] =>
   style.look.palette?.length ? style.look.palette : [theme.colors.accent];
@@ -43,10 +44,12 @@ const Stage: React.FC<{ children: React.ReactNode; align?: "center" | "stretch" 
   </Camera>
 );
 
-const useEnter = (i: number) => {
+/** Entrada da unidade `i` de `n`: no tempo da fala (`words`), ou escalonada sem tempos. */
+const useEnter = (i: number, words?: Word[], n = 1) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  return Math.min(1, springForge(frame, fps, stagger(i, fps)));
+  const at = startOf(words, i, n, i * STEP);
+  return { enter: Math.min(1, springForge(frame, fps, Math.round(at * fps))), at };
 };
 
 const body = (theme: Theme): React.CSSProperties => ({
@@ -64,14 +67,14 @@ const Inline: React.FC<{ text: string; theme: Theme }> = ({ text, theme }) => (
 
 export const ForgePhrase: React.FC<Props> = ({ scene, theme, style }) => {
   const text = "text" in scene ? scene.text ?? "" : "";
-  const enter = useEnter(0);
+  const { enter } = useEnter(0);
   const [a] = accents(theme, style);
   return (
     <Stage>
       <Card theme={theme} accent={a} opacity={enter} offsetX={(1 - enter) * -40}
         style={{ padding: "48px 40px", textAlign: "center" }}>
         <div style={{ ...body(theme), fontWeight: 800, fontSize: titleSize(text, CONTENT_W - 80), lineHeight: 1.15 }}>
-          <GradText theme={theme}><Inline text={text} theme={theme} /></GradText>
+          <GradWords theme={theme} text={text} words={scene.words} fallbackStep={0.12} />
         </div>
       </Card>
     </Stage>
@@ -97,9 +100,10 @@ export const ForgeFlow: React.FC<Props> = ({ scene, theme, style }) => {
           flexDirection: "column", gap: GAP,
         }}>
           {steps.map((step, i) => {
-            const enter = Math.min(1, springForge(frame, fps, stagger(i, fps, 0.3)));
+            const at = startOf(scene.words, i, steps.length, i * 0.3);
+            const enter = Math.min(1, springForge(frame, fps, Math.round(at * fps)));
             return (
-              <Pane key={i} theme={theme} accent={pick(list, i)} opacity={enter}
+              <Pane key={i} theme={theme} accent={pick(list, i)} opacity={enter} reveal={at}
                 style={{ height: paneH, transform: `translateY(${(1 - enter) * 30}px)` }}>
                 <div style={{
                   ...body(theme), whiteSpace: "nowrap",
@@ -130,9 +134,9 @@ export const ForgeList: React.FC<Props> = ({ scene, theme, style }) => {
   const items = scene.type === "list" ? scene.items ?? [] : [];
   const list = accents(theme, style);
   const Item: React.FC<{ item: string; i: number }> = ({ item, i }) => {
-    const enter = useEnter(i);
+    const { enter, at } = useEnter(i, scene.words, items.length);
     return (
-      <Card theme={theme} accent={pick(list, i)} opacity={enter} offsetX={(1 - enter) * -60}>
+      <Card theme={theme} accent={pick(list, i)} opacity={enter} offsetX={(1 - enter) * -60} reveal={at}>
         <div style={{ ...body(theme), fontSize: SCALE.body }}><Inline text={item} theme={theme} /></div>
       </Card>
     );
@@ -148,7 +152,7 @@ export const ForgeCompare: React.FC<Props> = ({ scene, theme, style }) => {
   const sides = scene.type === "compare" ? [scene.left, scene.right] : [];
   const list = accents(theme, style);
   const Side: React.FC<{ i: number }> = ({ i }) => {
-    const enter = useEnter(i * 2);
+    const { enter } = useEnter(i * 2);
     const side = sides[i];
     return (
       <Pane theme={theme} accent={pick(list, i)} opacity={enter} style={{ flex: 1, transform: `translateY(${(1 - enter) * 30}px)` }}>
@@ -173,7 +177,7 @@ export const ForgeCompare: React.FC<Props> = ({ scene, theme, style }) => {
 
 export const ForgeCta: React.FC<Props> = ({ scene, theme, style }) => {
   const text = scene.type === "cta" ? scene.text ?? theme.cta.text : theme.cta.text;
-  const enter = useEnter(0);
+  const { enter } = useEnter(0);
   const [a, b] = accents(theme, style);
   return (
     <Stage>

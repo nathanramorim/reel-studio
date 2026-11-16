@@ -8,9 +8,10 @@ from typing import Annotated, TypeVar
 
 import typer
 
-from .core import audio, contracts, cut, paths, proc, render
+from .core import audio, contracts, cut, music, paths, proc, render
 from .core import glossary as glossary_mod
 from .core import overlay as overlay_mod
+from .core import voice as voice_mod
 from .core.compact import compact, estimate_tokens
 from .core.errors import ReelError
 from .core.llm import LLMClient
@@ -20,6 +21,9 @@ app = typer.Typer(add_completion=False, no_args_is_help=True,
                   help="reel-studio: reels verticais a partir de vídeos gravados.")
 
 Video = Annotated[Path, typer.Argument(help="Arquivo de vídeo")]
+OptVideo = Annotated[Path | None, typer.Argument(help="Arquivo de vídeo (ou use --project)")]
+ProjectOpt = Annotated[str | None, typer.Option(
+    "--project", help="Projeto sem vídeo (conteúdo ou ideia): reel-projects/<nome>")]
 
 
 T = TypeVar("T")
@@ -47,6 +51,15 @@ def _load_env() -> None:
                 if sep and not line.lstrip().startswith("#"):
                     os.environ.setdefault(key.strip(), value.strip().strip('"'))
             return
+
+
+def _open(video: Path | None, project: str | None) -> Project:
+    """Projeto de um vídeo, ou de um texto sem vídeo (`--project`); um dos dois, nunca ambos."""
+    if video is not None and project is not None:
+        raise ReelError("Informe o vídeo ou --project, não os dois.")
+    if video is None and project is None:
+        raise ReelError("Falta o vídeo ou --project (entrada de conteúdo ou ideia).")
+    return Project.open(video) if video is not None else Project.open_text(project)
 
 
 Glossary = Annotated[Path | None, typer.Option(
@@ -168,33 +181,62 @@ def suggest(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int 
 
 
 @app.command(name="prompt-script")
-def prompt_script_cmd(video: Video, style: str, start: float = 0.0, end: float | None = None,
-                      glossary: Glossary = None):
-    """Mostra o prompt do modo VSL, para o agente gerar o JSON (sem rede, sem chave)."""
-    from .core.script import prompt as build_prompt
+def prompt_script_cmd(video: OptVideo = None, style_arg: StyleArg = None,
+                      style_opt: StyleOpt = None, start: float = 0.0,
+                      end: float | None = None, glossary: Glossary = None,
+                      tone: Annotated[str | None, typer.Option(
+                          help="default, polished, yc-parody, chaotic, deadpan, cinematic, "
+                               "app-store")] = None,
+                      content: Annotated[Path | None, typer.Option(
+                          help="Texto ou markdown, no lugar do vídeo")] = None,
+                      idea: Annotated[str | None, typer.Option(
+                          help="Ideia livre, no lugar do vídeo")] = None,
+                      project: ProjectOpt = None):
+    """Mostra o prompt do roteiro (vídeo, conteúdo ou ideia), sem rede e sem chave."""
+    from .core import script as script_mod
 
-    p = Project.open(video)
-    system, user = build_prompt(_transcript(p, glossary), contracts.load_style(style),
-                                start, end)
-    typer.echo(f"~{estimate_tokens(user)} tokens de transcrição\n")
+    style = _either(style_arg, style_opt, "o estilo", "--style")
+    st = contracts.load_style(style)
+    if content is not None or idea is not None:
+        if content is not None and idea is not None:
+            raise ReelError("Use --content ou --idea, não os dois.")
+        if video is not None:
+            raise ReelError("Conteúdo e ideia não usam vídeo: tire o argumento do vídeo.")
+        text = content.read_text(encoding="utf-8") if content is not None else idea
+        name = project or script_mod.slug(content.stem if content is not None else idea)
+        p = Project.open_text(name)
+        system, user, notes = script_mod.prompt_text(
+            text, st, tone, "content" if content is not None else "idea")
+        for note in notes:
+            typer.echo(f"aviso: {note}; revise antes de gerar")
+        where = f"--project {name}"
+    else:
+        p = _open(video, project)
+        if p.video is None:
+            raise ReelError("Sem vídeo: use --content ou --idea.")
+        system, user = script_mod.prompt(_transcript(p, glossary), st, start, end, tone)
+        where = str(video)
+    typer.echo(f"~{estimate_tokens(user)} tokens de entrada\n")
     typer.echo("=== SYSTEM ===\n" + system)
     typer.echo("\n=== USER ===\n" + user)
-    cmd = f"reel-studio save-scenes {video} --style {style} --file SEU_JSON.json"
-    typer.echo(f"\nGere o JSON e grave com: {cmd}")
+    typer.echo(f"\nGere o JSON e grave com: reel-studio save-scenes {where} "
+               f"--style {style} --file SEU_JSON.json")
 
 
 @app.command(name="save-scenes")
-def save_scenes_cmd(video: Video, style_arg: StyleArg = None, file_arg: FileArg = None,
-                    style_opt: StyleOpt = None, file_opt: FileOpt = None,
-                    theme: str | None = None):
+def save_scenes_cmd(video: OptVideo = None, style_arg: StyleArg = None,
+                    file_arg: FileArg = None, style_opt: StyleOpt = None,
+                    file_opt: FileOpt = None, theme: str | None = None,
+                    project: ProjectOpt = None):
     """Valida o JSON de cenas (gerado pelo agente ou por você) e grava scenes.json."""
     from .core.script import normalize
 
     style = _either(style_arg, style_opt, "o estilo", "--style")
     file = _either(file_arg, file_opt, "o JSON de cenas", "--file")
-    p = Project.open(video)
+    p = _open(video, project)
     raw = paths.read_json(file)
-    data = normalize(raw, contracts.load_style(style), theme, proc.probe_duration(p.video))
+    data = normalize(raw, contracts.load_style(style), theme,
+                     proc.probe_duration(p.video) if p.video else None)
     paths.write_json(p.path("scenes.json"), data)
     total = sum(s["dur"] for s in data["scenes"])
     typer.echo(f"{len(data['scenes'])} cenas, {total:.0f}s. Revise: {p.path('scenes.json')}")
@@ -246,7 +288,7 @@ def cut_cmd(video: Video, theme: str = "pessoal",
             typer.echo(f"dry-run {j.clip_id}: {j.out.name}")
         for layer in layers:
             typer.echo(f"dry-run {layer.clip_id}: camada de {layer.count} "
-                       f"componentes, {layer.length:.2f}s -> {layer.out.name}")
+                       f"componentes, {layer.length:.2f}s -> {layer.out.name} (pôster no quadro 0)")
         return
     for out in cut.execute(jobs, p.dir):
         typer.echo(f"reel: {out}")
@@ -255,20 +297,70 @@ def cut_cmd(video: Video, theme: str = "pessoal",
 
 
 @app.command(name="render")
-def render_cmd(video: Video, theme: str = "pessoal", style: str | None = None,
+def render_cmd(video: OptVideo = None, theme: str = "pessoal", style: str | None = None,
                captions: Annotated[str, typer.Option(
                    help="narration: legenda queimada da narração; none")] = "narration",
                audio: Annotated[str | None, typer.Option(
                    help="original: áudio dos trechos `source`; none. "
                         "Padrão: original se todas as cenas têm `source`")] = None,
+               music_mode: Annotated[str, typer.Option(
+                   "--music", help="auto: liga sem voz; on; off. A trilha fica abaixo da voz")
+               ] = "auto",
+               voice: Annotated[str | None, typer.Option(
+                   help="clone: voz gerada a partir de uma amostra (extra tts)")] = None,
+               voice_ref: Annotated[str | None, typer.Option(
+                   help="Amostra de voz (arquivo) ou `auto` para extrair da gravação")] = None,
+               confirm_own_voice: Annotated[bool, typer.Option(
+                   "--confirm-own-voice",
+                   help="Confirmo que a voz é minha ou que tenho autorização")] = False,
+               lang: Annotated[str, typer.Option(help="Idioma da voz gerada")] = "pt",
+               project: ProjectOpt = None,
                dry_run: Annotated[bool, typer.Option(help="Só mostra o plano")] = False):
-    """Renderiza o scenes.json aprovado com Remotion, com legenda e áudio por opção."""
-    p = Project.open(video)
-    scenes = contracts.load("scenes", p.require("scenes.json", f"reel-studio script {video}"))
+    """Renderiza o scenes.json aprovado com Remotion, com legenda, áudio e trilha por opção."""
+    music.validate(music_mode)
+    p = _open(video, project)
+    scenes = contracts.load("scenes", p.require("scenes.json", "reel-studio save-scenes"))
     st = contracts.load_style(style or scenes["style"])
+    transcript = _transcript(p) if p.path("transcript.json").is_file() and p.video else None
+    generated = None
+    if voice is not None:
+        if voice != "clone":
+            raise ReelError(f"--voice aceita clone; recebi {voice!r}.")
+        generated = _clone(p, scenes, voice_ref, confirm_own_voice, lang, transcript, dry_run)
+    if voice is not None or p.video is None:
+        mode = "none"  # a voz gerada, ou nenhuma, no lugar do áudio da gravação
+    else:
+        mode = audio or render.default_audio(scenes["scenes"])
     out = render.execute(scenes, contracts.load_theme(theme), st, p.dir, dry_run, p.video,
-                         render.Mix(captions, audio or render.default_audio(scenes["scenes"])))
+                         render.Mix(captions, mode, music_mode), transcript, generated,
+                         voice_planned=voice is not None)
     typer.echo(f"vsl: {out}")
+
+
+def _clone(p: Project, scenes: dict, ref_arg: str | None, confirmed: bool, lang: str,
+           transcript: dict | None, dry_run: bool) -> voice_mod.Voice | None:
+    """Voz gerada: consentimento antes de tudo; no `--dry-run` nada é gerado nem escrito."""
+    voice_mod.check_consent(confirmed, ref_arg is not None)
+    if dry_run:
+        return None
+    if ref_arg == "auto":
+        ref = _auto_ref(p, transcript)
+    else:
+        ref = voice_mod.require_consent(confirmed, Path(ref_arg).expanduser())
+    from .core import transcribe as tr
+
+    def align(wav: Path) -> dict:
+        return tr.transcribe(wav, tr.resolve_model(None), language=lang)
+
+    return voice_mod.synthesize(scenes["scenes"], ref, lang, p.dir,
+                                voice_mod.chatterbox_synth(lang), align)
+
+
+def _auto_ref(p: Project, transcript: dict | None) -> Path:
+    if p.video is None or transcript is None:
+        raise ReelError("--voice-ref auto exige um vídeo transcrito: rode transcribe antes.")
+    wav = p.require("audio.wav", f"reel-studio extract {p.video.name}")
+    return voice_mod.reference(transcript, wav, p.dir)
 
 
 @app.command()

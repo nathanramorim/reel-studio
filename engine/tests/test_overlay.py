@@ -129,3 +129,28 @@ def test_cut_dry_run_nao_escreve_nada(tmp_path, monkeypatch, transcript):
     none = CliRunner().invoke(cli.app, ["cut", str(video), "--theme", "forge", "--dry-run",
                                         "--overlays", "none"])
     assert "camada" not in none.output
+
+
+def test_camada_entrega_poster_no_quadro_0(tmp_path, transcript, monkeypatch):
+    jobs = _jobs(tmp_path, transcript)
+    layers = overlay.plan(jobs, tmp_path)
+    rdir = tmp_path / "render"
+    (rdir / "node_modules").mkdir(parents=True)
+    monkeypatch.setattr(overlay.paths, "render_dir", lambda: rdir)
+    monkeypatch.setattr(overlay.proc, "require_bin", lambda n, _h: n)
+    chamadas = []
+
+    def fake_run(args, cwd=None):
+        chamadas.append(args)
+        for arg in args:
+            if str(arg).endswith(".poster.mp4"):
+                overlay.Path(arg).write_bytes(b"x")
+
+    monkeypatch.setattr(overlay.proc, "run", fake_run)
+    monkeypatch.setattr(overlay.deliver.proc, "run", fake_run)
+    layers[0].out.parent.mkdir(parents=True, exist_ok=True)
+    layers[0].out.write_bytes(b"x")
+    overlay.execute(layers, jobs, load_theme("forge"), tmp_path)
+    juntas = [" ".join(map(str, c)) for c in chamadas]
+    assert any("-frames:v" in c and "-poster.jpg" in c for c in juntas)
+    assert any("overlay=enable='eq(n,0)'" in c for c in juntas)
