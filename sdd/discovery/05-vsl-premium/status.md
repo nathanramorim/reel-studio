@@ -1,7 +1,7 @@
 # Status — 05 Reels premium
 
-**Status:** discovery atualizado: música por padrão sem áudio e voz gerada a partir de gravação (clone local, opcional); aguardando o Gate 1.
+**Status:** Gate 1 aprovado; 12 specs criadas em `features/` (4 ondas); ainda não enfileiradas.
 
-**Próximo passo:** aprovar e rodar `/split-features` (12 tasks em 4 ondas).
+**Próximo passo:** enfileirar na ordem das ondas e rodar `forge dispatch 05-vsl-premium`.
 
-**A confirmar:** modelo de voz (candidato Chatterbox, MIT) e ADR-0003; estilo `forge-motion`; créditos do `/brag`.
+**A confirmar:** ADR-0003 (modelo de voz, candidato Chatterbox); estilo `forge-motion`; créditos do `/brag`.
