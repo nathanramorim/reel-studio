@@ -1,8 +1,8 @@
 {
-  "feature_id": "feat-03-09",
+  "feature_id": "feat-03-10",
   "branch": "feat/03-enquadramento-tela",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-16T06:30:11Z",
+  "updated_at": "2026-11-16T06:41:30Z",
   "items": [
     {
       "task_id": "feat-03-01-layout-automatico",
@@ -135,6 +135,21 @@
         "SEG-01",
         "ARQ-06",
         "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-10-regiao-por-densidade",
+      "title": "feat-03-10-regiao-por-densidade — Região de zoom por densidade de atividade, na proporção da faixa",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-10-regiao-por-densidade.md",
+      "status": "queued",
+      "rules": [
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-03",
         "TST-01"
       ],
       "skills_used": [],
