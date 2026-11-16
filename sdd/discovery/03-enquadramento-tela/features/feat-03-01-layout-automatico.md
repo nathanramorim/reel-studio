@@ -31,9 +31,18 @@ Tudo automático; a pessoa não passa parâmetro. Três layouts, escolhidos por 
 - O `cut` imprime o layout escolhido (ex.: `layout: zoom (2860x1776)`).
 - `--layout` e `--anchor` existem só como override raro; a skill não pergunta nada.
 
+## Refinamentos do uso real
+Validados com `zoom_cortes.py` (gravação de 14.33.02) e a edição local do `cut.py` no cache do plugin.
+- **Fundo:** cor `colors.bg` do tema (pad sólido, ex. `#0d0f14`), e não fundo desfocado. Vale para `zoom` e `fit`.
+- **Composição:** o conteúdo ocupa a faixa de cima (altura 920, a partir de y=320, centralizado nela) e a legenda `lower-third` fica abaixo, sem sobrepor. Referência: `scale=1080:-2,pad=1080:1920:0:320+(920-ih)/2:color=<bg>`.
+- **Zoom dinâmico:** a região pode mudar no tempo dentro do corte. `analyze` divide o trecho em janelas, acha a região de cada uma e fixa `w`×`h` (a maior) para o clip todo. O `x` e o `y` do `crop` usam `if(gte(t,T),valor,...)` aninhado, com `T` relativo ao início do corte e vírgulas escapadas. Só troca de região se ela se afastar o bastante da anterior (histerese), sem tremor. Troca seca, sem interpolação.
+- **Oráculo de teste:** os passos de `REGIOES` do `zoom_cortes.py` (ex.: `clip-02` troca em t=141.35) viram caso de teste da expressão gerada.
+- **Edição local no cache:** a mudança manual (`fit` com pad) é absorvida por esta feature; some com a atualização do plugin e não precisa ser preservada.
+
 ## Critérios de Aceitação Executáveis
 - `cd engine && uv run pytest tests/test_cut.py -k layout`: sem parâmetro, escolhe `fit` para 2860×1776 sem rosto, `fill` centrado no rosto para paisagem com rosto e `fill` para 1080×1920; paisagem sem rosto e com atividade concentrada usa `zoom`; atividade espalhada, parada ou sem OpenCV usa `fit`; o filtro de `fit` não contém `crop` do vídeo principal.
 - `pytest -k anchor`: `--anchor left` e `right` mudam o `x` do `crop`; valor fora de 0 a 1 é rejeitado na borda (`SEG-01`).
 - `uv run reel-studio cut "<gravação>" --theme forge --dry-run` mostra o layout escolhido e não escreve nada (`ARQ-05`).
 - `cd engine && uv run ruff check` passa.
 - Com a gravação real, o mp4 sai 1080×1920 e o texto da região ativa fica legível (conferência manual).
+- `pytest -k zoom_dinamico`: a expressão de `x`/`y` para os passos de `clip-02` é `if(gte(t,<T relativo>),…)` com vírgulas escapadas; o fundo usa `colors.bg` do tema e a faixa do conteúdo termina acima da legenda `lower-third`.
