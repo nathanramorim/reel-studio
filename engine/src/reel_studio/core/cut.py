@@ -8,13 +8,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import frames, proc
-from .captions import H, W, build_ass
+from .captions import H, W, build_ass, words_in
 from .errors import ReelError
 from .frames import Analysis, Region
 
-LAYOUTS = ("fill", "zoom", "fit")
+LAYOUTS = ("fill", "zoom", "fit", "split")
 BAND_Y = 320   # faixa do conteúdo (zoom e fit): acima da legenda lower-third
 BAND_H = 920
+SPLIT_Y = 250  # `split`: vídeo em cima (y 250 a 950); legenda, comentário e instruções embaixo
+SPLIT_H = 700
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 MAX_CLIP = 60.0   # duração máxima do corte final (discovery 01)
 CUT_DEFAULTS = {"pad_before": 0.40, "pad_after": 0.70, "fade_in": 0.25, "fade_out": 0.45}
@@ -43,6 +45,10 @@ class CutJob:
     start: float = 0.0
     end: float = 0.0
     overlays: tuple[dict, ...] = ()
+    intro: dict | None = None
+    presenter: bool = False
+    hook: str = ""
+    speech: tuple[tuple[float, float], ...] = ()
 
 
 ANCHORS = {"left": 0.0, "center": 0.5, "right": 1.0}
@@ -147,6 +153,11 @@ def _crop(layout: Layout, size: tuple[int, int]) -> str:
     return f"crop={cw}:{ch}:{_switch(xs)}:{_switch(ys)}"
 
 
+def _band(layout: Layout) -> tuple[int, int]:
+    """Faixa (y, altura) do vídeo: a do `split` ou a do `fit` e `zoom`."""
+    return (SPLIT_Y, SPLIT_H) if layout.kind == "split" else (BAND_Y, BAND_H)
+
+
 def video_rect(layout: Layout, size: tuple[int, int]) -> dict | None:
     """Retângulo que o vídeo ocupa no quadro 1080x1920 (fit e zoom); `None` no fill (tela cheia)."""
     if layout.kind == "fill":
@@ -156,9 +167,10 @@ def video_rect(layout: Layout, size: tuple[int, int]) -> dict | None:
         steps = _steps(layout)
         sw = _even(max(r.w for _, r in steps) * size[0])
         sh = _even(max(r.h for _, r in steps) * size[1])
-    scale = min(W / sw, BAND_H / sh)
+    band_y, band_h = _band(layout)
+    scale = min(W / sw, band_h / sh)
     w, h = _even(sw * scale), _even(sh * scale)
-    return {"left": (W - w) // 2, "top": BAND_Y + (BAND_H - h) // 2, "width": w, "height": h}
+    return {"left": (W - w) // 2, "top": band_y + (band_h - h) // 2, "width": w, "height": h}
 
 
 def video_filter(layout: Layout, size: tuple[int, int], ass_name: str,
@@ -167,8 +179,9 @@ def video_filter(layout: Layout, size: tuple[int, int], ass_name: str,
         return (f"scale={W}:{H}:force_original_aspect_ratio=increase,"
                 f"crop={W}:{H}:(iw-{W})*{layout.anchor:.4f}:0,ass={ass_name}")
     pre = f"{_crop(layout, size)}," if layout.kind == "zoom" and layout.region else ""
-    pad = (f"scale={W}:{BAND_H}:force_original_aspect_ratio=decrease,"
-           f"pad={W}:{H}:({W}-iw)/2:{BAND_Y}+({BAND_H}-ih)/2:color={_pad_color(bg)}")
+    band_y, band_h = _band(layout)
+    pad = (f"scale={W}:{band_h}:force_original_aspect_ratio=decrease,"
+           f"pad={W}:{H}:({W}-iw)/2:{band_y}+({band_h}-ih)/2:color={_pad_color(bg)}")
     return f"{pre}{pad},ass={ass_name}"
 
 
@@ -210,16 +223,29 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
                                 cfg["pad_before"], cfg["pad_after"])
         ass_name = f"{c['id']}.ass"
         out = workdir / "output" / f"{c['id']}-{theme['id']}.mp4"
-        chosen = _resolve(size, layout, anchor, analyzer, video, start, end)
+        chosen = _resolve(size, layout or c.get("layout"), anchor, analyzer, video, start, end)
         jobs.append(CutJob(
             clip_id=c["id"], ass_name=ass_name,
             ass_text=build_ass(transcript, start, end, theme, _ass_hook(c, overlays)),
             out=out, layout=chosen, size=size, start=start, end=end,
             overlays=_layer(c, start) if overlays else (),
+            intro=c.get("intro"), presenter=bool(c.get("presenter")), hook=c.get("hook", ""),
+            speech=_speech(transcript, start, end) if c.get("presenter") else (),
             args=ffmpeg_args(ffmpeg, video, start, end, ass_name, out, chosen, size,
                              theme["colors"]["bg"], (cfg["fade_in"], cfg["fade_out"])),
         ))
     return jobs
+
+
+def _speech(transcript: dict, start: float, end: float) -> tuple[tuple[float, float], ...]:
+    """Intervalos de fala (relativos ao corte) que movem o apresentador."""
+    spans: list[list[float]] = []
+    for w in words_in(transcript, start, end):
+        if spans and w["start"] - spans[-1][1] <= 0.25:
+            spans[-1][1] = round(w["end"], 3)
+        else:
+            spans.append([round(w["start"], 3), round(w["end"], 3)])
+    return tuple((a, b) for a, b in spans)
 
 
 def _ass_hook(clip: dict, overlays: bool) -> str:

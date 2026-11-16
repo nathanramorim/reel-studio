@@ -9,7 +9,9 @@ import { Card } from "../forge/Card";
 import { Chip } from "../forge/Chip";
 import { GradText } from "../forge/GradText";
 import { monoFont, panelSpec } from "../forge/panel";
-import { OVERLAY_FADE_SECONDS, REGIONS, SIDE } from "./regions";
+import { Presenter } from "../forge/Presenter";
+import { fitFontSize } from "../text-fit";
+import { OVERLAY_FADE_SECONDS, REGIONS, SIDE, SPLIT } from "./regions";
 
 const WIDTH = 1080;
 const CONTENT_W = WIDTH - 2 * SIDE;
@@ -52,7 +54,7 @@ const Frame: React.FC<{ theme: Theme; accent: string; rect: Rect }> = ({ theme, 
   );
 };
 
-export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, probe, frame: videoRect }) => {
+export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, probe, frame: videoRect, layout, presenter, speech }) => {
   useThemeFonts(theme);
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
@@ -63,12 +65,37 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
   const onTop = (o: OverlayItem): boolean => o.pos === "top";
   const families = [...new Set([theme.fonts.title, theme.fonts.body, monoFont(theme)])].filter((f): f is string => !!f);
   const hasLogo = active.some((a) => a.o.type === "logo");
+  const split = layout === "split";
+  /** Rodapé com o apresentador à esquerda: CTA e barra ocupam o resto. */
+  const footerLeft = SIDE + (presenter ? SPLIT.presenter.size + 20 : 0);
+  const footerWidth = SIDE + CONTENT_W - footerLeft;
   return (
     <AbsoluteFill id="probe-root">
       {probe && <Probe families={families} />}
       {overlays.length > 0 && videoRect && <Frame theme={theme} accent={accentAt(style, theme, 0)} rect={videoRect} />}
+      {presenter && (
+        <Presenter theme={theme} speech={speech} left={SIDE} top={REGIONS.footer.top - 10} size={SPLIT.presenter.size} />
+      )}
       {active.map(({ o, i, p }) => {
         const accent = accentAt(style, theme, i);
+        if (o.type === "hook" && split) {
+          const text = o.text ?? "";
+          return (
+            <div key={i} style={{
+              position: "absolute", left: SIDE, width: CONTENT_W - (hasLogo ? LOGO_BOX : 0),
+              top: SPLIT.hook.top, height: SPLIT.hook.height, display: "flex", alignItems: "center", opacity: p,
+            }}>
+              <Card theme={theme} accent={accent} style={{ width: "100%", textAlign: "center", padding: "10px 24px" }}>
+                <div style={{
+                  fontFamily: fontFamily(theme.fonts.title), fontWeight: 800, whiteSpace: "nowrap",
+                  fontSize: fitFontSize(text, CONTENT_W - (hasLogo ? LOGO_BOX : 0) - 48, 56, SCALE.min),
+                }}>
+                  <GradText theme={theme}>{text}</GradText>
+                </div>
+              </Card>
+            </div>
+          );
+        }
         if (o.type === "hook") {
           const text = o.text ?? "";
           return (
@@ -89,14 +116,16 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
           );
         }
         if (STRIP_TYPES.includes(o.type)) {
-          const group = strip.filter((a) => onTop(a.o) === onTop(o));
+          const group = strip.filter((a) => split || onTop(a.o) === onTop(o));
           const slot = group.findIndex((a) => a.i === i);
-          const top = onTop(o)
+          if (split && slot > 0) return null;
+          const top = split ? SPLIT.chip.top : onTop(o)
             ? REGIONS.topStrip.top + slot * REGIONS.topStrip.slot
             : REGIONS.strip.bottom - (slot + 1) * REGIONS.strip.slot;
           return (
             <div key={i} style={{
-              position: "absolute", left: SIDE, width: CONTENT_W, top, height: REGIONS.strip.slot - 12,
+              position: "absolute", left: SIDE, width: CONTENT_W, top,
+              height: split ? SPLIT.chip.height : REGIONS.strip.slot - 12,
               display: "flex", alignItems: "center", justifyContent: "center", opacity: p,
               transform: `translateY(${(1 - p) * 24}px)`,
             }}>
@@ -117,7 +146,7 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
         if (o.type === "progress") {
           return (
             <div key={i} style={{
-              position: "absolute", left: SIDE, width: CONTENT_W, top: REGIONS.footer.top, height: BAR_H,
+              position: "absolute", left: footerLeft, width: footerWidth, top: REGIONS.footer.top, height: BAR_H,
               borderRadius: BAR_H, background: theme.colors.surface, opacity: p,
             }}>
               <div style={{
@@ -130,7 +159,7 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
         if (o.type === "cta") {
           return (
             <div key={i} style={{
-              position: "absolute", left: SIDE, right: SIDE,
+              position: "absolute", left: footerLeft, width: footerWidth,
               top: REGIONS.footer.top + 16, height: REGIONS.footer.height - 16, display: "flex",
               alignItems: "center", opacity: p,
             }}>
@@ -144,6 +173,14 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
                 </div>
               </Card>
             </div>
+          );
+        }
+        if (o.type === "logo" && logoUri && split) {
+          return (
+            <img key={i} src={logoUri} style={{
+              position: "absolute", left: SIDE + CONTENT_W - (LOGO_BOX - 20), top: SPLIT.hook.top,
+              width: LOGO_BOX - 20, height: LOGO_BOX - 20, objectFit: "contain", opacity: p,
+            }} />
           );
         }
         if (o.type === "logo" && logoUri) {

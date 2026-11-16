@@ -2,7 +2,8 @@ import React from "react";
 import { Composition } from "remotion";
 import { Reel } from "./Reel";
 import { Overlay } from "./overlay/Overlay";
-import { OverlayProps, ReelProps } from "./types";
+import { Intro } from "./Intro";
+import { IntroProps, OverlayProps, ReelProps } from "./types";
 import sample from "../sample-props.json";
 
 const DEFAULT_PROPS = sample as unknown as ReelProps;
@@ -12,6 +13,10 @@ const totalFrames = (props: ReelProps) =>
 
 const OVERLAY_DEFAULTS: OverlayProps = {
   overlays: [], theme: DEFAULT_PROPS.theme, style: DEFAULT_PROPS.style, fps: DEFAULT_PROPS.fps, length: 1,
+};
+
+const INTRO_DEFAULTS: IntroProps = {
+  text: "", theme: DEFAULT_PROPS.theme, style: DEFAULT_PROPS.style, fps: DEFAULT_PROPS.fps, length: 1.5,
 };
 
 export const RemotionRoot: React.FC = () => (
@@ -37,6 +42,19 @@ export const RemotionRoot: React.FC = () => (
       fps={OVERLAY_DEFAULTS.fps}
       durationInFrames={Math.max(1, Math.round(OVERLAY_DEFAULTS.length * OVERLAY_DEFAULTS.fps))}
       defaultProps={OVERLAY_DEFAULTS}
+      calculateMetadata={({ props }) => ({
+        durationInFrames: Math.max(1, Math.round(props.length * props.fps)),
+        fps: props.fps,
+      })}
+    />
+    <Composition
+      id="Intro"
+      component={Intro}
+      width={1080}
+      height={1920}
+      fps={INTRO_DEFAULTS.fps}
+      durationInFrames={Math.max(1, Math.round(INTRO_DEFAULTS.length * INTRO_DEFAULTS.fps))}
+      defaultProps={INTRO_DEFAULTS}
       calculateMetadata={({ props }) => ({
         durationInFrames: Math.max(1, Math.round(props.length * props.fps)),
         fps: props.fps,

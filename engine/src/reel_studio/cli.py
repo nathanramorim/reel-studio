@@ -262,7 +262,7 @@ def script(video: Video, style: str, theme: str | None = None,
 @app.command(name="cut")
 def cut_cmd(video: Video, theme: str = "pessoal",
             layout: Annotated[str | None, typer.Option(
-                help="Override raro: fill, zoom ou fit (padrão: automático)")] = None,
+                help="Override raro: fill, zoom, fit ou split (padrão: automático)")] = None,
             anchor: Annotated[str | None, typer.Option(
                 help="Override raro do fill: left, center, right ou 0 a 1")] = None,
             glossary: Glossary = None,
@@ -287,8 +287,12 @@ def cut_cmd(video: Video, theme: str = "pessoal",
         for j in jobs:
             typer.echo(f"dry-run {j.clip_id}: {j.out.name}")
         for layer in layers:
-            typer.echo(f"dry-run {layer.clip_id}: camada de {layer.count} "
-                       f"componentes, {layer.length:.2f}s -> {layer.out.name} (pôster no quadro 0)")
+            if layer.render_args:
+                typer.echo(f"dry-run {layer.clip_id}: camada de {layer.count} componentes, "
+                           f"{layer.length:.2f}s -> {layer.out.name} (pôster no quadro 0)")
+            if layer.intro:
+                typer.echo(f"dry-run {layer.clip_id}: abertura de {layer.intro.dur:.1f}s "
+                           f"-> {layer.intro.out.name}")
         return
     for out in cut.execute(jobs, p.dir):
         typer.echo(f"reel: {out}")

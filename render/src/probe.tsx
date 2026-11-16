@@ -57,9 +57,10 @@ export const Probe: React.FC<{ families: string[] }> = ({ families }) => {
         words.forEach((w) => lines.set(w.top, (lines.get(w.top) ?? 0) + 1));
         return [...lines.entries()].sort((a, b) => a[0] - b[0]).map(([, count]) => count);
       });
+      const presenters = [...document.querySelectorAll("#probe-root [data-presenter]")].map(rect);
       const media = [...document.querySelectorAll("#probe-root [data-media-box]")].map(rect);
       const minSize = sizes.length ? Math.min(...sizes) : null;
-      console.log(`[probe] ${JSON.stringify({ fonts, minSize, boxes, reveals, media, panels, ctaLines })}`);
+      console.log(`[probe] ${JSON.stringify({ fonts, minSize, boxes, reveals, media, panels, ctaLines, presenters })}`);
       continueRender(handle);
     });
   }, []);

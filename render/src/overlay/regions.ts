@@ -18,5 +18,14 @@ export const REGIONS = {
   footer: { top: CAPTION.bottom + 20, height: 140 },
 } as const;
 
+/** Layout `split` (core/cut.py `SPLIT_Y`, `SPLIT_H`): vídeo em y 250 a 950; texto só abaixo dele. */
+export const SPLIT = {
+  video: { top: 250, bottom: 950 },
+  hook: { top: 970, height: 100 },
+  chip: { top: 1075, height: 95 },
+  /** Rodapé: apresentador à esquerda, logo à direita, CTA e barra no meio. */
+  presenter: { size: 150 },
+} as const;
+
 export const SIDE = 140;
 export const OVERLAY_FADE_SECONDS = 0.25;

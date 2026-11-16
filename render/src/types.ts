@@ -66,4 +66,9 @@ export type OverlayProps = {
   overlays: OverlayItem[]; theme: Theme; style: Style; fps: number; length: number; probe?: boolean;
   /** Retângulo do vídeo no quadro (core/cut.py `video_rect`); ausente no fill (tela cheia): sem moldura. */
   frame?: { left: number; top: number; width: number; height: number } | null;
+  /** Layout do corte (`split`: vídeo em cima, faixas de texto embaixo), apresentador e intervalos de fala (s). */
+  layout?: string; presenter?: boolean; speech?: [number, number][];
 };
+
+/** Props da composição `Intro` (abertura animada antes do corte); `length` em segundos. */
+export type IntroProps = { text: string; theme: Theme; style: Style; fps: number; length: number };

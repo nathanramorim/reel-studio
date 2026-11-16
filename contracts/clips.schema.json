@@ -15,6 +15,17 @@
           "end": { "type": "number", "minimum": 0 },
           "hook": { "type": "string", "maxLength": 60, "description": "Frase curta no topo do reel" },
           "reason": { "type": "string" },
+          "layout": { "enum": ["fill", "zoom", "fit", "split"], "description": "Enquadramento do clipe; split: vídeo em cima e legenda e instruções embaixo" },
+          "presenter": { "type": "boolean", "description": "Mascote do tema reage à fala (rodapé à esquerda)" },
+          "intro": {
+            "type": "object",
+            "description": "Abertura animada antes do corte",
+            "properties": {
+              "dur": { "type": "number", "minimum": 0.5, "maximum": 3 },
+              "text": { "type": "string", "maxLength": 60 }
+            },
+            "additionalProperties": false
+          },
           "overlays": {
             "type": "array",
             "description": "Componentes sobre o corte; at e dur em segundos relativos ao corte",

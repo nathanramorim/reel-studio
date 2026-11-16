@@ -1,6 +1,6 @@
 // Verifica stills de cada cena: fonte carregada, escala mínima, cobertura e paleta.
 // Uso: node scripts/check-render.mjs [--fonts] [--scale] [--safe-zone] [--transitions] [--words] [--media]
-//        [--fill] [--cta] [--style <id>] [--all]
+//        [--fill] [--cta] [--split] [--style <id>] [--all]
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import { readFileSync, mkdtempSync, rmSync, mkdirSync, readdirSync, symlinkSync } from "node:fs";
@@ -15,7 +15,7 @@ const repo = path.resolve(root, "..");
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const styleId = args.includes("--style") ? args[args.indexOf("--style") + 1] : null;
-const FLAGS = ["fonts", "scale", "safe-zone", "transitions", "words", "media", "fill", "cta"];
+const FLAGS = ["fonts", "scale", "safe-zone", "transitions", "words", "media", "fill", "cta", "split"];
 const picked = FLAGS.some(flag);
 const all = flag("all") || (!picked && !styleId);
 /** `--style X` roda as checagens de cena do estilo; as flags isoladas restringem. */
@@ -234,6 +234,46 @@ try {
       onBrowserLog: (l) => logs.push(l.text) });
     return { probe: JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8)), output };
   };
+  if (want("split")) {
+    // 05-14: no `split` o vídeo fica em cima (y 250 a 950) e todo o texto abaixo dele, sem cobrir a legenda.
+    const code = "import json;from reel_studio.core.cut import Layout,video_rect;"
+      + "print(json.dumps(video_rect(Layout('split'),(2860,1776))))";
+    const r = spawnSync("uv", ["run", "python", "-c", code], { cwd: path.join(repo, "engine"), encoding: "utf8" });
+    if (r.status !== 0) throw new Error(r.stderr);
+    const rect = JSON.parse(r.stdout);
+    const splitRegion = Object.fromEntries([...readFileSync(path.join(root, "src/overlay/regions.ts"), "utf8")
+      .matchAll(/video: \{ top: (\d+), bottom: (\d+) \}/g)].flatMap((m) => [["top", Number(m[1])], ["bottom", Number(m[2])]]));
+    const sample = OVERLAY_SAMPLE.filter((o) => !o.pos);
+    const props = { ...overlayProps(sample, 6), probe: true, layout: "split", presenter: true, frame: rect,
+      speech: [[0, 6]] };
+    const composition = await selectComposition({ serveUrl, id: "Overlay", inputProps: props });
+    const logs = [];
+    await renderStill({ composition, serveUrl, output: path.join(tmp, "split.png"), inputProps: props, frame: 90,
+      imageFormat: "png", onBrowserLog: (l) => logs.push(l.text) });
+    const probe = JSON.parse((logs.find((t) => t.startsWith("[probe]")) ?? "[probe] {}").slice(8));
+    const boxes = probe.boxes ?? [];
+    check(rect.top >= splitRegion.top && rect.top + rect.height <= splitRegion.bottom,
+      `split: vídeo na faixa de cima (y ${rect.top}-${rect.top + rect.height}, faixa ${splitRegion.top}-${splitRegion.bottom})`);
+    const onVideo = boxes.filter((b) => b.top < splitRegion.bottom);
+    check(boxes.length > 0 && onVideo.length === 0, "split: nenhum texto sobre o vídeo (todo abaixo de y " + splitRegion.bottom + ")"
+      + (onVideo.length ? ` cobre: ${JSON.stringify(onVideo[0])}` : ""));
+    const bad = boxes.filter((b) => b.bottom > SAFE.bottom + 0.5 || (b.bottom > SAFE.lowerHalf && b.right > WIDTH - SAFE.rightGuard + 0.5));
+    check(bad.length === 0, "split: texto na zona segura" + (bad.length ? ` fora: ${JSON.stringify(bad[0])}` : ""));
+    const cap = captionBand();
+    const hit = boxes.filter((b) => b.top < cap.bottom && b.bottom > cap.top);
+    check(hit.length === 0, `split: nenhum texto cobre a legenda (y ${cap.top.toFixed(0)}-${cap.bottom})`
+      + (hit.length ? ` cobre: ${JSON.stringify(hit[0])}` : ""));
+    const hits = (x, y) => x.left < y.right - 2 && y.left < x.right - 2 && x.top < y.bottom - 2 && y.top < x.bottom - 2;
+    check(!boxes.some((x, i) => boxes.slice(i + 1).some((y) => hits(x, y))), "split: faixas sem sobreposição de texto");
+    const pr = (probe.presenters ?? [])[0];
+    check(!!pr, "split: apresentador presente");
+    if (pr) {
+      check(pr.top >= SAFE.top && pr.bottom <= SAFE.bottom && pr.right <= WIDTH - SAFE.rightGuard + 0.5 && pr.left >= 0,
+        `split: apresentador na zona segura (y ${pr.top.toFixed(0)}-${pr.bottom.toFixed(0)})`);
+      check(!boxes.some((b) => hits(b, pr)), "split: apresentador sem sobrepor texto");
+    }
+    check(probe.minSize >= 44, `split: menor texto ${probe.minSize}px >= 44px`);
+  }
   if (want("cta")) {
     const texts = ["Quer ver mais?", "Siga para ver mais sobre automação local de vídeo ok",
       "Rode npx @nathanramorim/forge-sdd init e comece agora ok"];
