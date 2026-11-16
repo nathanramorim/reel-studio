@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "C1 a C4 atendidos: 69 testes e ruff passam na branch (com extra vision). Layout automático fill/zoom/fit em core/cut.py e análise em core/frames.py, com OpenCV em import tardio e fallback fit (ARQ-04). --anchor (0 a 1) e --layout validados em cut.parse_anchor/validate_layout (SEG-01). ffprobe/ffmpeg por lista de argumentos via core/proc.py (SEG-03). --dry-run só lê o vídeo e informa o layout (ARQ-05). Glossário em memória com limite de tamanho e de entradas. Observações não bloqueantes: o PR não registra a consulta ao context7 pedida em SEG-07 (extra com faixa \u003e=4.9,\u003c5); C5 é manual; as rules de .agents/rules são do template Go e não se aplicam ao Python."
+}

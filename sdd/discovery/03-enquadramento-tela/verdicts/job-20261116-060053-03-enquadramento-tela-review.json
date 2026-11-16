@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "C1 a C4 atendidos: 50 testes e ruff passam na branch. Layout automático (fill/zoom/fit) em core/cut.py com análise em core/frames.py. --anchor (0 a 1) e --layout são validados na borda (SEG-01, cut.parse_anchor e validate_layout). ffprobe e ffmpeg rodam por lista de argumentos via core/proc.py (SEG-03). OpenCV fica no extra vision com import tardio e fallback fit (ARQ-04). --dry-run só lê o vídeo e informa o layout (ARQ-05). Observações não bloqueantes: (1) feat-03-01 descreve o fit sobre fundo desfocado, mas a implementação usa pad com a cor bg do tema; confirme se isso é intencional. (2) O PR não registra a consulta ao context7 pedida em SEG-07; o extra usa a faixa \u003e=4.9,\u003c5. (3) C5 é manual. (4) As rules de .agents/rules são do template Go e não se aplicam ao Python."
+}

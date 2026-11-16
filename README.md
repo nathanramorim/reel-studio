@@ -35,7 +35,7 @@ A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o v�
 ## Antes de começar
 
 - **Python 3.11+** com [uv](https://docs.astral.sh/uv/).
-- **ffmpeg** no PATH (`brew install ffmpeg` ou `winget install ffmpeg`).
+- **ffmpeg** no PATH (macOS: `brew install ffmpeg-full`, com libass para a legenda; Windows: `winget install ffmpeg`).
 - **Node.js 18+** (só para o modo VSL, que usa Remotion).
 - **Um agente que lê skills** (Claude Code, agy/Antigravity ou Codex) para gerar cortes e roteiros sem chave de API. Sem nenhum deles, dá para automatizar com `OPENROUTER_API_KEY` (veja "Caminho de automação" abaixo).
 
@@ -76,7 +76,7 @@ Pela CLI, dentro de uma sessão com agente, em qualquer um dos três (sem chave 
 ```bash
 cd engine
 uv run reel-studio extract aula.mp4
-uv run reel-studio transcribe aula.mp4
+uv run reel-studio transcribe aula.mp4   # --model medium ou large-v3 acerta mais o sotaque
 
 uv run reel-studio prompt-suggest aula.mp4 --max 5    # modo corte: mostra o prompt
 # o agente escreve cortes.json a partir do prompt
@@ -88,6 +88,8 @@ uv run reel-studio prompt-script aula.mp4 --style isometric-pastel   # modo VSL
 uv run reel-studio save-scenes aula.mp4 --style isometric-pastel --theme forge --file roteiro.json
 uv run reel-studio render aula.mp4 --theme forge
 ```
+
+**`correcoes.json`** (opcional, ao lado do vídeo ou em `--glossary`): mapa `errado -> certo` aplicado à transcrição em memória. Uma chave aceita variantes separadas por `|` (`"checaja|checage|checajem": "checagem"`); a mesma variante com dois valores é erro. O tema pode ter `vocabulary` (lista de termos), que junto aos valores do glossário alimenta o prompt do Whisper (`transcribe --theme TEMA`, `--prompt` para texto extra). `save-clips` e `save-scenes` aceitam `--file` e `--style` ou os mesmos valores como argumentos posicionais.
 
 Fora do Claude Code, para automação (CI, cron), use `suggest` e `script` no lugar de `prompt-suggest`/`save-clips` e `prompt-script`/`save-scenes`: eles chamam o OpenRouter direto, com `OPENROUTER_API_KEY` no `.env`.
 

@@ -1,0 +1,159 @@
+{
+  "feature_id": "feat-03-10",
+  "branch": "feat/03-enquadramento-tela",
+  "spec_status": "reviewed",
+  "updated_at": "2026-11-16T06:41:30Z",
+  "items": [
+    {
+      "task_id": "feat-03-01-layout-automatico",
+      "title": "feat-03-01-layout-automatico — Layout automático do corte (pessoa e tela)",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-01-layout-automatico.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-03",
+        "SEG-07",
+        "ARQ-04",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-02-zoom-dinamico",
+      "title": "feat-03-02-zoom-dinamico — Fundo do tema, faixa do conteúdo e zoom no tempo",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-02-zoom-dinamico.md",
+      "status": "queued",
+      "rules": [
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-03-glossario-correcoes",
+      "title": "feat-03-03-glossario-correcoes — Correção automática de termos errados na transcrição",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-03-glossario-correcoes.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-02",
+        "ARQ-05",
+        "ARQ-06",
+        "ARQ-10",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-04-folga-e-fade",
+      "title": "feat-03-04-folga-e-fade — Folga de fala e fade nos cortes",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-04-folga-e-fade.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-06",
+        "ARQ-10",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-05-fixar-av-transcribe",
+      "title": "feat-03-05-fixar-av-transcribe — `transcribe` quebra com av 19",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-05-fixar-av-transcribe.md",
+      "status": "queued",
+      "rules": [
+        "ARQ-04",
+        "SEG-07",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-06-flags-file-e-style",
+      "title": "feat-03-06-flags-file-e-style — Doc manda `--file`/`--style`, CLI espera posicional",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-06-flags-file-e-style.md",
+      "status": "queued",
+      "rules": [
+        "ARQ-06",
+        "SEG-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-07-preflight-filtro-ass",
+      "title": "feat-03-07-preflight-filtro-ass — `cut` falha tarde com `Unknown filter 'ass'`",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-07-preflight-filtro-ass.md",
+      "status": "queued",
+      "rules": [
+        "SEG-03",
+        "ARQ-05",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-08-modelo-e-initial-prompt",
+      "title": "feat-03-08-modelo-e-initial-prompt — Transcrição: modelo maior e vocabulário no Whisper",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-08-modelo-e-initial-prompt.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-09-variantes-regionais-glossario",
+      "title": "feat-03-09-variantes-regionais-glossario — Glossário com variantes de pronúncia regional",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-09-variantes-regionais-glossario.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "ARQ-06",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-10-regiao-por-densidade",
+      "title": "feat-03-10-regiao-por-densidade — Região de zoom por densidade de atividade, na proporção da faixa",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-10-regiao-por-densidade.md",
+      "status": "queued",
+      "rules": [
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    }
+  ]
+}

@@ -23,4 +23,55 @@ def run(args: list[str], cwd: Path | None = None) -> None:
         raise ReelError(f"Falhou: {Path(args[0]).name} (código {result.returncode})\n{tail}")
 
 
-FFMPEG_HINT = "Instale o ffmpeg (macOS: brew install ffmpeg; Windows: winget install ffmpeg)."
+def capture(args: list[str]) -> str:
+    result = subprocess.run(args, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        tail = "\n".join(result.stderr.strip().splitlines()[-8:])
+        raise ReelError(f"Falhou: {Path(args[0]).name} (código {result.returncode})\n{tail}")
+    return result.stdout
+
+
+def probe_size(video: Path) -> tuple[int, int]:
+    """Largura e altura do primeiro stream de vídeo, via ffprobe."""
+    ffprobe = require_bin("ffprobe", FFMPEG_HINT)
+    out = capture([ffprobe, "-v", "error", "-select_streams", "v:0",
+                   "-show_entries", "stream=width,height", "-of", "csv=p=0", str(video)])
+    try:
+        w, h = (int(v) for v in out.strip().split(",")[:2])
+    except ValueError:
+        raise ReelError(f"Não consegui ler as dimensões de {video.name}.") from None
+    return w, h
+
+
+def probe_duration(video: Path) -> float:
+    """Duração do contêiner em segundos, via ffprobe."""
+    ffprobe = require_bin("ffprobe", FFMPEG_HINT)
+    out = capture([ffprobe, "-v", "error", "-show_entries", "format=duration",
+                   "-of", "csv=p=0", str(video)])
+    try:
+        return float(out.strip())
+    except ValueError:
+        raise ReelError(f"Não consegui ler a duração de {video.name}.") from None
+
+
+FFMPEG_HINT = ("Instale o ffmpeg (macOS: brew install ffmpeg-full; "
+               "Windows: winget install ffmpeg).")
+
+
+def has_filter(ffmpeg: str, name: str) -> bool:
+    """Se o ffmpeg tem o filtro `name` (ex.: `ass`, que depende do libass)."""
+    for line in capture([ffmpeg, "-hide_banner", "-filters"]).splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == name:
+            return True
+    return False
+
+
+def under_rosetta() -> bool:
+    """True num Mac Apple Silicon rodando o terminal sob Rosetta (sysctl, sem shell)."""
+    sysctl = shutil.which("sysctl")
+    if not sysctl:
+        return False
+    result = subprocess.run([sysctl, "-n", "sysctl.proc_translated"],
+                            capture_output=True, text=True, check=False)
+    return result.returncode == 0 and result.stdout.strip() == "1"

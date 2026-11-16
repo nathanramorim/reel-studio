@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "C1 a C4 atendidos: 41 testes e ruff passam. Layout automático (fill/zoom/fit) tem testes para pé, rosto, tela concentrada, tela espalhada e sem OpenCV. --anchor fora de 0 a 1 e --layout inválido são rejeitados na borda (SEG-01). ffprobe/ffmpeg rodam por lista de argumentos via core/proc.py (SEG-03). OpenCV fica no extra vision, com import tardio (ARQ-04). --dry-run só lê o vídeo e não escreve (ARQ-05). Observações não bloqueantes: o extra vision usa a faixa \u003e=4.9,\u003c5 (uv.lock fixa a versão) e o PR não registra a consulta ao context7 pedida em SEG-07. C5 é manual. As rules do repositório são do template Go e não se aplicam ao Python."
+}

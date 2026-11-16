@@ -11,3 +11,4 @@
 | Tema | `themes/*.json` | — | `contracts/theme.schema.json` | Marca |
 | Estilo | `styles/*/style.json` | — | `contracts/style.schema.json` | Linguagem visual e tipos de cena |
 | Validação | `core/contracts.py` | — | `load(kind, path)` | Fonte única de schemas |
+| Glossário | `core/glossary.py` | `correcoes.json` | `find(...)`, `apply(transcript, mapping)` | Corrige termos em memória; `transcript.json` segue cru |

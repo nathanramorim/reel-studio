@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "Diff confere com a spec (C1-C4): layout automático fill/zoom/fit em core/cut.py, análise em core/frames.py com OpenCV opcional no extra vision (ARQ-04), ffprobe/ffmpeg por lista de argumentos via proc (SEG-03), --layout e --anchor validados na borda (SEG-01), dry-run informa o layout. Em worktree limpa: 108 testes passam e ruff sem erros. Nenhuma violação encontrada. C5 é manual."
+}
