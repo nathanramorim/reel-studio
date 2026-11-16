@@ -147,6 +147,20 @@ def _crop(layout: Layout, size: tuple[int, int]) -> str:
     return f"crop={cw}:{ch}:{_switch(xs)}:{_switch(ys)}"
 
 
+def video_rect(layout: Layout, size: tuple[int, int]) -> dict | None:
+    """Retângulo que o vídeo ocupa no quadro 1080x1920 (fit e zoom); `None` no fill (tela cheia)."""
+    if layout.kind == "fill":
+        return None
+    sw, sh = size
+    if layout.kind == "zoom" and layout.region:
+        steps = _steps(layout)
+        sw = _even(max(r.w for _, r in steps) * size[0])
+        sh = _even(max(r.h for _, r in steps) * size[1])
+    scale = min(W / sw, BAND_H / sh)
+    w, h = _even(sw * scale), _even(sh * scale)
+    return {"left": (W - w) // 2, "top": BAND_Y + (BAND_H - h) // 2, "width": w, "height": h}
+
+
 def video_filter(layout: Layout, size: tuple[int, int], ass_name: str,
                  bg: str = "#000000") -> str:
     if layout.kind == "fill":
@@ -199,13 +213,20 @@ def plan(video: Path, workdir: Path, clips: dict, transcript: dict, theme: dict,
         chosen = _resolve(size, layout, anchor, analyzer, video, start, end)
         jobs.append(CutJob(
             clip_id=c["id"], ass_name=ass_name,
-            ass_text=build_ass(transcript, start, end, theme, c.get("hook", "")),
+            ass_text=build_ass(transcript, start, end, theme, _ass_hook(c, overlays)),
             out=out, layout=chosen, size=size, start=start, end=end,
             overlays=_layer(c, start) if overlays else (),
             args=ffmpeg_args(ffmpeg, video, start, end, ass_name, out, chosen, size,
                              theme["colors"]["bg"], (cfg["fade_in"], cfg["fade_out"])),
         ))
     return jobs
+
+
+def _ass_hook(clip: dict, overlays: bool) -> str:
+    """`hook` do corte para o `.ass`; vazio quando um overlay `hook` já desenha o gancho."""
+    if overlays and any(o.get("type") == "hook" for o in clip.get("overlays", [])):
+        return ""
+    return clip.get("hook", "")
 
 
 def _layer(clip: dict, window_start: float) -> tuple[dict, ...]:

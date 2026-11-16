@@ -89,6 +89,18 @@ uv run reel-studio prompt-script aula.mp4 --style isometric-pastel   # modo VSL
 # o agente escreve roteiro.json a partir do prompt
 uv run reel-studio save-scenes aula.mp4 --style isometric-pastel --theme forge --file roteiro.json
 uv run reel-studio render aula.mp4 --theme forge --style forge-motion   # --captions narration|none, --audio original|none
+# --music auto|on|off: trilha na batida, ligada sozinha sem voz e sempre abaixo dela
+# o render entrega o mp4 (com o pôster no quadro 0), poster.jpg e share-copy.txt (do campo `share`)
+
+# VSL sem vídeo: conteúdo (texto ou markdown) ou ideia livre
+uv run reel-studio prompt-script --content post.md --style forge-motion --tone cinematic
+uv run reel-studio prompt-script --idea "por que automatizar reels" --style forge-motion
+uv run reel-studio save-scenes --project post --style forge-motion --file roteiro.json
+uv run reel-studio render --project post --theme forge --style forge-motion
+
+# Voz gerada (opcional, extra pesado): só da própria voz, ou com autorização
+uv sync --extra tts
+uv run reel-studio render aula.mp4 --theme forge --voice clone --voice-ref auto --confirm-own-voice
 ```
 
 **`correcoes.json`** (opcional, ao lado do vídeo ou em `--glossary`): mapa `errado -> certo` aplicado à transcrição em memória. Uma chave aceita variantes separadas por `|` (`"checaja|checage|checajem": "checagem"`); a mesma variante com dois valores é erro. O tema pode ter `vocabulary` (lista de termos), que junto aos valores do glossário alimenta o prompt do Whisper (`transcribe --theme TEMA`, `--prompt` para texto extra). `save-clips` e `save-scenes` aceitam `--file` e `--style` ou os mesmos valores como argumentos posicionais.
@@ -108,9 +120,16 @@ Tema é a sua marca (cores, fontes, legenda, CTA): qualquer pessoa cria o dela. 
 | Isometric Pastel | Processos e fluxos |
 | Manim Style Math | Números e fórmulas (render na fase 3) |
 
+## Referências e créditos
+
+- **`/brag`** ([`latent-spaces/brag`](https://github.com/latent-spaces/brag), MIT): as regras de criação e acabamento do roteiro (gancho, destaques, fecho, tons e `share`) foram adaptadas dele.
+- **Vídeo do pipeline do Forge** (`forge-sdd/docs/video-pipeline`): a linguagem de movimento do estilo `forge-motion` e a síntese da trilha (`core/music.py`, só biblioteca padrão) vêm dele.
+- **Chatterbox** ([`resemble-ai/chatterbox`](https://github.com/resemble-ai/chatterbox), MIT): voz gerada opcional, ver `sdd/spec/adr/adr-0003-voz-gerada.md`.
+
 ## Segurança e privacidade
 
-- Vídeo e áudio **nunca** saem da sua máquina.
+- Vídeo e áudio **nunca** saem da sua máquina; a voz gerada exige `--confirm-own-voice` e a amostra fica só na pasta do vídeo.
+- Cenas com a gravação (`media`) avisam que a tela pode mostrar dados sensíveis; confira antes de publicar.
 - Dentro do Claude Code, nem a transcrição sai: o próprio Claude lê o prompt e gera o JSON, sem chamada de rede nova.
 - No caminho de automação (fora do Claude Code), só a transcrição compactada vai ao provedor que você escolher no OpenRouter.
 - A chave de API, quando usada, fica em `.env`, fora do controle de versão.

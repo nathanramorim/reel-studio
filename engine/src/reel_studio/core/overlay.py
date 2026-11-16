@@ -6,8 +6,8 @@ import base64
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import contracts, contrast, paths, proc, render
-from .cut import CutJob
+from . import contracts, contrast, deliver, paths, proc, render
+from .cut import CutJob, video_rect
 from .errors import ReelError
 
 COMPOSITION = "Overlay"
@@ -56,7 +56,8 @@ def layer_props(job: CutJob, theme: dict) -> dict:
     adjusted = with_assets(contrast.resolve(theme, style)[0])
     return {"overlays": list(job.overlays), "theme": adjusted,
             "style": render.resolved_style(style, adjusted), "fps": render.FPS,
-            "length": round(job.end - job.start, 3)}
+            "length": round(job.end - job.start, 3),
+            "frame": video_rect(job.layout, job.size)}
 
 
 def render_args(npx: str, props_file: Path, layer: Path) -> list[str]:
@@ -106,6 +107,8 @@ def execute(plans: list[LayerPlan], jobs: list[CutJob], theme: dict, workdir: Pa
             paths.write_json(p.props_file, layer_props(by_id[p.clip_id], theme))
             proc.run([npx, *p.render_args[1:]], cwd=rdir)
             proc.run(p.compose_args, cwd=workdir)
+            deliver.apply_poster(p.compose_args[0], p.out, p.length,
+                                 p.out.with_name(f"{p.out.stem}-poster.jpg"))
         finally:
             p.layer.unlink(missing_ok=True)
             p.props_file.unlink(missing_ok=True)

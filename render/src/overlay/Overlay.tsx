@@ -32,13 +32,16 @@ const accentAt = (style: Style, theme: Theme, i: number): string => {
   return palette[i % palette.length];
 };
 
-const Frame: React.FC<{ theme: Theme; accent: string }> = ({ theme, accent }) => {
+type Rect = { left: number; top: number; width: number; height: number };
+
+/** Moldura rente ao vídeo (mesmo retângulo do corte): nunca fica mais estreita nem mais alta que ele. */
+const Frame: React.FC<{ theme: Theme; accent: string; rect: Rect }> = ({ theme, accent, rect }) => {
   const spec = panelSpec(theme);
   const dots = [theme.colors.bad ?? accent, theme.colors.warn ?? accent, theme.colors.success ?? accent];
   return (
     <div style={{
-      position: "absolute", left: 40, width: WIDTH - 80, top: REGIONS.frame.top, height: REGIONS.frame.height,
-      border: `3px solid ${spec.border}`, borderRadius: spec.radius,
+      position: "absolute", left: rect.left, width: rect.width, top: rect.top, height: rect.height, boxSizing: "border-box",
+      border: `3px solid ${spec.border}`, borderRadius: 0,
     }}>
       {spec.bar && dots.slice(0, spec.dots).map((c, i) => (
         <div key={i} style={{
@@ -49,7 +52,7 @@ const Frame: React.FC<{ theme: Theme; accent: string }> = ({ theme, accent }) =>
   );
 };
 
-export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, probe }) => {
+export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, probe, frame: videoRect }) => {
   useThemeFonts(theme);
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
@@ -57,12 +60,13 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
   const logoUri = theme.brand?.logoUri;
   const active = overlays.map((o, i) => ({ o, i, p: presence(o, frame, fps) })).filter((a) => a.p > 0);
   const strip = active.filter((a) => STRIP_TYPES.includes(a.o.type));
+  const onTop = (o: OverlayItem): boolean => o.pos === "top";
   const families = [...new Set([theme.fonts.title, theme.fonts.body, monoFont(theme)])].filter((f): f is string => !!f);
   const hasLogo = active.some((a) => a.o.type === "logo");
   return (
     <AbsoluteFill id="probe-root">
       {probe && <Probe families={families} />}
-      {overlays.length > 0 && <Frame theme={theme} accent={accentAt(style, theme, 0)} />}
+      {overlays.length > 0 && videoRect && <Frame theme={theme} accent={accentAt(style, theme, 0)} rect={videoRect} />}
       {active.map(({ o, i, p }) => {
         const accent = accentAt(style, theme, i);
         if (o.type === "hook") {
@@ -85,8 +89,11 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
           );
         }
         if (STRIP_TYPES.includes(o.type)) {
-          const slot = strip.findIndex((a) => a.i === i);
-          const top = REGIONS.strip.bottom - (slot + 1) * REGIONS.strip.slot;
+          const group = strip.filter((a) => onTop(a.o) === onTop(o));
+          const slot = group.findIndex((a) => a.i === i);
+          const top = onTop(o)
+            ? REGIONS.topStrip.top + slot * REGIONS.topStrip.slot
+            : REGIONS.strip.bottom - (slot + 1) * REGIONS.strip.slot;
           return (
             <div key={i} style={{
               position: "absolute", left: SIDE, width: CONTENT_W, top, height: REGIONS.strip.slot - 12,
@@ -128,9 +135,10 @@ export const Overlay: React.FC<OverlayProps> = ({ overlays, theme, style, fps, p
               alignItems: "center", opacity: p,
             }}>
               <Card theme={theme} accent={accent} style={{ width: "100%", padding: "6px 24px" }}>
-                <div style={{
+                <div data-cta="" style={{
                   fontFamily: fontFamily(monoFont(theme)), fontWeight: 500, fontSize: SCALE.min,
                   color: theme.colors.text, lineHeight: 1.2, overflowWrap: "anywhere",
+                  textWrap: "balance" as React.CSSProperties["textWrap"],
                 }}>
                   {o.text ?? theme.cta.text}
                 </div>

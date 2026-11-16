@@ -1,7 +1,5 @@
 # Status — 05 Reels premium
 
-**Status:** Onda 1 mesclada (PR #4); Onda 2 (05-04, 05-05) implementada na branch `feat/05-vsl-premium`, aguardando Reviewer.
+**Status:** Ondas 1 e 2 mescladas (#4, #6). Ondas 3 e 4 e a 05-13 no PR #5 (aberto). SEG-07 resolvido; C9 e C10 refeitos, moldura rente ao vídeo; `check-render --all`, pytest (251) e ruff passam. 05-14 (corte dividido, abertura, apresentador): spec escrita, não despachada.
 
-**Próximo passo:** Reviewer da Onda 2; merge; depois Onda 3 (05-06, 05-07, 05-08). C9 e C10 (manuais) ficam para quem tem a gravação 14.33.02.
-
-**A confirmar:** ADR-0003 (modelo de voz) antes da 05-11; 05-11 e 05-12 ficam por último.
+**Próximo passo:** você confirma as suposições da 05-14 e valida C9, C10 e C12 (voz; exige `--confirm-own-voice`); então mesclar o PR #5 e promover a ADR-0003 a `aprovado`.

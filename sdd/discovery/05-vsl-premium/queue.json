@@ -1,0 +1,80 @@
+{
+  "feature_id": "feat-05-05",
+  "branch": "feat/05-vsl-premium",
+  "spec_status": "reviewed",
+  "updated_at": "2026-11-16T09:12:57Z",
+  "items": [
+    {
+      "task_id": "feat-05-01-zona-segura-e-leitura",
+      "title": "feat-05-01-zona-segura-e-leitura — Zona segura da vertical e tempo de leitura",
+      "spec_path": "sdd/discovery/05-vsl-premium/features/feat-05-01-zona-segura-e-leitura.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "ARQ-05",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-05-02-kit-da-marca-no-tema",
+      "title": "feat-05-02-kit-da-marca-no-tema — Kit da marca no tema (`brand`)",
+      "spec_path": "sdd/discovery/05-vsl-premium/features/feat-05-02-kit-da-marca-no-tema.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-02",
+        "ARQ-06",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-05-03-contratos-overlays-e-entradas",
+      "title": "feat-05-03-contratos-overlays-e-entradas — Contratos: `overlays`, entradas conteúdo e livre, `media`",
+      "spec_path": "sdd/discovery/05-vsl-premium/features/feat-05-03-contratos-overlays-e-entradas.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "ARQ-06",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-05-04-corte-com-componentes",
+      "title": "feat-05-04-corte-com-componentes — Corte com componentes (camada sobre o corte intacto)",
+      "spec_path": "sdd/discovery/05-vsl-premium/features/feat-05-04-corte-com-componentes.md",
+      "status": "queued",
+      "rules": [
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-10",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-05-05-estilo-forge-motion",
+      "title": "feat-05-05-estilo-forge-motion — Estilo `forge-motion`: painéis, pacotes, degradê, fundo e câmera vivos",
+      "spec_path": "sdd/discovery/05-vsl-premium/features/feat-05-05-estilo-forge-motion.md",
+      "status": "queued",
+      "rules": [
+        "ARQ-06",
+        "DUP-01",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    }
+  ]
+}

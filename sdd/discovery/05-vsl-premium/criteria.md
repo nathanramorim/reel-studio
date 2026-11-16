@@ -106,3 +106,4 @@ sequenceDiagram
 | C12 | Manual: VSL do clip-05 com a voz gerada a partir da gravação 14.33.02, e conteúdo livre com trilha ligada | `uv run reel-studio render … --voice clone --voice-ref …` |
 | C9 | Manual, corte: os 5 cortes da gravação 14.33.02 com componentes por cima, mesmo enquadramento, legenda e voz de hoje | `uv run reel-studio cut … --theme forge` com `overlays` |
 | C10 | Manual, VSL: clip-05, tema forge, estilo `forge-motion`, voz original e legenda, comparado com o vídeo do pipeline | `uv run reel-studio render … --style forge-motion --theme forge` |
+| C13 | Manual, corte dividido: clip-02 e clip-05 em `split` com abertura e apresentador, comparados com o C9 | `uv run reel-studio cut … --layout split` com `intro` e `presenter` |

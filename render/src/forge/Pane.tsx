@@ -7,14 +7,14 @@ const DOT = 14;
 
 /** Janela de terminal: barra com pontos e corpo; raio, borda e pontos vêm do `brand` do tema. */
 export const Pane: React.FC<{
-  theme: Theme; accent: string; opacity?: number; children: React.ReactNode;
+  theme: Theme; accent: string; opacity?: number; reveal?: number; children: React.ReactNode;
   style?: React.CSSProperties;
-}> = ({ theme, accent, opacity = 1, children, style }) => {
+}> = ({ theme, accent, opacity = 1, reveal, children, style }) => {
   const spec = panelSpec(theme);
   const dotColors = [theme.colors.bad ?? accent, theme.colors.warn ?? accent, theme.colors.success ?? accent,
     theme.colors.accent2 ?? accent, accent];
   return (
-    <div style={{
+    <div data-panel="" data-reveal-at={reveal} style={{
       opacity, background: theme.colors.surface, borderRadius: spec.radius,
       border: `2px solid ${spec.border}`, overflow: "hidden", display: "flex", flexDirection: "column",
       boxShadow: `0 0 40px ${theme.colors.glow ?? "transparent"}`, ...style,

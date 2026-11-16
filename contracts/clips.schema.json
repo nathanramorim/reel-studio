@@ -25,7 +25,8 @@
                 "at": { "type": "number", "minimum": 0 },
                 "dur": { "type": "number", "exclusiveMinimum": 0 },
                 "type": { "enum": ["hook", "keyword", "step", "callout", "progress", "cta", "logo"] },
-                "text": { "type": "string", "maxLength": 60 }
+                "text": { "type": "string", "maxLength": 60 },
+                "pos": { "enum": ["top", "bottom"], "description": "Só keyword, step e callout: faixa abaixo do gancho (top) ou acima da legenda (bottom, padrão)" }
               },
               "additionalProperties": false
             }

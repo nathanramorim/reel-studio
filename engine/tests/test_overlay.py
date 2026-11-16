@@ -27,7 +27,11 @@ def _jobs(tmp_path, transcript, overlays=True, with_overlays=True):
 def test_regressao_comando_do_corte_nao_muda_com_camadas(tmp_path, transcript):
     sem = _jobs(tmp_path, transcript, with_overlays=False)[0]
     com = _jobs(tmp_path, transcript)[0]
-    assert com.args == sem.args and com.ass_text == sem.ass_text and com.out == sem.out
+    assert com.args == sem.args and com.out == sem.out
+    # 05-13: o overlay `hook` já desenha o gancho, então o `.ass` não o repete.
+    assert "Dialogue: 1" in sem.ass_text and "Dialogue: 1" not in com.ass_text
+    assert com.ass_text == sem.ass_text.replace(
+        next(ln for ln in sem.ass_text.splitlines() if ln.startswith("Dialogue: 1")) + "\n", "")
 
 
 def test_regressao_sem_camadas_nao_ha_passo_de_composicao(tmp_path, transcript):
@@ -129,3 +133,46 @@ def test_cut_dry_run_nao_escreve_nada(tmp_path, monkeypatch, transcript):
     none = CliRunner().invoke(cli.app, ["cut", str(video), "--theme", "forge", "--dry-run",
                                         "--overlays", "none"])
     assert "camada" not in none.output
+
+
+def test_camada_entrega_poster_no_quadro_0(tmp_path, transcript, monkeypatch):
+    jobs = _jobs(tmp_path, transcript)
+    layers = overlay.plan(jobs, tmp_path)
+    rdir = tmp_path / "render"
+    (rdir / "node_modules").mkdir(parents=True)
+    monkeypatch.setattr(overlay.paths, "render_dir", lambda: rdir)
+    monkeypatch.setattr(overlay.proc, "require_bin", lambda n, _h: n)
+    chamadas = []
+
+    def fake_run(args, cwd=None):
+        chamadas.append(args)
+        for arg in args:
+            if str(arg).endswith(".poster.mp4"):
+                overlay.Path(arg).write_bytes(b"x")
+
+    monkeypatch.setattr(overlay.proc, "run", fake_run)
+    monkeypatch.setattr(overlay.deliver.proc, "run", fake_run)
+    layers[0].out.parent.mkdir(parents=True, exist_ok=True)
+    layers[0].out.write_bytes(b"x")
+    overlay.execute(layers, jobs, load_theme("forge"), tmp_path)
+    juntas = [" ".join(map(str, c)) for c in chamadas]
+    assert any("-frames:v" in c and "-poster.jpg" in c for c in juntas)
+    assert any("overlay=enable='eq(n,0)'" in c for c in juntas)
+
+
+def test_moldura_rente_ao_video_no_fit_e_ausente_no_fill():
+    from reel_studio.core.cut import Layout, video_rect
+    rect = video_rect(Layout(kind="fit"), (2860, 1776))
+    assert rect["left"] == 0 and rect["width"] == 1080 and rect["height"] < 920
+    assert rect["top"] == 320 + (920 - rect["height"]) // 2
+    quadrado = video_rect(Layout(kind="fit"), (1000, 1000))
+    assert quadrado["width"] == 920 and quadrado["left"] == 80 and quadrado["top"] == 320
+    assert video_rect(Layout(kind="fill"), (1920, 1080)) is None
+
+
+def test_layer_props_leva_o_retangulo_do_video(tmp_path, transcript):
+    from reel_studio.core.cut import Layout
+    job = _jobs(tmp_path, transcript)[0]
+    assert overlay.layer_props(job, load_theme("forge"))["frame"] is None
+    fit = type(job)(**{**job.__dict__, "layout": Layout(kind="fit"), "size": (2860, 1776)})
+    assert overlay.layer_props(fit, load_theme("forge"))["frame"]["width"] == 1080

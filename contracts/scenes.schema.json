@@ -39,6 +39,7 @@
             },
             "additionalProperties": false
           },
+          "transition": { "enum": ["cut", "dip", "wipe", "slide"], "description": "Transição de saída para a próxima cena; o padrão vem do tom" },
           "text": { "type": "string", "maxLength": 80 },
           "steps": { "type": "array", "items": { "type": "string", "maxLength": 24 }, "maxItems": 6 },
           "items": { "type": "array", "items": { "type": "string", "maxLength": 40 }, "maxItems": 5 },

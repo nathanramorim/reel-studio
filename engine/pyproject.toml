@@ -13,6 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 transcribe = ["faster-whisper>=1.0", "av<17"]
 voice = ["demucs>=4.0"]
+tts = ["chatterbox-tts>=0.1.4"]
 vision = [
     "opencv-python-headless>=4.9,<5",
 ]

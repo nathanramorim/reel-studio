@@ -124,6 +124,15 @@ def test_overlays_validos_passam():
     assert contracts.validate("clips", _clip(overlays=ov))
 
 
+def test_overlays_pos_top_e_bottom_passam_e_outro_valor_e_rejeitado():
+    ok = [{"at": 0, "dur": 2, "type": "keyword", "text": "x", "pos": "top"},
+          {"at": 0, "dur": 2, "type": "step", "text": "y", "pos": "bottom"}]
+    assert contracts.validate("clips", _clip(overlays=ok))
+    with pytest.raises(ContractError):
+        bad = [{"at": 0, "dur": 1, "type": "step", "pos": "meio"}]
+        contracts.validate("clips", _clip(overlays=bad))
+
+
 def test_overlays_fora_do_corte_e_rejeitado():
     with pytest.raises(ContractError, match="fora do corte"):
         contracts.validate("clips", _clip(overlays=[{"at": 9, "dur": 2, "type": "cta"}]))
