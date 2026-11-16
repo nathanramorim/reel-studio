@@ -12,7 +12,8 @@ ADR-0001 (estilo e tema independentes; o LLM gera `scenes.json`, nunca código d
 - `ARQ-04`: trilha e efeitos só com a biblioteca padrão; sem dependência de render nova; transições próprias, sem `@remotion/transitions`.
 - `ARQ-05`: `--dry-run` não escreve nada.
 - `SEG-03`: ffmpeg e Node por lista de argumentos. `SEG-05`: dados sensíveis nunca em log, vídeo ou copy.
-- Sem rede no render; fontes e ativos locais.
+- Sem rede no render; fontes e ativos locais. O modelo de voz é baixado uma vez, na instalação do extra `tts`, nunca durante o render.
+- `SEG-05`: amostras de voz e áudio gerado nunca em log, nem fora da pasta do vídeo; a marca d'água do modelo não é removida.
 - **Não regredir:** o comando do `ffmpeg` do corte e o `.ass` da legenda ficam idênticos quando não há camadas; o enquadramento automático, o glossário e a folga/fade não mudam.
 - Camadas de componentes são compositadas por cima do mp4 do corte (formato com alfa só na composição), nunca no lugar dele (`ARQ-05`).
 
@@ -38,7 +39,7 @@ ADR-0001 (estilo e tema independentes; o LLM gera `scenes.json`, nunca código d
 | `/brag` | `latent-spaces/brag` (MIT) | regras de criação e acabamento | adaptar | Ideias, com créditos |
 
 ## Dependências novas
-Nenhuma. O `musica.py` do Forge usa só a biblioteca padrão de Python. Consultar context7 caso entre qualquer pacote.
+Extra opcional `tts` do uv para a voz gerada (`ARQ-04`): candidato **Chatterbox** (`resemble-ai/chatterbox`, MIT, clona voz de uma amostra, português e ajuste pt-BR, `cpu`/`mps`/`cuda`, marca d'água embutida). Consultar o context7 com a versão exata e confirmar a licença dos pesos (`SEG-07`); registrar a escolha na ADR-0003. O restante não tem dependência nova: o `musica.py` do Forge usa só a biblioteca padrão.
 
 ## C4: contexto
 ```mermaid
@@ -66,6 +67,10 @@ graph LR
   R --> A[core/music: grade de batidas + SFX]
   M --> F[ffmpeg: junta vídeo, legenda, trilha, áudio original]
   A --> F
+  V[voz de referência: amostra da gravação] --> T[core/voice: clone local]
+  T --> R
+  T --> W[Whisper local: tempos de palavra]
+  W --> P
   F --> O[vsl.mp4 + pôster + share-copy.txt]
   Q[check-render: zona segura + meio da transição] -.-> M
 ```
@@ -97,5 +102,7 @@ sequenceDiagram
 | C6 | `ffprobe`: pôster no quadro 0, trilha e áudio original, duração igual a frames/fps | `ffprobe` e `ffmpeg` sobre o mp4 |
 | C7 | Tema novo ou estilo sem `brand` continua renderizando (compatibilidade) | `uv run pytest -k brand` |
 | C8 | **Não regressão:** sem camadas, o comando do `ffmpeg` do corte e o `.ass` são idênticos aos de hoje (teste de igualdade) | `cd engine && uv run pytest -k regressao` |
+| C11 | Voz gerada: amostra extraída da gravação, duração das cenas igual à do áudio gerado, tempos de palavra coerentes, consentimento exigido, sem voz sem referência | `cd engine && uv run pytest -k "voz or amostra or consentimento"` |
+| C12 | Manual: VSL do clip-05 com a voz gerada a partir da gravação 14.33.02, e conteúdo livre com trilha ligada | `uv run reel-studio render … --voice clone --voice-ref …` |
 | C9 | Manual, corte: os 5 cortes da gravação 14.33.02 com componentes por cima, mesmo enquadramento, legenda e voz de hoje | `uv run reel-studio cut … --theme forge` com `overlays` |
 | C10 | Manual, VSL: clip-05, tema forge, estilo `forge-motion`, voz original e legenda, comparado com o vídeo do pipeline | `uv run reel-studio render … --style forge-motion --theme forge` |

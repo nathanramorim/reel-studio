@@ -11,5 +11,6 @@
 | 3 | feat-05-07 transições entre cenas (saída e entrada escalonadas; passar pelo fundo) | 05 | sim | DUP-03, TST-01 |
 | 3 | feat-05-08 janela com a tela real nas cenas do VSL (recorte automático) e aviso de dado sensível | 03, 05 | sim | SEG-03, SEG-05, DUP-03, TST-01 |
 | 4 | feat-05-09 roteiro estilo brag: gancho, destaques, fecho, `--tone`, copy, e as entradas conteúdo e livre | 03 | sim | ARQ-06, SEG-05, TST-01 |
-| 4 | feat-05-10 trilha e efeitos na grade de batidas (`--music`), com ducking sobre a voz | 05 | sim | ARQ-04, ARQ-05, SEG-03, DUP-03, TST-01 |
-| 4 | feat-05-11 QA e entrega: quadros do meio da transição, pôster no quadro 0, `share-copy.txt`, créditos do `/brag` | 06, 07, 09 | não | ARQ-05, DUP-03, TST-01 |
+| 4 | feat-05-10 trilha e efeitos na grade de batidas, **ligada por padrão sem áudio** e sempre abaixo da voz (`--music`) | 05 | sim | ARQ-04, ARQ-05, SEG-03, DUP-03, TST-01 |
+| 4 | feat-05-11 voz gerada a partir de gravação: amostra automática, clone local (extra `tts`), duração das cenas e tempos de palavra pelo áudio gerado, consentimento e ADR-0003 | 03, 06 | não | ARQ-04, SEG-03, SEG-05, SEG-07, DUP-03, TST-01 |
+| 4 | feat-05-12 QA e entrega: quadros do meio da transição, pôster no quadro 0, `share-copy.txt`, créditos do `/brag` | 06, 07, 09, 11 | não | ARQ-05, DUP-03, TST-01 |

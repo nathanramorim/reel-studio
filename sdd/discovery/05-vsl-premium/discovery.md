@@ -9,13 +9,14 @@ Ao mesmo tempo, o modo **corte** já ficou bom no uso real (enquadramento, legen
 Quem grava a tela ou a si mesmo e quer postar reels com a identidade do próprio projeto. Primeiro usuário: o autor, tema forge.
 
 ## Entradas (o que a pessoa traz)
-| Entrada | Exemplo | Saída | Voz |
-|---|---|---|---|
-| **Vídeo pronto** | gravação de tela | **Corte com componentes**: o vídeo real (com o enquadramento atual) mais camadas de componentes; ou VSL a partir do vídeo | A voz gravada, sempre que houver vídeo |
-| **Conteúdo** | texto, README, URL, projeto | VSL animado com a linguagem do tema | Sem voz; legenda e trilha opcional |
-| **Livre** | só uma ideia | VSL animado | Sem voz; legenda e trilha opcional |
+| Entrada | Exemplo | Saída | Voz | Música |
+|---|---|---|---|---|
+| **Vídeo pronto** | gravação de tela | **Corte com componentes** (vídeo real mais camadas), ou VSL a partir do vídeo | A voz gravada, sempre que houver | Opcional; desligada por padrão |
+| **Vídeo sem áudio** | gravação de tela muda | Corte com componentes, ou VSL | Opcional: voz gerada a partir de uma gravação sua | **Ligada por padrão** |
+| **Conteúdo** | texto, README, URL, projeto | VSL animado com a linguagem do tema | Opcional: voz gerada a partir de uma gravação sua; sem referência, sem voz | **Ligada por padrão** |
+| **Livre** | só uma ideia | VSL animado | Igual ao conteúdo | **Ligada por padrão** |
 
-Voz sintética (TTS) fica fora desta iniciativa.
+**Voz gerada a partir de gravação:** a pessoa indica uma gravação da própria voz (ou o próprio vídeo); o motor extrai uma amostra limpa e sintetiza a narração das cenas nessa voz, localmente. Serve também ao VSL de vídeo com áudio ruim: a mesma pessoa, com o roteiro re-narrado em voz limpa. A síntese sem voz de referência (voz genérica) fica fora desta iniciativa.
 
 ## Mantido (não regredir)
 Estas partes foram validadas no uso real e continuam como estão:
@@ -38,6 +39,8 @@ Regras de criação e acabamento adaptadas do `/brag` (`latent-spaces/brag`, lic
 - **Cores e identidade vêm do tema**; o estilo só define a gramática do movimento (decisão da 04).
 - **Camadas sobre o corte, nunca no lugar dele:** o corte (ffmpeg) segue intocado, e os componentes entram numa camada transparente compositada por cima.
 - **Voz:** com vídeo, a voz original é o padrão; no VSL a partir de vídeo, o áudio original passa a ser o padrão quando todas as cenas têm `source`, e a legenda também.
+- **Música:** ligada por padrão quando não há áudio de voz (vídeo mudo, conteúdo, livre) e desligada quando há voz; com voz (gravada ou gerada), a trilha fica sempre abaixo dela (ducking).
+- **Voz gerada (clone):** só a partir de gravação indicada pela pessoa, que confirma ser a própria voz (ou ter autorização); processamento local; a marca d'água do modelo é mantida; a amostra e o áudio gerado nunca vão para log ou rede. A duração de cada cena segue o áudio gerado, e os tempos de palavra (texto e legenda) vêm de transcrever esse áudio com o próprio Whisper local.
 - **Zona segura da vertical** para o que é novo: texto lido entre 13% e 80% da altura (y 250 a 1536) e fora dos 140 px da direita na metade de baixo. A legenda do corte continua onde está (já fica nessa zona).
 - **Leitura:** linha a ler fica inteira e parada por cerca de 0,3 s por palavra.
 - **Gancho** nos 2 primeiros segundos; cada quadro parado deve valer o post.
@@ -48,8 +51,8 @@ Regras de criação e acabamento adaptadas do `/brag` (`latent-spaces/brag`, lic
 - LLM nunca vê mídia; dados e render locais; sem rede no render.
 
 ## Escopo
-**Dentro:** contrato das camadas (`overlays`) e das entradas conteúdo e livre; corte com componentes; zona segura e tempo de leitura; kit da marca no tema; estilo `forge-motion` para o VSL; texto sincronizado com a fala; transições; janela com a tela real nas cenas do VSL; roteiro estilo brag (gancho, tom, copy); trilha opcional na batida, com a voz em primeiro plano; QA, pôster e `share-copy.txt`.
-**Fora:** voz sintética, Hyperframes ou outro renderizador, publicação automática, novos temas além do ajuste do `forge`, mudar o enquadramento, a legenda ou o corte atuais.
+**Dentro:** música por padrão sem áudio; voz gerada a partir de gravação (clone local, opcional); contrato das camadas (`overlays`) e das entradas conteúdo e livre; corte com componentes; zona segura e tempo de leitura; kit da marca no tema; estilo `forge-motion` para o VSL; texto sincronizado com a fala; transições; janela com a tela real nas cenas do VSL; roteiro estilo brag (gancho, tom, copy); trilha opcional na batida, com a voz em primeiro plano; QA, pôster e `share-copy.txt`.
+**Fora:** voz sintética sem gravação de referência, Hyperframes ou outro renderizador, publicação automática, novos temas além do ajuste do `forge`, mudar o enquadramento, a legenda ou o corte atuais.
 
 ## Riscos
 | Risco | Mitigação |
@@ -62,3 +65,6 @@ Regras de criação e acabamento adaptadas do `/brag` (`latent-spaces/brag`, lic
 | Texto sincronizado sem tempos de palavra | Fallback: distribuir as palavras pelo tempo da cena |
 | Trilha cobrir a voz | Ducking: a voz sempre à frente; trilha opcional |
 | Licença do `/brag` | MIT; só ideias, com créditos |
+| Clonar a voz sem consentimento | A amostra vem de gravação indicada pela pessoa, com confirmação explícita; marca d'água mantida; nada vai para a rede |
+| Modelo de voz pesado e lento, e qualidade em pt-BR | Extra opcional `tts`; modelo baixado uma vez, fora do render; candidato Chatterbox (MIT, pt-BR); validar no C11 e medir o tempo |
+| Tempo da fala gerada não bater com a cena | A cena segue o áudio gerado; tempos de palavra por transcrição local |
