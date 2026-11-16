@@ -1,8 +1,8 @@
 {
-  "feature_id": "feat-03-02",
+  "feature_id": "feat-03-04",
   "branch": "feat/03-enquadramento-tela",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-16T06:00:52Z",
+  "updated_at": "2026-11-16T06:17:29Z",
   "items": [
     {
       "task_id": "feat-03-01-layout-automatico",
@@ -32,6 +32,40 @@
         "ARQ-05",
         "ARQ-10",
         "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-03-glossario-correcoes",
+      "title": "feat-03-03-glossario-correcoes — Correção automática de termos errados na transcrição",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-03-glossario-correcoes.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-02",
+        "ARQ-05",
+        "ARQ-06",
+        "ARQ-10",
+        "DUP-01",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-03-04-folga-e-fade",
+      "title": "feat-03-04-folga-e-fade — Folga de fala e fade nos cortes",
+      "spec_path": "sdd/discovery/03-enquadramento-tela/features/feat-03-04-folga-e-fade.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-06",
+        "ARQ-10",
+        "DUP-01",
         "TST-01"
       ],
       "skills_used": [],
