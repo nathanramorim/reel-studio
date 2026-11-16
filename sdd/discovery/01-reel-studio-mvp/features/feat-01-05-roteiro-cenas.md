@@ -18,7 +18,7 @@ Nenhuma.
 SEG-04, DUP-04
 
 ## Escopo
-`reel-studio script VIDEO --style S` gera `scenes.json` usando só os tipos de cena declarados no `style.json`.
+`reel-studio prompt-script VIDEO --style S` mostra o prompt para o agente gerar o JSON; `reel-studio save-scenes VIDEO --style S --file X.json` valida (só os tipos de cena do `style.json`) e grava `scenes.json`. `reel-studio script` faz o mesmo via OpenRouter (caminho de automação).
 
 ## Critérios de Aceitação Executáveis
 - `uv run pytest tests/test_script.py` (LLM simulado, tipos inválidos rejeitados).

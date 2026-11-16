@@ -25,3 +25,11 @@ def test_normalize_respeita_max_clips(transcript):
     ]}
     data = normalize(raw, transcript, min_s=1, max_s=60, max_clips=2)
     assert len(data["clips"]) == 2
+
+
+def test_prompt_nao_chama_rede(transcript):
+    from reel_studio.core.suggest import prompt
+
+    system, user = prompt(transcript, max_clips=3, min_s=10, max_s=60)
+    assert "clips" in system
+    assert "[0.0]" in user

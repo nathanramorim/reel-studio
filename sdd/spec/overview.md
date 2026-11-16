@@ -1,6 +1,6 @@
 # Overview — reel-studio
 
-Plugin do Claude Code com motor local que transforma vídeos gravados em reels 9:16. Dois modos: **corte** (recorta o vídeo real, com legenda na marca) e **VSL** (reescreve como roteiro curto e anima em um dos estilos). O LLM só lê a transcrição.
+Plugin do Claude Code com motor local que transforma vídeos gravados em reels 9:16. Dois modos: **corte** (recorta o vídeo real, com legenda na marca) e **VSL** (reescreve como roteiro curto e anima em um dos estilos). Dentro do Claude Code, o próprio agente gera os cortes e o roteiro a partir da transcrição, sem chamada de rede nova; o OpenRouter é só o caminho de automação sem agente.
 
 ## Índice
 - `stack.md` — tecnologias
@@ -18,8 +18,8 @@ Plugin do Claude Code com motor local que transforma vídeos gravados em reels 9
 ```mermaid
 graph TB
   User((Criador)) -->|"/gerar-reel"| Claude[Claude Code + skill reel-studio]
-  Claude -->|CLI| Engine[reel-studio engine]
-  Engine -->|texto compactado| LLM[OpenRouter]
+  Claude -->|CLI: prompt + save| Engine[reel-studio engine]
+  Claude -.->|"automação sem agente"| LLM[OpenRouter]
   Engine --> Out[(reels .mp4)]
 ```
 
@@ -27,9 +27,10 @@ graph TB
 ```mermaid
 graph LR
   Skill[skills/reel-studio] --> CLI[engine: CLI uv]
+  Skill -->|gera clips/scenes.json| CLI
   CLI --> FF[ffmpeg]
   CLI --> W[faster-whisper]
-  CLI --> LLM[OpenRouter]
+  CLI -.->|automação, sem agente| LLM[OpenRouter]
   CLI --> R[render: Remotion]
   CLI --> M[render: Manim]
   R --> T[(themes + styles)]

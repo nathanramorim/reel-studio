@@ -9,7 +9,7 @@ Transformar vídeos já gravados em reels verticais (corte do vídeo real ou VSL
 | Motor (CLI) | Python 3.11+ com `uv` | Pipeline de mídia e IA local; uv é o padrão do autor |
 | Mídia | `ffmpeg` (binário do sistema) | Corte, áudio e queima de legenda sem dependência pesada |
 | Transcrição | `faster-whisper` (MIT), local | Nada sai da máquina |
-| Escolha de cortes e roteiro | LLM via OpenRouter (HTTP) | Só texto compactado sai; uma chamada por vídeo |
+| Escolha de cortes e roteiro | O agente (Claude Code) gera o JSON a partir do prompt; OpenRouter só no caminho de automação | Dentro do Claude Code, zero chamada de rede extra e zero chave |
 | Render animado | Remotion (React/TS) + Manim (estilo matemático) | Cenas por componentes prontos, sem gerar código por vídeo |
 | Distribuição | Plugin do Claude Code (skill + comandos) | Instalação direta do GitHub |
 | DB | none | Estado em arquivos JSON por vídeo |

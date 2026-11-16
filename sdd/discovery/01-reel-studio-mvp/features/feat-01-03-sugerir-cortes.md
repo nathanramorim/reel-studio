@@ -18,7 +18,7 @@ ADR-0001.
 SEG-04, SEG-05, DUP-01
 
 ## Escopo
-`reel-studio suggest VIDEO --max 5` compacta a transcrição, faz uma chamada e grava `clips.json` com cortes alinhados a segmentos.
+`reel-studio prompt-suggest VIDEO --max 5` mostra o prompt (system + transcrição compactada) para o agente gerar o JSON; `reel-studio save-clips VIDEO --file X.json` valida e grava `clips.json` com cortes alinhados a segmentos. `reel-studio suggest` faz o mesmo chamando o OpenRouter (caminho de automação, sem agente).
 
 ## Critérios de Aceitação Executáveis
 - `uv run pytest tests/test_compact.py tests/test_suggest.py` (LLM simulado).

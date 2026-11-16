@@ -44,7 +44,18 @@ def normalize(raw: dict, style: dict, theme_id: str | None) -> dict:
     return contracts.validate("scenes", data)
 
 
+def prompt(transcript: dict, style: dict, start: float = 0.0,
+           end: float | None = None) -> tuple[str, str]:
+    """System e user para quem vai gerar o JSON: o agente (padrão) ou um LLMClient (automação)."""
+    return build_system(style), compact(transcript, start, end)
+
+
 def script(transcript: dict, style: dict, llm: LLMClient, theme_id: str | None = None,
            start: float = 0.0, end: float | None = None) -> dict:
-    raw = llm.complete_json(build_system(style), compact(transcript, start, end))
+    """Caminho de automação: chama o OpenRouter.
+
+    Dentro do Claude Code, prefira prompt() + normalize().
+    """
+    system, user = prompt(transcript, style, start, end)
+    raw = llm.complete_json(system, user)
     return normalize(raw, style, theme_id)

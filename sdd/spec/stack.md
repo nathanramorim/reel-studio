@@ -7,7 +7,7 @@
 | Runtime | Python | >=3.11 | PSF | Motor |
 | Gerenciador | uv | atual | MIT/Apache | Padrão do autor |
 | CLI | typer | >=0.12 | MIT | Comandos simples |
-| HTTP | httpx | >=0.27 | BSD | Chamada ao OpenRouter |
+| HTTP | httpx | >=0.27 | BSD | Chamada ao OpenRouter, só no caminho de automação (sem agente) |
 | Transcrição | faster-whisper | >=1.0 (extra `transcribe`) | MIT | Local |
 | Isolar voz | demucs | >=4.0 (extra `voice`) | MIT | Local, opcional |
 | Mídia | ffmpeg | sistema | LGPL/GPL conforme build | Corte e legenda |

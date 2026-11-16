@@ -8,7 +8,7 @@ ADR-0001 (todas as decisões). Constitution: `ARQ-01`, `ARQ-04`, `ARQ-05`, `ARQ-
 
 ## Restrições
 - `SEG-03`: ffmpeg é chamado com lista de argumentos, nunca com shell.
-- `SEG-04` e `SEG-05`: chave do OpenRouter só por env; nunca em log.
+- `SEG-04` e `SEG-05`: chave do OpenRouter (caminho de automação) só por env; nunca em log.
 - `ARQ-05`: `--dry-run` em `cut` e `render` só imprime o plano.
 - `ARQ-04`: transcrição, voz e Manim são extras opcionais do uv.
 - `DUP-04`: schemas só em `contracts/`.

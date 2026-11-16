@@ -18,7 +18,7 @@
 
 O **reel-studio** transforma um vídeo que você já gravou em um reel vertical para o Instagram. Dois modos: **corte**, que recorta o trecho real do vídeo, e **VSL**, que reescreve a fala como um roteiro curto e anima num dos estilos visuais.
 
-A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o vídeo nem o áudio, numa única chamada por etapa. Nada é gerado sem você aprovar o corte ou o roteiro primeiro.
+A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o vídeo nem o áudio. Dentro do Claude Code, é o próprio Claude que escolhe os cortes e escreve o roteiro — sem chave de API, sem chamada de rede extra. Fora do Claude Code, há um caminho de automação via OpenRouter. Nada é gerado sem você aprovar o corte ou o roteiro primeiro.
 
 ## Por que usar
 
@@ -35,8 +35,8 @@ A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o v�
 - **Python 3.11+** com [uv](https://docs.astral.sh/uv/).
 - **ffmpeg** no PATH (`brew install ffmpeg` ou `winget install ffmpeg`).
 - **Node.js 18+** (só para o modo VSL, que usa Remotion).
-- **Claude Code**, para instalar como plugin.
-- Chave da sua conta no [OpenRouter](https://openrouter.ai) (`OPENROUTER_API_KEY`), para `suggest` e `script`.
+- **Claude Code**, para instalar como plugin e gerar cortes/roteiros sem chave de API.
+- Só se for automatizar **fora** do Claude Code: chave no [OpenRouter](https://openrouter.ai) (`OPENROUTER_API_KEY`).
 
 ## Instalação
 
@@ -69,18 +69,25 @@ No Claude Code, dentro de uma sessão com o plugin instalado:
 
 A skill pergunta o modo, o tema e (no modo VSL) o estilo, mostra o plano e só gera o vídeo depois do seu "sim". Comandos extras: `/transcrever` e `/extrair-voz`.
 
-Pela CLI, direto:
+Pela CLI, dentro de uma sessão com agente (sem chave de API — o agente lê o prompt e escreve o JSON):
 
 ```bash
 cd engine
 uv run reel-studio extract aula.mp4
 uv run reel-studio transcribe aula.mp4
-uv run reel-studio suggest aula.mp4 --max 5      # modo corte
+
+uv run reel-studio prompt-suggest aula.mp4 --max 5    # modo corte: mostra o prompt
+# o agente escreve cortes.json a partir do prompt
+uv run reel-studio save-clips aula.mp4 --file cortes.json --max 5
 uv run reel-studio cut aula.mp4 --theme busize
 
-uv run reel-studio script aula.mp4 --style isometric-pastel --theme forge   # modo VSL
+uv run reel-studio prompt-script aula.mp4 --style isometric-pastel   # modo VSL
+# o agente escreve roteiro.json a partir do prompt
+uv run reel-studio save-scenes aula.mp4 --style isometric-pastel --theme forge --file roteiro.json
 uv run reel-studio render aula.mp4 --theme forge
 ```
+
+Fora do Claude Code, para automação (CI, cron), use `suggest` e `script` no lugar de `prompt-suggest`/`save-clips` e `prompt-script`/`save-scenes`: eles chamam o OpenRouter direto, com `OPENROUTER_API_KEY` no `.env`.
 
 ## Temas e estilos
 
@@ -98,8 +105,9 @@ uv run reel-studio render aula.mp4 --theme forge
 ## Segurança e privacidade
 
 - Vídeo e áudio **nunca** saem da sua máquina.
-- Só a transcrição, compactada, é enviada ao provedor de IA que você escolher (via OpenRouter).
-- A chave de API fica em `.env`, fora do controle de versão.
+- Dentro do Claude Code, nem a transcrição sai: o próprio Claude lê o prompt e gera o JSON, sem chamada de rede nova.
+- No caminho de automação (fora do Claude Code), só a transcrição compactada vai ao provedor que você escolher no OpenRouter.
+- A chave de API, quando usada, fica em `.env`, fora do controle de versão.
 - O Remotion tem licença gratuita para uso pessoal e empresas de até 3 pessoas; acima disso, [confira a licença](https://www.remotion.dev/license) antes de usar em produção.
 
 ## Versões

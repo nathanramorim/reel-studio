@@ -24,31 +24,41 @@ Transforma um vídeo gravado em reel 9:16. O LLM nunca vê vídeo ou áudio: só
    uv run reel-studio transcribe VIDEO
    ```
    Se faltar o extra, rode `uv sync --extra transcribe` (e `--extra voice` se o áudio tiver ruído de fundo, antes do extract com `--voice-only`).
-3. **Modo corte:**
+3. **Modo corte — você mesmo gera o JSON, sem chave e sem chamada de rede nova:**
    ```
-   uv run reel-studio suggest VIDEO --max 5
+   uv run reel-studio prompt-suggest VIDEO --max 5
    ```
-   Mostre os cortes sugeridos (hora e gancho) e abra `VIDEO.reel/clips.json` para a pessoa aprovar ou editar. Só depois do "sim":
+   Isso imprime o system e a transcrição compactada. Leia, pense como o prompt pede e **escreva você mesmo** o JSON `{"clips": [...]}` num arquivo (ex.: `cortes.json`, com `Write`). Depois:
+   ```
+   uv run reel-studio save-clips VIDEO --file cortes.json --max 5
+   ```
+   Mostre os cortes salvos (hora e gancho) e abra `VIDEO.reel/clips.json` para a pessoa aprovar ou editar. Só depois do "sim":
    ```
    uv run reel-studio cut VIDEO --theme TEMA
    ```
-4. **Modo VSL:** veja `references/estilos.md` para escolher o estilo certo pelo tipo de conteúdo.
+4. **Modo VSL — mesma lógica.** Veja `references/estilos.md` para escolher o estilo certo pelo tipo de conteúdo.
    ```
-   uv run reel-studio script VIDEO --style ESTILO --theme TEMA
+   uv run reel-studio prompt-script VIDEO --style ESTILO
    ```
-   Mostre as cenas geradas e espere o "sim" antes de:
+   Escreva o JSON `{"scenes": [...]}` (ex.: `roteiro.json`) e grave:
+   ```
+   uv run reel-studio save-scenes VIDEO --style ESTILO --theme TEMA --file roteiro.json
+   ```
+   Mostre as cenas e espere o "sim" antes de:
    ```
    uv run reel-studio render VIDEO --theme TEMA
    ```
    Na primeira vez, `cd ${CLAUDE_PLUGIN_ROOT}/render && npm install` (demora, avise antes).
-5. **Nunca gere o vídeo final sem aprovação** do `clips.json` ou do `scenes.json`.
-6. **Sem tema que combine?** Veja `references/criar-tema.md`.
-7. **Problema comum?** Veja `references/resolucao-de-problemas.md` antes de tentar de novo.
+5. **Sem Claude Code, ou querendo automatizar sem agente no loop:** troque `prompt-suggest`/`save-clips` por `suggest` direto (idem `prompt-script`/`save-scenes` por `script`), com `OPENROUTER_API_KEY` no `.env`. Esse caminho existe só para automação fora de uma sessão com agente.
+6. **Nunca gere o vídeo final sem aprovação** do `clips.json` ou do `scenes.json`.
+7. **Sem tema que combine?** Veja `references/criar-tema.md`.
+8. **Problema comum?** Veja `references/resolucao-de-problemas.md` antes de tentar de novo.
 
 ## Regras
 
 - O LLM só recebe texto da transcrição, nunca mídia.
-- Um reel por vez; não encadeie `suggest` ou `script` sem mostrar o resultado.
+- Dentro do Claude Code, você mesmo gera `clips.json`/`scenes.json` a partir do prompt — não chame o OpenRouter nem peça chave à pessoa; isso só vale no caminho de automação (regra 5).
+- Um reel por vez; não encadeie etapas sem mostrar o resultado.
 - Linguagem simples, em português do Brasil.
 - Nunca invente cortes ou cenas fora do que a transcrição sustenta.
 - Não faça commit nem push, a menos que a pessoa peça.

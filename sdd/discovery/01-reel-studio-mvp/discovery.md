@@ -15,6 +15,7 @@ Criadores técnicos que gravam explicações e querem publicar no Instagram com 
 
 ## Regras de negócio
 - O LLM nunca recebe mídia, só texto compactado.
+- Dentro do Claude Code, o agente gera cortes e roteiro a partir do prompt; não chama o OpenRouter e não pede chave.
 - Nada é renderizado sem aprovação do `clips.json` ou do `scenes.json`.
 - Corte respeita frases completas (início e fim em limite de segmento).
 - Reels entre 15 e 60 segundos por padrão.

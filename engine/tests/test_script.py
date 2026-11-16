@@ -23,3 +23,11 @@ def test_normalize_rejeita_tipo_fora_do_estilo():
     raw = {"scenes": [{"type": "chart", "dur": 3, "narration": "x"}]}
     with pytest.raises(ContractError):
         normalize(raw, _style(), theme_id=None)
+
+
+def test_prompt_nao_chama_rede(transcript):
+    from reel_studio.core.script import prompt
+
+    system, user = prompt(transcript, _style())
+    assert "title" in system
+    assert "[0.0]" in user

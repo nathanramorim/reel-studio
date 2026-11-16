@@ -49,7 +49,18 @@ def normalize(raw: dict, transcript: dict, min_s: int, max_s: int, max_clips: in
     return contracts.validate("clips", {"clips": [dict(sorted(c.items())) for c in clips]})
 
 
+def prompt(transcript: dict, max_clips: int = 5, min_s: int = 15,
+           max_s: int = 60) -> tuple[str, str]:
+    """System e user para quem vai gerar o JSON: o agente (padrão) ou um LLMClient (automação)."""
+    return SYSTEM, build_user(compact(transcript), max_clips, min_s, max_s)
+
+
 def suggest(transcript: dict, llm: LLMClient, max_clips: int = 5,
             min_s: int = 15, max_s: int = 60) -> dict:
-    raw = llm.complete_json(SYSTEM, build_user(compact(transcript), max_clips, min_s, max_s))
+    """Caminho de automação: chama o OpenRouter.
+
+    Dentro do Claude Code, prefira prompt() + normalize().
+    """
+    system, user = prompt(transcript, max_clips, min_s, max_s)
+    raw = llm.complete_json(system, user)
     return normalize(raw, transcript, min_s, max_s, max_clips)

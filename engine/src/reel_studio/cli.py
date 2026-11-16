@@ -65,16 +65,28 @@ def transcribe(video: Video, model: str = "small", lang: str = "pt",
     typer.echo(f"transcript: {out} ({len(data['segments'])} segmentos, {data['duration']:.0f}s)")
 
 
-@app.command()
-def suggest(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int = 60):
-    """Sugere cortes (uma chamada ao LLM) e grava clips.json."""
-    from .core.suggest import suggest as run
+@app.command(name="prompt-suggest")
+def prompt_suggest_cmd(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int = 60):
+    """Mostra o prompt do modo corte, para o agente gerar o JSON (sem rede, sem chave)."""
+    from .core.suggest import prompt as build_prompt
 
-    _load_env()
     p = Project.open(video)
-    t = _transcript(p)
-    typer.echo(f"enviando ~{estimate_tokens(compact(t))} tokens de transcrição")
-    data = run(t, LLMClient(), max_clips=max, min_s=min_seconds, max_s=max_seconds)
+    system, user = build_prompt(_transcript(p), max_clips=max, min_s=min_seconds, max_s=max_seconds)
+    typer.echo(f"~{estimate_tokens(user)} tokens de transcrição\n")
+    typer.echo("=== SYSTEM ===\n" + system)
+    typer.echo("\n=== USER ===\n" + user)
+    typer.echo(f"\nGere o JSON e grave com: reel-studio save-clips {video} --file SEU_JSON.json")
+
+
+@app.command(name="save-clips")
+def save_clips_cmd(video: Video, file: Path, max: int = 5,
+                   min_seconds: int = 15, max_seconds: int = 60):
+    """Valida o JSON de cortes (gerado pelo agente ou por você) e grava clips.json."""
+    from .core.suggest import normalize
+
+    p = Project.open(video)
+    raw = paths.read_json(file)
+    data = normalize(raw, _transcript(p), min_s=min_seconds, max_s=max_seconds, max_clips=max)
     paths.write_json(p.path("clips.json"), data)
     for c in data["clips"]:
         typer.echo(f"{c['id']}  {c['start']:.1f}s a {c['end']:.1f}s  {c['hook']}")
@@ -82,9 +94,58 @@ def suggest(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int 
 
 
 @app.command()
+def suggest(video: Video, max: int = 5, min_seconds: int = 15, max_seconds: int = 60):
+    """[Automação] Sugere cortes via OpenRouter (uma chamada) e grava clips.json.
+
+    Dentro do Claude Code, prefira 'prompt-suggest' + 'save-clips': sem chave,
+    sem chamada de rede nova, o próprio agente gera o JSON."""
+    from .core.suggest import suggest as run
+
+    _load_env()
+    p = Project.open(video)
+    t = _transcript(p)
+    typer.echo(f"enviando ~{estimate_tokens(compact(t))} tokens de transcrição ao OpenRouter")
+    data = run(t, LLMClient(), max_clips=max, min_s=min_seconds, max_s=max_seconds)
+    paths.write_json(p.path("clips.json"), data)
+    for c in data["clips"]:
+        typer.echo(f"{c['id']}  {c['start']:.1f}s a {c['end']:.1f}s  {c['hook']}")
+    typer.echo(f"revise e edite: {p.path('clips.json')}")
+
+
+@app.command(name="prompt-script")
+def prompt_script_cmd(video: Video, style: str, start: float = 0.0, end: float | None = None):
+    """Mostra o prompt do modo VSL, para o agente gerar o JSON (sem rede, sem chave)."""
+    from .core.script import prompt as build_prompt
+
+    p = Project.open(video)
+    system, user = build_prompt(_transcript(p), contracts.load_style(style), start, end)
+    typer.echo(f"~{estimate_tokens(user)} tokens de transcrição\n")
+    typer.echo("=== SYSTEM ===\n" + system)
+    typer.echo("\n=== USER ===\n" + user)
+    cmd = f"reel-studio save-scenes {video} --style {style} --file SEU_JSON.json"
+    typer.echo(f"\nGere o JSON e grave com: {cmd}")
+
+
+@app.command(name="save-scenes")
+def save_scenes_cmd(video: Video, style: str, file: Path, theme: str | None = None):
+    """Valida o JSON de cenas (gerado pelo agente ou por você) e grava scenes.json."""
+    from .core.script import normalize
+
+    p = Project.open(video)
+    raw = paths.read_json(file)
+    data = normalize(raw, contracts.load_style(style), theme)
+    paths.write_json(p.path("scenes.json"), data)
+    total = sum(s["dur"] for s in data["scenes"])
+    typer.echo(f"{len(data['scenes'])} cenas, {total:.0f}s. Revise: {p.path('scenes.json')}")
+
+
+@app.command()
 def script(video: Video, style: str, theme: str | None = None,
            start: float = 0.0, end: float | None = None):
-    """Gera o roteiro em cenas (scenes.json) para o modo VSL."""
+    """[Automação] Gera o roteiro via OpenRouter e grava scenes.json.
+
+    Dentro do Claude Code, prefira 'prompt-script' + 'save-scenes': sem chave,
+    sem chamada de rede nova, o próprio agente gera o JSON."""
     from .core.script import script as run
 
     _load_env()
