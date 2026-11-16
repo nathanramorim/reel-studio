@@ -1,7 +1,7 @@
 {
   "id": "forge",
   "name": "Forge SDD",
-  "colors": { "bg": "#0d0f14", "surface": "#12151d", "text": "#e9ecf4", "muted": "#99a2b8", "accent": "#4f8ef7", "accent2": "#8aa4ff", "success": "#3ecf8e" },
+  "colors": { "bg": "#0d0f14", "surface": "#12151d", "text": "#e9ecf4", "muted": "#99a2b8", "accent": "#4f8ef7", "accent2": "#8aa4ff", "success": "#3ecf8e", "glow": "#1e2a4a", "gradient": ["#4f8ef7", "#8aa4ff", "#3ecf8e"], "warn": "#f5b04a", "bad": "#f2677a" },
   "fonts": { "title": "Montserrat", "body": "Montserrat", "mono": "JetBrains Mono" },
   "caption": { "style": "word-highlight", "position": "lower-third", "size": 72, "uppercase": false },
   "logo": null,

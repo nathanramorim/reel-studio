@@ -16,6 +16,13 @@
           "type": { "enum": ["title", "highlight", "flow", "list", "compare", "chart", "quote", "cta"] },
           "dur": { "type": "number", "minimum": 1, "maximum": 15 },
           "narration": { "type": "string" },
+          "source": {
+            "type": "object",
+            "description": "Trecho do vídeo de origem (segundos) cujo áudio acompanha a cena",
+            "required": ["start", "end"],
+            "properties": { "start": { "type": "number", "minimum": 0 }, "end": { "type": "number", "minimum": 0 } },
+            "additionalProperties": false
+          },
           "text": { "type": "string", "maxLength": 80 },
           "steps": { "type": "array", "items": { "type": "string", "maxLength": 24 }, "maxItems": 6 },
           "items": { "type": "array", "items": { "type": "string", "maxLength": 40 }, "maxItems": 5 },

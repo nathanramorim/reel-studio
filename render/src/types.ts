@@ -3,7 +3,8 @@ export type Theme = {
   name: string;
   colors: {
     bg: string; surface: string; text: string; muted: string;
-    accent: string; accent2?: string; success?: string;
+    accent: string; accent2?: string; success?: string; warn?: string; bad?: string;
+    glow?: string; gradient?: string[];
   };
   fonts: { title: string; body: string; mono?: string };
   caption: { style: "word-highlight" | "line"; position: string; size?: number; uppercase?: boolean };

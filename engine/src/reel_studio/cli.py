@@ -8,7 +8,7 @@ from typing import Annotated, TypeVar
 
 import typer
 
-from .core import audio, contracts, cut, paths, render
+from .core import audio, contracts, cut, paths, proc, render
 from .core import glossary as glossary_mod
 from .core.compact import compact, estimate_tokens
 from .core.errors import ReelError
@@ -193,7 +193,7 @@ def save_scenes_cmd(video: Video, style_arg: StyleArg = None, file_arg: FileArg 
     file = _either(file_arg, file_opt, "o JSON de cenas", "--file")
     p = Project.open(video)
     raw = paths.read_json(file)
-    data = normalize(raw, contracts.load_style(style), theme)
+    data = normalize(raw, contracts.load_style(style), theme, proc.probe_duration(p.video))
     paths.write_json(p.path("scenes.json"), data)
     total = sum(s["dur"] for s in data["scenes"])
     typer.echo(f"{len(data['scenes'])} cenas, {total:.0f}s. Revise: {p.path('scenes.json')}")
@@ -245,12 +245,17 @@ def cut_cmd(video: Video, theme: str = "pessoal",
 
 @app.command(name="render")
 def render_cmd(video: Video, theme: str = "pessoal", style: str | None = None,
-               dry_run: Annotated[bool, typer.Option(help="Só mostra o comando")] = False):
-    """Renderiza o scenes.json aprovado com Remotion."""
+               captions: Annotated[str, typer.Option(
+                   help="narration: legenda queimada da narração; none")] = "narration",
+               audio: Annotated[str, typer.Option(
+                   help="original: áudio dos trechos `source`; none")] = "none",
+               dry_run: Annotated[bool, typer.Option(help="Só mostra o plano")] = False):
+    """Renderiza o scenes.json aprovado com Remotion, com legenda e áudio por opção."""
     p = Project.open(video)
     scenes = contracts.load("scenes", p.require("scenes.json", f"reel-studio script {video}"))
     st = contracts.load_style(style or scenes["style"])
-    out = render.execute(scenes, contracts.load_theme(theme), st, p.dir, dry_run)
+    out = render.execute(scenes, contracts.load_theme(theme), st, p.dir, dry_run, p.video,
+                         render.Mix(captions, audio))
     typer.echo(f"vsl: {out}")
 
 

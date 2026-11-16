@@ -73,6 +73,27 @@ def header(theme: dict) -> str:
     ])
 
 
+def narration_chunks(text: str) -> list[str]:
+    words = text.split()
+    return [" ".join(words[i:i + CHUNK_WORDS]) for i in range(0, len(words), CHUNK_WORDS)]
+
+
+def build_scene_ass(scenes: list[dict], durations: list[float], theme: dict) -> str:
+    """Legenda da `narration` de cada cena: blocos de 3 palavras repartidos no tempo da cena."""
+    upper = theme["caption"].get("uppercase", False)
+    lines = [header(theme)]
+    offset = 0.0
+    for scene, dur in zip(scenes, durations, strict=True):
+        blocks = narration_chunks(scene.get("narration", ""))
+        for i, block in enumerate(blocks):
+            a = offset + dur * i / len(blocks)
+            b = offset + dur * (i + 1) / len(blocks)
+            text = _escape(block.upper() if upper else block)
+            lines.append(f"Dialogue: 0,{ts(a)},{ts(b)},Caption,,0,0,0,,{text}")
+        offset += dur
+    return "\n".join(lines) + "\n"
+
+
 def build_ass(transcript: dict, start: float, end: float, theme: dict, hook: str = "") -> str:
     cap = theme["caption"]
     accent = ass_color(theme["colors"]["accent"])

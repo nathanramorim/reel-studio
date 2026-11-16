@@ -86,7 +86,7 @@ uv run reel-studio cut aula.mp4 --theme busize
 uv run reel-studio prompt-script aula.mp4 --style isometric-pastel   # modo VSL
 # o agente escreve roteiro.json a partir do prompt
 uv run reel-studio save-scenes aula.mp4 --style isometric-pastel --theme forge --file roteiro.json
-uv run reel-studio render aula.mp4 --theme forge
+uv run reel-studio render aula.mp4 --theme forge   # --captions narration|none, --audio original|none
 ```
 
 **`correcoes.json`** (opcional, ao lado do vídeo ou em `--glossary`): mapa `errado -> certo` aplicado à transcrição em memória. Uma chave aceita variantes separadas por `|` (`"checaja|checage|checajem": "checagem"`); a mesma variante com dois valores é erro. O tema pode ter `vocabulary` (lista de termos), que junto aos valores do glossário alimenta o prompt do Whisper (`transcribe --theme TEMA`, `--prompt` para texto extra). `save-clips` e `save-scenes` aceitam `--file` e `--style` ou os mesmos valores como argumentos posicionais.

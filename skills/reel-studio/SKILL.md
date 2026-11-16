@@ -53,7 +53,8 @@ Funciona em qualquer agente que leia skills (Claude Code, agy/Antigravity, Codex
    ```
    Mostre as cenas e espere o "sim" antes de:
    ```
-   uv run reel-studio render VIDEO --theme TEMA
+   uv run reel-studio render VIDEO --theme TEMA [--captions narration|none] [--audio original|none]
+   # --captions: legenda queimada da narration (padrão); --audio original: fala dos trechos `source` (todas as cenas)
    ```
    Na primeira vez, `cd RAIZ/render && npm install` (demora, avise antes).
 5. **Sem Claude Code, ou querendo automatizar sem agente no loop:** troque `prompt-suggest`/`save-clips` por `suggest` direto (idem `prompt-script`/`save-scenes` por `script`), com `OPENROUTER_API_KEY` no `.env`. Esse caminho existe só para automação fora de uma sessão com agente.

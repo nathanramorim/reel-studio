@@ -3,6 +3,7 @@
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import { readFileSync, mkdtempSync, rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { inflateSync } from "node:zlib";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -27,9 +28,18 @@ const SCENES = [
     right: { label: "Depois", points: ["Pipeline local", "Minutos por vídeo"] } },
   { type: "cta", dur: 3, narration: "", text: "Quer ver mais?" },
 ];
+/** Props como o motor entrega ao render (paleta e contraste resolvidos em core/render.py, DUP-01). */
+const engineProps = (scenes, themeId, styleId) => {
+  const code = "import json,sys;from reel_studio.core import contracts,render;"
+    + "t=contracts.load_theme(sys.argv[2]);s=contracts.load_style(sys.argv[3]);"
+    + "print(json.dumps(render.props({'scenes':json.loads(sys.argv[1])},t,s)))";
+  const r = spawnSync("uv", ["run", "python", "-c", code, JSON.stringify(scenes), themeId, styleId],
+    { cwd: path.join(repo, "engine"), encoding: "utf8" });
+  if (r.status !== 0) throw new Error(r.stderr);
+  return JSON.parse(r.stdout);
+};
 const STYLES = ["isometric-pastel", "flat-vector-science", "whiteboard-explainer"];
 
-const luminance = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 
 /** Decodifica PNG 8 bits RGB/RGBA sem entrelaçamento. */
@@ -89,7 +99,7 @@ try {
     for (let i = 0; i < SCENES.length; i++) {
       const scene = SCENES[i];
       const logs = [];
-      const inputProps = { scenes: [scene], theme, style, fps: 30, probe: true };
+      const inputProps = { ...engineProps([scene], theme.id, style.id), probe: true };
       const composition = await selectComposition({ serveUrl, id: "Reel", inputProps });
       const out = path.join(tmp, `${style.id}-${scene.type}.png`);
       await renderStill({
@@ -107,13 +117,12 @@ try {
         check(probe.minSize >= 44, `${tag}: menor texto ${probe.minSize}px >= 44px`);
       }
       if (all || styleId) {
-        const bg = hex(style.look.bg ?? theme.colors.bg);
-        const palette = [...(style.look.palette ?? []).map(hex), hex(theme.colors.accent)];
-        const a = analyze(decodePng(readFileSync(out)), style.background === "own" ? bg : hex(theme.colors.bg), palette);
+        const palette = [...inputProps.style.look.palette.map(hex), hex(theme.colors.accent)];
+        const a = analyze(decodePng(readFileSync(out)), hex(theme.colors.bg), palette);
         if (style.id === "isometric-pastel") {
           if (scene.type === "flow") check(a.coverage >= 0.7, `${tag}: cobertura vertical ${(a.coverage * 100).toFixed(0)}% >= 70%`);
           check(a.gap <= 0.25, `${tag}: maior faixa vazia ${(a.gap * 100).toFixed(0)}% <= 25%`);
-          check(luminance(a.corner) > 0.8, `${tag}: fundo claro com tema ${theme.id}`);
+          check(a.corner.every((v, k) => Math.abs(v - hex(theme.colors.bg)[k]) <= 8), `${tag}: fundo do tema ${theme.id}`);
           check(a.colors >= 3, `${tag}: ${a.colors} cores da paleta (>= 3)`);
         }
       }
