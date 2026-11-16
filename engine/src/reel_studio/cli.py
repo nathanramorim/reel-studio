@@ -247,15 +247,16 @@ def cut_cmd(video: Video, theme: str = "pessoal",
 def render_cmd(video: Video, theme: str = "pessoal", style: str | None = None,
                captions: Annotated[str, typer.Option(
                    help="narration: legenda queimada da narração; none")] = "narration",
-               audio: Annotated[str, typer.Option(
-                   help="original: áudio dos trechos `source`; none")] = "none",
+               audio: Annotated[str | None, typer.Option(
+                   help="original: áudio dos trechos `source`; none. "
+                        "Padrão: original se todas as cenas têm `source`")] = None,
                dry_run: Annotated[bool, typer.Option(help="Só mostra o plano")] = False):
     """Renderiza o scenes.json aprovado com Remotion, com legenda e áudio por opção."""
     p = Project.open(video)
     scenes = contracts.load("scenes", p.require("scenes.json", f"reel-studio script {video}"))
     st = contracts.load_style(style or scenes["style"])
     out = render.execute(scenes, contracts.load_theme(theme), st, p.dir, dry_run, p.video,
-                         render.Mix(captions, audio))
+                         render.Mix(captions, audio or render.default_audio(scenes["scenes"])))
     typer.echo(f"vsl: {out}")
 
 

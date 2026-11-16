@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from reel_studio.core import contracts, paths
@@ -56,3 +58,97 @@ def test_cena_aceita_source_e_rejeita_source_incompleto():
     contracts.validate("scenes", {"style": "s", "scenes": [cena]})
     with pytest.raises(ContractError):
         contracts.validate("scenes", {"style": "s", "scenes": [{**cena, "source": {"start": 1}}]})
+
+
+# --- brand (05-02) ---
+def _tema_com_brand(tmp_path, monkeypatch, brand, assets=("brand/logo.svg",)):
+    import json
+    for a in assets:
+        f = tmp_path / "t" / a
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("<svg/>")
+    tema = {"id": "t", "name": "T", "colors": {"bg": "#000000", "surface": "#111111",
+            "text": "#ffffff", "muted": "#999999", "accent": "#4f8ef7"},
+            "fonts": {"title": "Montserrat", "body": "Montserrat"},
+            "caption": {"style": "line", "position": "bottom"}, "cta": {"text": "x"},
+            "brand": brand}
+    (tmp_path / "t.json").write_text(json.dumps(tema))
+    monkeypatch.setattr(paths, "_theme_dirs", lambda: [tmp_path])
+
+
+def test_brand_forge_resolve_ativos_dentro_da_pasta_do_tema():
+    brand = contracts.load_theme("forge")["brand"]
+    pasta = (paths.repo_root() / "themes" / "forge").resolve()
+    for key in ("logo", "mascot"):
+        assert Path(brand[key]).is_absolute() and Path(brand[key]).is_file()
+        assert Path(brand[key]).is_relative_to(pasta)
+    assert brand["panel"]["radius"] == 18 and brand["panel"]["dots"] == 3
+
+
+def test_brand_tema_sem_brand_carrega_igual():
+    assert "brand" not in contracts.load_theme("pessoal")
+
+
+def test_brand_caminho_fora_da_pasta_do_tema_e_rejeitado(tmp_path, monkeypatch):
+    _tema_com_brand(tmp_path, monkeypatch, {"logo": "../fora.svg"})
+    with pytest.raises(ContractError, match="sai da pasta"):
+        contracts.load_theme("t")
+
+
+def test_brand_caminho_absoluto_ou_nao_svg_e_rejeitado(tmp_path, monkeypatch):
+    for ruim in ("/etc/passwd.svg", "brand/logo.png"):
+        _tema_com_brand(tmp_path, monkeypatch, {"logo": ruim})
+        with pytest.raises(ContractError):
+            contracts.load_theme("t")
+
+
+def test_brand_ativo_inexistente_e_rejeitado(tmp_path, monkeypatch):
+    _tema_com_brand(tmp_path, monkeypatch, {"logo": "brand/nao-existe.svg"})
+    with pytest.raises(ContractError, match="não encontrado"):
+        contracts.load_theme("t")
+
+
+def test_brand_null_e_campos_opcionais(tmp_path, monkeypatch):
+    _tema_com_brand(tmp_path, monkeypatch, {"logo": None, "mascot": None})
+    assert contracts.load_theme("t")["brand"]["logo"] is None
+
+
+# --- overlays, media e share (05-03) ---
+def _clip(**extra):
+    return {"clips": [{"id": "clip-01", "start": 10.0, "end": 20.0, "hook": "x", **extra}]}
+
+
+def test_overlays_validos_passam():
+    ov = [{"at": 0, "dur": 2, "type": "hook", "text": "Gancho"},
+          {"at": 8, "dur": 2, "type": "logo"}]
+    assert contracts.validate("clips", _clip(overlays=ov))
+
+
+def test_overlays_fora_do_corte_e_rejeitado():
+    with pytest.raises(ContractError, match="fora do corte"):
+        contracts.validate("clips", _clip(overlays=[{"at": 9, "dur": 2, "type": "cta"}]))
+
+
+def test_overlays_tipo_invalido_e_texto_longo_sao_rejeitados():
+    with pytest.raises(ContractError):
+        contracts.validate("clips", _clip(overlays=[{"at": 0, "dur": 1, "type": "confete"}]))
+    with pytest.raises(ContractError):
+        contracts.validate("clips", _clip(overlays=[{"at": 0, "dur": 1, "type": "hook",
+                                                      "text": "x" * 61}]))
+
+
+def _cena(**extra):
+    return {"style": "isometric-pastel",
+            "scenes": [{"type": "title", "dur": 3, "narration": "n", **extra}]}
+
+
+def test_media_e_share_validos_passam():
+    data = {**_cena(media={"source": {"start": 1, "end": 4}}), "share": "x" * 280, "tone": "direto"}
+    assert contracts.validate("scenes", data)
+
+
+def test_media_invalida_e_share_longo_sao_rejeitados():
+    with pytest.raises(ContractError):
+        contracts.validate("scenes", _cena(media={"source": {"start": 1}}))
+    with pytest.raises(ContractError):
+        contracts.validate("scenes", {**_cena(), "share": "x" * 281})

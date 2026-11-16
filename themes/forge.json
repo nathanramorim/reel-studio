@@ -5,5 +5,6 @@
   "fonts": { "title": "Montserrat", "body": "Montserrat", "mono": "JetBrains Mono" },
   "caption": { "style": "word-highlight", "position": "lower-third", "size": 72, "uppercase": false },
   "logo": null,
+  "brand": { "logo": "brand/logo.svg", "mascot": "brand/mascot.svg", "mono": "JetBrains Mono", "panel": { "radius": 18, "border": "muted", "bar": true, "dots": 3 }, "packet": { "glow": true, "radius": 999 } },
   "cta": { "text": "npx @nathanramorim/forge-sdd init" }
 }
