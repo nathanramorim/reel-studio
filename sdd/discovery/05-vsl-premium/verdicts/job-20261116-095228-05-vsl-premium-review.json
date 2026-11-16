@@ -1,0 +1,17 @@
+{
+  "veredito": "duvida",
+  "achados": [
+    {
+      "verificacao": "S-06",
+      "regra": "SEG-07",
+      "classificacao": "duvida",
+      "severidade": "media",
+      "arquivo": "sdd/spec/adr/adr-0003-voz-gerada.md",
+      "linha": 21,
+      "evidencia": "API conferida na documentação oficial do repositório (o context7 não estava exposto à sessão do Builder). ... licença dos pesos no Hugging Face a reconfirmar antes de publicar vídeos.",
+      "explicacao": "A spec manda consultar o context7 na versão exata e confirmar a licença dos pesos antes de adicionar o extra tts (chatterbox-tts\u003e=0.1.4 em engine/pyproject.toml). O ADR-0003 registra que nenhuma das duas verificações foi feita e deixa o status como proposto. O uv.lock também re-resolveu pacotes que já existiam.",
+      "correcao": "A pessoa confirma se aceita mergear com a licença dos pesos pendente e a ADR-0003 em 'proposto', ou se isso deve ser resolvido antes."
+    }
+  ],
+  "resumo": "Conforme na verificação feita: 245 testes passam, ruff limpo, tsc sem erros. Os testes de regressão (C8) existem. Consentimento de voz e --dry-run da voz respeitam ARQ-05 e SEG-05. ffmpeg roda por lista de argumentos. A única dúvida é a SEG-07: licença dos pesos do Chatterbox e consulta ao context7 pendentes, com a ADR-0003 ainda 'proposto'. Não executei os critérios manuais C3, C4 e C9 a C12, nem o check-render.mjs."
+}

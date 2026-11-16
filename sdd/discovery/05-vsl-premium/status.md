@@ -1,7 +1,7 @@
 # Status — 05 Reels premium
 
-**Status:** Ondas 1 e 2 mescladas ou em PR (#4, #5); Ondas 3 e 4 (05-06 a 05-12) implementadas na branch `feat/05-vsl-premium`, aguardando Reviewer.
+**Status:** Ondas 1 e 2 mescladas (PRs #4 e #6); Ondas 3 e 4 (05-06 a 05-12) no PR #5, escalado pelo Reviewer (SEG-07: licença dos pesos do Chatterbox e ADR-0003 em `proposto`); 05-13 mapeada, não despachada.
 
-**Próximo passo:** Reviewer; merge. C9, C10 e C12 (manuais) ficam para quem tem a gravação 14.33.02 e o extra `tts`.
+**Próximo passo:** validar as Ondas 3 e 4 (C12 e ADR-0003); decidir os chips (05-13) e despachar a 05-13.
 
-**A confirmar:** ADR-0003 (`proposto`) vira `aprovado` após o C12; licença dos pesos do Chatterbox.
+**A confirmar:** aceitar o PR #5 com a licença dos pesos pendente; chips sobre a gravação.
