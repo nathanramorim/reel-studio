@@ -11,3 +11,4 @@
 | 4 | feat-03-07 preflight do filtro `ass` no `cut` | — | sim | SEG-03, ARQ-05, DUP-03, TST-01 |
 | 5 | feat-03-08 modelo maior e `initial_prompt` | 05, 03 | não | SEG-01, ARQ-05, ARQ-10, DUP-01, TST-01 |
 | 5 | feat-03-09 variantes regionais no glossário | 03 | sim | SEG-01, ARQ-06, DUP-01, TST-01 |
+| 6 | feat-03-10 região por densidade, na proporção da faixa | 02 | não | SEG-03, ARQ-05, ARQ-10, DUP-03, TST-01 |
