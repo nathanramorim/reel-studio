@@ -29,3 +29,16 @@ def test_pelo_menos_quatro_estilos():
 
 def test_temas_esperados_existem():
     assert {"pessoal", "busize", "forge", "exemplo"} <= set(paths.list_themes())
+
+
+def test_estilo_isometrico_declara_ink_e_fundo_proprio():
+    style = contracts.load_style("isometric-pastel")
+    assert style["background"] == "own"
+    assert style["look"]["ink"].startswith("#")
+
+
+def test_look_ink_aceita_texto_e_rejeita_outro_tipo():
+    style = contracts.load_style("isometric-pastel")
+    contracts.validate("style", style)
+    with pytest.raises(ContractError):
+        contracts.validate("style", {**style, "look": {**style["look"], "ink": 7}})

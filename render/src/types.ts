@@ -16,7 +16,7 @@ export type Style = {
   name: string;
   renderer: "remotion" | "manim";
   background: "theme" | "own";
-  look: { bg?: string; stroke?: string; palette?: string[]; font?: string; motion?: string };
+  look: { bg?: string; ink?: string; stroke?: string; palette?: string[]; font?: string; motion?: string };
   scene_types: string[];
 };
 
@@ -37,4 +37,5 @@ export type ReelProps = {
   theme: Theme;
   style: Style;
   fps: number;
+  probe?: boolean;
 };

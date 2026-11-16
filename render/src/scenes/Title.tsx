@@ -2,7 +2,8 @@ import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import { Theme, Style } from "../types";
 import { popIn } from "../motion";
-import { fitFontSize } from "../text-fit";
+import { fontFamily } from "../fonts";
+import { titleSize } from "../scale";
 
 export const Title: React.FC<{ text: string; theme: Theme; style: Style }> = ({
   text, theme, style,
@@ -10,7 +11,7 @@ export const Title: React.FC<{ text: string; theme: Theme; style: Style }> = ({
   const frame = useCurrentFrame();
   const { fps, width } = useVideoConfig();
   const scale = popIn(frame, fps);
-  const size = fitFontSize(text, width - 160, 96, 48);
+  const size = titleSize(text, width - 160);
   const accent = style.look.palette?.[0] ?? theme.colors.accent;
   return (
     <div style={{
@@ -18,7 +19,7 @@ export const Title: React.FC<{ text: string; theme: Theme; style: Style }> = ({
       justifyContent: "center", padding: "0 80px", textAlign: "center",
     }}>
       <div style={{
-        fontFamily: theme.fonts.title, fontWeight: 700, fontSize: size,
+        fontFamily: fontFamily(theme.fonts.title), fontWeight: 700, fontSize: size,
         color: theme.colors.text, lineHeight: 1.15, transform: `scale(${scale})`,
       }}>
         {text.split(" ").map((word, i) => (

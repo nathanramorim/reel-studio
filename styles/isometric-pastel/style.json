@@ -4,7 +4,7 @@
   "source": { "url": "https://www.futurepedia.io/resources/ai-style-atlas/view", "ref": "Popular Explainer Looks" },
   "renderer": "remotion",
   "best_for": "Processos e fluxos",
-  "background": "theme",
-  "look": { "bg": "#f6f1ea", "stroke": "none", "palette": ["#bfdbfe", "#c7f0db", "#fde2c8", "#e9d5ff", "#ff7f6e"], "font": "Montserrat", "motion": "slide" },
+  "background": "own",
+  "look": { "bg": "#f6f1ea", "ink": "#1f2430", "stroke": "none", "palette": ["#bfdbfe", "#c7f0db", "#fde2c8", "#e9d5ff"], "font": "Montserrat", "motion": "slide" },
   "scene_types": ["title", "highlight", "flow", "list", "compare", "cta"]
 }

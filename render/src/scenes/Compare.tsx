@@ -1,5 +1,7 @@
 import React from "react";
 import { Theme, Style, SidePoints } from "../types";
+import { fontFamily } from "../fonts";
+import { SCALE } from "../scale";
 
 const Side: React.FC<{ side?: SidePoints; theme: Theme; accent: string }> = ({
   side, theme, accent,
@@ -9,13 +11,13 @@ const Side: React.FC<{ side?: SidePoints; theme: Theme; accent: string }> = ({
     border: `2px solid ${theme.colors.muted}22`,
   }}>
     <div style={{
-      fontFamily: theme.fonts.title, fontWeight: 800, fontSize: 32, color: accent, marginBottom: 16,
+      fontFamily: fontFamily(theme.fonts.title), fontWeight: 800, fontSize: SCALE.secondary, color: accent, marginBottom: 16,
     }}>
       {side?.label ?? ""}
     </div>
     {(side?.points ?? []).map((p, i) => (
       <div key={i} style={{
-        fontFamily: theme.fonts.body, fontSize: 26, color: theme.colors.text, marginBottom: 10,
+        fontFamily: fontFamily(theme.fonts.body), fontSize: SCALE.min, color: theme.colors.text, marginBottom: 10,
       }}>
         — {p}
       </div>

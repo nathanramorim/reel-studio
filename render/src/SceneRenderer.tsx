@@ -8,11 +8,14 @@ import { ListScene } from "./scenes/ListScene";
 import { Compare } from "./scenes/Compare";
 import { Chart } from "./scenes/Chart";
 import { Cta } from "./scenes/Cta";
+import { styleScenes } from "./styleScenes";
 
 /** Único ponto que liga type -> componente (DUP-01): novo tipo de cena entra só aqui. */
 export const SceneRenderer: React.FC<{ scene: Scene; theme: Theme; style: Style }> = ({
   scene, theme, style,
 }) => {
+  const Variant = styleScenes[style.id]?.[scene.type];
+  if (Variant) return <Variant scene={scene} theme={theme} style={style} />;
   switch (scene.type) {
     case "title":
       return <Title text={scene.text ?? ""} theme={theme} style={style} />;
