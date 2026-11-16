@@ -1,8 +1,8 @@
 {
-  "feature_id": "feat-05-05",
+  "feature_id": "feat-05-14",
   "branch": "feat/05-vsl-premium",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-16T09:12:57Z",
+  "updated_at": "2026-11-16T12:32:45Z",
   "items": [
     {
       "task_id": "feat-05-01-zona-segura-e-leitura",
@@ -69,6 +69,23 @@
       "status": "queued",
       "rules": [
         "ARQ-06",
+        "DUP-01",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-05-14-corte-dividido-com-abertura-e-apresentador",
+      "title": "feat-05-14-corte-dividido-com-abertura-e-apresentador — Corte dividido, abertura animada e apresentador",
+      "spec_path": "sdd/discovery/05-vsl-premium/features/feat-05-14-corte-dividido-com-abertura-e-apresentador.md",
+      "status": "queued",
+      "rules": [
+        "SEG-03",
+        "ARQ-05",
+        "ARQ-06",
+        "ARQ-10",
         "DUP-01",
         "DUP-03",
         "TST-01"
