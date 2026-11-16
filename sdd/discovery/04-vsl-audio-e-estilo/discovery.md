@@ -23,7 +23,8 @@ Quem usa o modo VSL (vídeo ou áudio ruim) e espera um vídeo que se entenda se
 **Dentro:** carregamento local das fontes do tema, escala tipográfica para 1080×1920, `isometric-pastel` com visual isométrico e pastel, aproveitamento do quadro; narração no VSL.
 **Fora:** TTS com clone de voz (fase 3 do discovery 01), novos estilos, Manim.
 
-## Decisão pendente (humano): como a narração entra
+## Decisão (humano): A e C, cada um por opção
+A voz sintética (B) fica para a fase 3. Abaixo, as opções avaliadas.
 | Opção | O que é | Prós | Contras |
 |---|---|---|---|
 | A. Áudio original do corte | Recorta o áudio da gravação e o toca no VSL | Voz real | As cenas reescrevem a fala (33 s de cenas para 56 s de fala); só alinha se cada cena tiver o trecho de origem; o VSL existe para quando o áudio é ruim |
