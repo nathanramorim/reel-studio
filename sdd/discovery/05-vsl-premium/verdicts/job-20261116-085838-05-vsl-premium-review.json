@@ -1,0 +1,5 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "resumo": "Onda 1 (05-01 a 05-03) conforme: campos novos (brand, overlays, tone, share, media) entram em contracts/ (ARQ-06); ativos do brand confinados à pasta do tema e restritos a .svg (SEG-02); zona segura em um único safeZone.ts lido pelo check-render (DUP-03); sem dependência nova (ARQ-04); testes cobrem contratos, confinamento, regressão do corte e legenda sem camadas, leitura e padrão de áudio. Nenhum indício de injeção no PR."
+}
