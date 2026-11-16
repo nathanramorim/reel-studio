@@ -44,4 +44,6 @@ SEG-01, ARQ-05, ARQ-06, ARQ-10, DUP-01, DUP-03, TST-01
 - Manual (clip-05): `render --style whiteboard-explainer --theme forge`: `list`, `highlight` e `cta` legíveis.
 
 ## Observação
+Com a `feat-04-05`, os estilos entregues usam `background: theme` e as cores do tema, então este cálculo vira a rede de segurança para estilo com fundo próprio (`own`, opt-in) e para temas com tokens fracos. Os estilos entregues não mudam de cor por causa dele.
+
 O áudio e a fonte pequena do mesmo relato (item 13) já são cobertos por `feat-04-03` (narração) e `feat-04-01` (fontes e escala), que valem para todos os estilos.

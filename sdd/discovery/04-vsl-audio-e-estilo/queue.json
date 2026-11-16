@@ -1,8 +1,8 @@
 {
-  "feature_id": "feat-04-03",
+  "feature_id": "feat-04-04",
   "branch": "feat/04-vsl-audio-e-estilo",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-16T07:20:29Z",
+  "updated_at": "2026-11-16T07:21:41Z",
   "items": [
     {
       "task_id": "feat-04-01-fontes-e-escala",
@@ -42,6 +42,23 @@
         "SEG-03",
         "ARQ-05",
         "ARQ-06",
+        "DUP-03",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 0
+    },
+    {
+      "task_id": "feat-04-04-contraste-estilo-tema",
+      "title": "feat-04-04-contraste-estilo-tema — Cor do texto pelo fundo do estilo (contraste mínimo)",
+      "spec_path": "sdd/discovery/04-vsl-audio-e-estilo/features/feat-04-04-contraste-estilo-tema.md",
+      "status": "queued",
+      "rules": [
+        "SEG-01",
+        "ARQ-05",
+        "ARQ-06",
+        "ARQ-10",
+        "DUP-01",
         "DUP-03",
         "TST-01"
       ],

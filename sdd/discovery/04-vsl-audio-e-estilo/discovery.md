@@ -17,7 +17,7 @@ Quem usa o modo VSL (vídeo ou áudio ruim) e espera um vídeo que se entenda se
 
 ## Regras de negócio
 - O vídeo VSL tem de ser compreensível sozinho: a narração precisa estar no vídeo, como fala ou como legenda.
-- Estilo e tema continuam combináveis (ADR-0001): o estilo define a linguagem visual; o tema entrega acento, fontes e CTA.
+- Estilo e tema continuam combináveis (ADR-0001): o estilo define a animação e a forma; **todas as cores** (fundo, preenchimentos, texto) vêm do tema, isto é, do design system do projeto que está sendo gerado (decisão do humano).
 - Dados locais: nada de rede no render (fontes empacotadas, não baixadas).
 - O LLM nunca vê mídia.
 
