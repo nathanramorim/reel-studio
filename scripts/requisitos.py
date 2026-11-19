@@ -7,13 +7,14 @@
 
 Uso:
   uv run scripts/requisitos.py checar [--json] [--raiz PASTA]
-  uv run scripts/requisitos.py instalar [--sim] [--raiz PASTA]
+  uv run scripts/requisitos.py instalar [--sim] [--raiz PASTA] [item ...]
 
 Roda antes de clonar (pela URL do arquivo) e antes dos extras: só usa a biblioteca padrão.
 `checar` mostra cada requisito (ok, faltando ou opcional) e sai com código 1 se faltar um
 obrigatório. `instalar` mostra o comando de cada item que falta e pergunta antes de rodar;
-com `--sim`, roda sem perguntar. Nunca aceita licença nem declaração por você e nunca lê
-chaves: esses itens só são explicados.
+com `--sim`, roda sem perguntar. Com nomes de itens, cuida só deles (é assim que a IA, sem
+terminal, roda item a item o que você aprovou: `instalar --sim ffmpeg`). Nunca aceita
+licença nem declaração por você e nunca lê chaves: esses itens só são explicados.
 """
 
 from __future__ import annotations
@@ -221,7 +222,12 @@ def _hf_cache(amb: Ambiente) -> Path:
 def check_whisper_modelo(amb: Ambiente) -> Requisito:
     modelo = amb.env.get("REEL_WHISPER_MODEL") or "small"
     if modelo not in WHISPER_MODELOS:
-        modelo = "small"
+        # mesma lista fechada do motor (core/transcribe.resolve_model), que recusa o valor
+        return Requisito(
+            "whisper-modelo", FALTANDO, "", True, SEU,
+            "REEL_WHISPER_MODEL tem um valor que o motor recusa, e a transcrição vai falhar. "
+            f"Use um destes: {', '.join(WHISPER_MODELOS)} (ou apague a variável para usar o "
+            "small).")
     nome = f"whisper-{modelo}"
     explic = (f"Modelo do Whisper (REEL_WHISPER_MODEL, padrão small, cerca de 480 MB) em "
               f"{_hf_cache(amb)}. Baixa sozinho na primeira transcrição; adiantar evita a espera.")
@@ -278,7 +284,8 @@ def _versao_remotion(raiz: Path) -> str:
 
 
 def check_render_npm(amb: Ambiente) -> Requisito:
-    explic = "Pacotes do render (Remotion), com `npm install` na pasta render/ (cerca de 300 MB)."
+    explic = ("Pacotes do render (Remotion), com `npm install` na pasta render/ (cerca de 700 MB, "
+              "já com o Chrome Headless Shell).")
     if amb.raiz is None:
         return Requisito("render-npm", OPCIONAL, "", False, PROJETO, f"{explic} {SEM_RAIZ}")
     render = amb.raiz / "render"
@@ -292,7 +299,7 @@ def check_render_npm(amb: Ambiente) -> Requisito:
 
 
 def check_chrome(amb: Ambiente) -> Requisito:
-    explic = ("Chrome Headless Shell que o Remotion usa para desenhar o vídeo (cerca de 100 MB, "
+    explic = ("Chrome Headless Shell que o Remotion usa para desenhar o vídeo (cerca de 200 MB, "
               "em render/node_modules/.remotion/). Baixa sozinho no primeiro render.")
     if amb.raiz is None:
         return Requisito("chrome-headless", OPCIONAL, "", False, DOWNLOAD, f"{explic} {SEM_RAIZ}")
@@ -372,13 +379,23 @@ def em_json(reqs: list[Requisito]) -> str:
 def instalar(amb: Ambiente, sim: bool, interativo: bool,
              perguntar: Callable[[str], str] = input,
              saida: Callable[[str], None] = print,
-             executor: Callable[[list[str], str | None], tuple[int, str]] | None = None) -> int:
+             executor: Callable[[list[str], str | None], tuple[int, str]] | None = None,
+             itens: list[str] | None = None) -> int:
     """Mostra e roda os comandos do que falta. Idempotente: o que já está ok é pulado.
 
     A checagem usa o executor do ambiente (silencioso); a instalação usa `executor`.
     """
     executor = executor or amb.executar
-    pendentes = [r for r in checar(amb) if r.estado != OK]
+    reqs = checar(amb)
+    if itens:
+        validos = [r.nome for r in reqs]
+        desconhecidos = [n for n in itens if n not in validos]
+        if desconhecidos:
+            saida(f"Item desconhecido: {', '.join(desconhecidos)}. "
+                  f"Itens válidos: {', '.join(validos)}.")
+            return 2
+        reqs = [r for r in reqs if r.nome in itens]
+    pendentes = [r for r in reqs if r.estado != OK]
     if not pendentes:
         saida("Nada a instalar: todos os requisitos estão ok.")
         return 0
@@ -424,6 +441,8 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--json", action="store_true", help="saída em JSON")
     i = sub.add_parser("instalar", help="mostra e roda os comandos do que falta")
     i.add_argument("--sim", action="store_true", help="roda sem perguntar item a item")
+    i.add_argument("itens", nargs="*", metavar="item",
+                   help="só estes itens (nomes da coluna Requisito); sem nomes, tudo o que falta")
     for s in (c, i):
         s.add_argument("--raiz", help="pasta do reel-studio (padrão: detecta)")
     args = p.parse_args(argv)
@@ -432,7 +451,8 @@ def main(argv: list[str] | None = None) -> int:
         reqs = checar(amb)
         print(em_json(reqs) if args.json else em_tabela(reqs))
         return 1 if falta_obrigatorio(reqs) else 0
-    return instalar(amb, args.sim, sys.stdin.isatty(), executor=_rodar_visivel)
+    return instalar(amb, args.sim, sys.stdin.isatty(), executor=_rodar_visivel,
+                    itens=args.itens)
 
 
 if __name__ == "__main__":

@@ -135,9 +135,14 @@ def test_whisper_respeita_reel_whisper_model(tmp_path):
     assert "WhisperModel('medium')" in r["whisper-medium"].comandos[0][-1]
 
 
-def test_whisper_com_valor_invalido_volta_ao_small(tmp_path):
-    r = por_nome(req.checar(ambiente(tmp_path, env={"REEL_WHISPER_MODEL": "x'; rm"})))
-    assert r["whisper-small"].estado == req.OK
+def test_whisper_com_valor_invalido_fica_faltando_e_avisa(tmp_path):
+    reqs = req.checar(ambiente(tmp_path, env={"REEL_WHISPER_MODEL": "x'; rm"}))
+    r = por_nome(reqs)["whisper-modelo"]
+    assert r.estado == req.FALTANDO and r.obrigatorio and r.tipo == req.SEU
+    assert r.comandos == []
+    assert "o motor recusa" in r.explicacao and "large-v3" in r.explicacao
+    assert "x'; rm" not in req.em_tabela(reqs)
+    assert req.falta_obrigatorio(reqs)
 
 
 def test_openrouter_nunca_le_a_chave(tmp_path):
@@ -240,3 +245,31 @@ def raiz_falsa_em(pasta: Path) -> None:
     (pasta / "engine" / "pyproject.toml").write_text("[project]\n")
     (pasta / "render").mkdir()
     (pasta / "render" / "package.json").write_text("{}")
+
+
+def test_instalar_com_item_cuida_so_dele(tmp_path):
+    amb = ambiente(tmp_path, programas=TODOS - {"ffmpeg"}, extras_ok=False)
+    codigo, rodados, texto = _instalar(amb, sim=True, interativo=False, itens=["extra-voice"])
+    assert codigo == 0
+    assert [c for c, _ in rodados] == [["uv", "sync", "--inexact", "--extra", "voice"]]
+    assert "ffmpeg" not in texto
+
+
+def test_instalar_item_ja_ok_nao_roda_nada(tmp_path):
+    codigo, rodados, texto = _instalar(ambiente(tmp_path), sim=True, interativo=False,
+                                       itens=["ffmpeg"])
+    assert codigo == 0 and rodados == []
+    assert "Nada a instalar" in texto
+
+
+def test_instalar_item_desconhecido_sai_2_com_a_lista(tmp_path):
+    codigo, rodados, texto = _instalar(ambiente(tmp_path), sim=True, interativo=False,
+                                       itens=["ffmpeg", "nao-existe"])
+    assert codigo == 2 and rodados == []
+    assert "nao-existe" in texto and "Itens válidos:" in texto and "extra-transcribe" in texto
+
+
+def test_main_instalar_repassa_os_itens(monkeypatch, tmp_path):
+    amb = ambiente(tmp_path)
+    monkeypatch.setattr(req, "Ambiente", lambda raiz: amb)
+    assert req.main(["instalar", "--sim", "nao-existe"]) == 2
