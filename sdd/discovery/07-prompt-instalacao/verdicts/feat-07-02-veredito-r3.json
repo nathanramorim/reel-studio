@@ -1,0 +1,6 @@
+{
+  "veredito": "conforme",
+  "achados": [],
+  "candidate_skill": null,
+  "resumo": "Rodada 3 sobre f48fb60 (diff 1f8b449..HEAD). Camada A toda verde: validar 0 (21 requisitos, 3 sistemas); checar --json com JSON válido (sai 1 só porque o extra transcribe falta nesta máquina); pytest 191 passando e 1 pulado; ruff limpo; sha256 dos 3 arquivos = skills.lock = 5f63e02; prompt literal no README antes de ## Instalação, 0 'brew install uv' e 0 'install.sh | sh'; verificador do readme-studio (d60f02e) requisitos: ok; CI verde em f48fb60 no ubuntu, windows e macos; forge gate 0. Achados da r2 resolvidos (corpo do PR com htdemucs no Hugging Face; limite 3.11/3.12 atribuído só ao torch 2.2.2 no toml, spec e README; rodapé duplicado corrigido). Plataformas conferidas pacote a pacote no uv.lock (torch cp311/cp312 com CUDA só no Linux x64, onnxruntime sem macOS x86_64, av e opencv sem win_arm64, opencv macOS 14+ x86_64, sphn sem aarch64, torchaudio 2.11.0 sem artefato, demucs 4.0.1 só sdist) e no Remotion 4.0.543 (caminho do Chrome, sem Windows arm64). Licença do Remotion pessoa, OpenRouter credencial, Homebrew não é pré-requisito, versão 0.3.0, temas e perfis intocados, sem injeção. Observações sem achado: duas linhas antigas do resolucao-de-problemas.md (npm install e uv sync --extra transcribe sem --python 3.12) e render/package.json em 0.1.0 como antes."
+}

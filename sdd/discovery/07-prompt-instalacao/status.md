@@ -1,7 +1,7 @@
 # Status — 07 Prompt de instalação para a IA
 
-**Status:** feat-07-01 aprovada na Camada B r4 (`conforme`, commit 75fccaf; r1 a r3 `duvida`, achados corrigidos; pareceres em `verdicts/`). PR #8 aberto, sem merge.
+**Status:** feat-07-01 (0.2.0) e feat-07-02 (0.3.0, motor multiplataforma `requisitos-para-ia@5f63e02`) aprovadas na Camada B (07-02: r3 conforme; r1 e r2 violacao, corrigidas). CI verde em ubuntu, windows e macos. PR #8 aberto, sem merge.
 
 **Próximo passo:** merge humano (Camada C).
 
-**Sobras:** rótulo "Este item é seu" nos itens do projeto antes do clone (dúvida baixa da r4); RAM de 8 GB e PyTorch ~1 GB não medidos; Linux e Windows não testados; a URL raw só funciona depois do merge na `main`.
+**Sobras:** Mac Intel e Windows arm64 sem suporte (alternativa WSL ou x64); Linux e Windows sem teste de vídeo; RAM de 8 GB não medida; URLs raw só após o merge; motor já tem 1775d2d (fica no 5f63e02); 2 linhas antigas no resolucao-de-problemas.md; temas e perfis pessoais em follow-up.
