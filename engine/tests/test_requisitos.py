@@ -94,7 +94,18 @@ def test_tudo_ok_sem_obrigatorio_faltando(tmp_path):
 def test_ffmpeg_ausente_e_obrigatorio_com_brew(tmp_path):
     r = por_nome(req.checar(ambiente(tmp_path, programas=TODOS - {"ffmpeg"})))
     assert r["ffmpeg"].estado == req.FALTANDO and r["ffmpeg"].obrigatorio
-    assert r["ffmpeg"].comandos == [["brew", "install", "ffmpeg-full"]]
+    assert r["ffmpeg"].comandos == [
+        ["brew", "install", "ffmpeg-full"],
+        ["brew", "link", "--overwrite", "--force", "ffmpeg-full"],
+    ]
+
+
+def test_ffmpeg_ausente_sob_rosetta_usa_arch_nos_dois_comandos(tmp_path):
+    amb = ambiente(tmp_path, programas=TODOS - {"ffmpeg"}, rosetta=True)
+    assert por_nome(req.checar(amb))["ffmpeg"].comandos == [
+        ["arch", "-arm64", "brew", "install", "ffmpeg-full"],
+        ["arch", "-arm64", "brew", "link", "--overwrite", "--force", "ffmpeg-full"],
+    ]
 
 
 def test_ffmpeg_sem_libass_pede_ffmpeg_full_e_link(tmp_path):

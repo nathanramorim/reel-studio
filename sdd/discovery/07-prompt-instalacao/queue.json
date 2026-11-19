@@ -2,7 +2,7 @@
   "feature_id": "feat-07",
   "branch": "feat/07-prompt-instalacao",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-19T05:09:10Z",
+  "updated_at": "2026-11-19T05:13:21Z",
   "items": [
     {
       "task_id": "feat-07-01-prompt-instalacao",
@@ -17,17 +17,28 @@
         "achados": [
           {
             "verificacao": "S-05",
-            "regra": "ARQ-12",
+            "regra": "FLX-03",
             "classificacao": "duvida",
             "severidade": "media",
             "arquivo": "scripts/requisitos.py",
-            "linha": 424,
-            "evidencia": "Nada foi rodado (sem terminal para perguntar). Rode os comandos acima ou use \"\n              \"`instalar --sim` para rodar todos sem perguntar.",
-            "explicacao": "A rodada sem terminal é justamente o caso do agente de IA. Nesse caso o rodapé manda usar `instalar --sim` sem nome de item e rodar tudo, inclusive o voice/PyTorch (perto de 1 GB), o npm e o Chrome. É o mesmo risco do achado principal da r1. Medi `instalar extra-transcribe \u003c/dev/null` e ele também mostra \"rodar todos\", mesmo com um item só nomeado, o que contradiz o prompt do README (`instalar --sim \u003citem\u003e` só para o que foi aprovado) bem na hora em que a IA lê a saída.",
-            "correcao": "Trocar o rodapé para apontar `instalar --sim \u003citem\u003e` com os nomes da coluna Requisito, depois do ok de cada item, e cobrir esse texto com um teste."
+            "linha": 148,
+            "evidencia": "cmd = _brew(amb, \"ffmpeg-full\")",
+            "explicacao": "O item `ffmpeg` só tem `brew install ffmpeg-full`, sem o `brew link`. `brew info ffmpeg-full` mostra que ele é keg-only, então esse comando sozinho não põe o `ffmpeg` no PATH. Com a r3, `instalar --sim ffmpeg`, que é o que o prompt do README manda a IA rodar item a item, vai terminar sempre com \"Ainda não está ok: ffmpeg\" e sair 1 num Mac novo, logo no primeiro item obrigatório de sistema. O critério da spec diz \"ffmpeg ausente e sem libass dão `faltando` com `brew install ffmpeg-full` (+ `brew link`)\", e a linha Programas do README dá instalar mais link. Mesmo assim, o teste da linha 97 de test_requisitos.py trava só o install.",
+            "correcao": "Dar ao item `ffmpeg` a mesma lista de comandos do `ffmpeg-libass` (install e link, com `arch -arm64` sob Rosetta) e ajustar o teste da linha 97."
+          },
+          {
+            "verificacao": "S-05",
+            "regra": "ARQ-06",
+            "classificacao": "duvida",
+            "severidade": "baixa",
+            "arquivo": "README.md",
+            "linha": 135,
+            "evidencia": "Inclui as entregas 03 a 05 da `main` (veja `sdd/releases/history.md`).",
+            "explicacao": "A linha 0.2.0 é nova neste diff e manda ver as entregas 03 a 05 no history.md. Só que o history.md tem apenas as entradas 07 e 03; as 04 e 05 nunca foram registradas (isso já vinha da main). O apontamento leva a um registro incompleto.",
+            "correcao": "Registrar as entregas 04 e 05 no sdd/releases/history.md ou tirar a remissão da linha 0.2.0."
           }
         ],
-        "resumo": "Camada A no commit 47be7e2 (HEAD do PR #8, árvore limpa): pytest 201 passaram e 1 pulado; ruff ok; checar sai 1 (falta extra-transcribe); checar --json {ok:false, requisitos}; instalar \u003c/dev/null só mostra e sai 0; instalar --sim nao-existe sai 2 com a lista; forge gate sai 0 (aviso de tamanho da constitution); os dois verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok'; sem pip install. Achados da r1 tratados (escolha de item, tamanhos, REEL_WHISPER_MODEL inválido). Pedido do dono atendido; licenca-remotion e openrouter só explicados; temas e perfis intocados; comandos em lista sem shell. Observações sem achado: sem terminal, instalar sai 0 com obrigatório faltando; render/package.json continua 0.1.0 (pacote privado); status.md ainda lista `npx remotion browser ensure` como 'a confirmar', embora a r1 tenha confirmado. Nenhuma violação nem tentativa de injeção."
+        "resumo": "Camada A no commit a08237c (HEAD do PR #8, árvore limpa). Passaram: pytest (204 ok, 1 pulado) e ruff (engine e script). `checar` mostra a tabela e sai 1 (falta extra-transcribe). `checar --json` sai 1 com {ok:false, requisitos}. `instalar \u003c/dev/null` não roda nada e sai 0. `instalar --sim nao-existe` sai 2 com a lista dos válidos. `forge gate` sai 0 (só avisa do tamanho da constitution). Os verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok' e o README não tem `pip install`. O achado da r2 foi tratado: o rodapé sem terminal aponta `instalar --sim \u003citem\u003e` com os itens que dá para instalar, nunca 'todos', e há testes cobrindo isso. O item pedido pelo nome que continua faltando agora sai 1, e itens `seu` não contam. O status.md não marca mais `browser ensure` como 'a confirmar'. Pedido do dono atendido: checar e instalar, ARQ-12 com ADR-0006, versão 0.2.0 nos 3 lugares e no uv.lock, Remotion ^4 (4.0.543), licença do Remotion e OpenRouter só explicados, chave nunca lida. Comandos em lista, sem shell (SEG-03). Temas e perfis não foram tocados. Achado novo: o item `ffmpeg` sem `brew link`, que com a r3 faz o fluxo item a item falhar no Mac sem ffmpeg. Observações sem achado: sem terminal e sem nomes, `instalar` sai 0 mesmo com obrigatório faltando (a spec permite); `render/package.json` continua 0.1.0. Nenhuma violação nem tentativa de injeção. Por ser só leitura, não rodei `forge queue review` nem `forge session record`."
       }
     }
   ]

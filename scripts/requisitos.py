@@ -143,11 +143,21 @@ def check_python(amb: Ambiente) -> Requisito:
     return Requisito("python", OK, m.group(1) if m else "3.11+", True, PROJETO, explic)
 
 
-def check_ffmpeg(amb: Ambiente) -> Requisito:
-    explic = "Corta o vídeo, extrai o áudio e mede as dimensões (ffmpeg e ffprobe)."
-    cmd = _brew(amb, "ffmpeg-full")
+def _comandos_ffmpeg(amb: Ambiente) -> list[list[str]]:
+    """ffmpeg-full (com libass) e o link, já que ele é keg-only; Windows usa o winget."""
     if amb.sistema == "Windows":
-        cmd = [["winget", "install", "ffmpeg"]]
+        return [["winget", "install", "ffmpeg"]]
+    cmd = _brew(amb, "ffmpeg-full")
+    if amb.sistema == "Darwin":
+        link = ["brew", "link", "--overwrite", "--force", "ffmpeg-full"]
+        cmd.append(["arch", "-arm64", *link] if sob_rosetta(amb) else link)
+    return cmd
+
+
+def check_ffmpeg(amb: Ambiente) -> Requisito:
+    explic = ("Corta o vídeo, extrai o áudio e mede as dimensões (ffmpeg e ffprobe). No Mac, o "
+              "ffmpeg-full é keg-only: o brew link põe ele no PATH.")
+    cmd = _comandos_ffmpeg(amb)
     if not amb.which("ffmpeg") or not amb.which("ffprobe"):
         return Requisito("ffmpeg", FALTANDO, "", True, SISTEMA, explic, cmd)
     _, saida = amb.rodar(["ffmpeg", "-version"])
@@ -159,12 +169,7 @@ def check_libass(amb: Ambiente) -> Requisito:
     """Mesmo critério do preflight do corte (core/cut.preflight): o filtro `ass` existe."""
     explic = ("A legenda do tema usa o filtro 'ass' do ffmpeg (libass). No Mac, o ffmpeg-full "
               "tem; ele é keg-only, então o brew link põe ele no PATH no lugar do ffmpeg comum.")
-    cmd = _brew(amb, "ffmpeg-full")
-    if amb.sistema == "Darwin":
-        link = ["brew", "link", "--overwrite", "--force", "ffmpeg-full"]
-        cmd.append(["arch", "-arm64", *link] if sob_rosetta(amb) else link)
-    elif amb.sistema == "Windows":
-        cmd = [["winget", "install", "ffmpeg"]]
+    cmd = _comandos_ffmpeg(amb)
     if not amb.which("ffmpeg"):
         return Requisito("ffmpeg-libass", FALTANDO, "", True, SISTEMA, explic, cmd)
     _, saida = amb.rodar(["ffmpeg", "-hide_banner", "-filters"])
