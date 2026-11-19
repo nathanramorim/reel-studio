@@ -4,8 +4,11 @@
 # - Python 3.11 ou 3.12: o uv.lock fixa torch 2.2.2 e onnxruntime 1.32.0, sem wheel para 3.13+.
 # - extra transcribe (faster-whisper -> onnxruntime 1.32.0): wheel para macOS 14+ arm64, Linux x64 e arm64 e
 #   Windows x64; sem wheel para Mac Intel; av sem wheel para Windows arm64.
-# - extra voice (demucs + torch 2.2.2): Linux arm64 compila sphn (Rust); Windows arm64 sem torch.
-# - extra vision (opencv-python-headless 4.14): sem wheel para Mac Intel nem Windows arm64 no lock.
+# - extra voice (demucs 4.1.0 + torch 2.2.2): Linux arm64 compila sphn (Rust); Windows arm64 sem torch; no Mac
+#   Intel o lock cai no demucs 4.0.1 com torchaudio 2.11.0 sem artefato. O htdemucs do demucs 4.1.0 vem do
+#   Hugging Face (adefossez/HTDemucs), não do torch hub.
+# - extra vision (opencv-python-headless 4.14): wheel para macOS 13+ arm64 e 14+ x86_64, Linux e Windows x64;
+#   sem wheel para Windows arm64.
 # - faster-whisper usa device="auto" (CUDA se houver as bibliotecas da NVIDIA, senão CPU; nunca MPS); o demucs
 #   usa CUDA se houver, senão CPU. Caches: Hugging Face e torch ficam em ~/.cache em todos os sistemas.
 # - Remotion 4.0.543: Chrome Headless Shell em render/node_modules/.remotion/ (baixado a partir da pasta
@@ -208,6 +211,9 @@ checar = { arquivo = ["{raiz}/engine/.venv/lib/python3.1*/site-packages/demucs",
   quando = { sistema = "macos", rosetta = true }
   manual = "Este terminal roda em Rosetta (x86_64): abra um terminal nativo arm64 e rode de novo."
   [[requisito.receita]]
+  quando = { sistema = "macos", arch = "x64" }
+  nao_suportado = "Mac Intel: o uv.lock cai no demucs 4.0.1 com torchaudio 2.11.0, que não tem wheel para macOS x86_64. Use um Mac com Apple Silicon, Linux ou Windows x64."
+  [[requisito.receita]]
   quando = { sistema = "linux", arch = "arm64" }
   comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "voice"]]
   nota = "Linux arm64: o sphn não tem wheel e compila (precisa do gcc e do Rust, item compilador). Não testado."
@@ -228,7 +234,8 @@ checar = { arquivo = ["{raiz}/engine/.venv/lib/python3.1*/site-packages/cv2", "{
   nao_suportado = "O OpenCV do uv.lock não tem wheel para Windows arm64; o corte usa o enquadramento fit (ou use o WSL)."
   [[requisito.receita]]
   quando = { sistema = "macos", arch = "x64" }
-  nao_suportado = "O OpenCV do uv.lock não tem wheel para Mac Intel; o corte usa o enquadramento fit."
+  comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "vision"]]
+  nota = "Mac Intel: wheel para macOS 14 ou mais novo; não testado (e a transcrição, obrigatória, não roda no Mac Intel)."
   [[requisito.receita]]
   comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "vision"]]
 
@@ -252,8 +259,8 @@ tipo = "download"
 obrigatorio = false
 depende_de = ["extra-voice"]
 tamanho = "80 MB"
-cache = "{home}/.cache/torch/hub/checkpoints"
-checar = { arquivo = ["{env:TORCH_HOME}/hub/checkpoints/*.th", "{env:XDG_CACHE_HOME}/torch/hub/checkpoints/*.th", "{home}/.cache/torch/hub/checkpoints/*.th"] }
+cache = "{home}/.cache/huggingface/hub"
+checar = { arquivo = ["{env:HF_HUB_CACHE}/models--adefossez--HTDemucs/snapshots/*/*.safetensors", "{env:HF_HOME}/hub/models--adefossez--HTDemucs/snapshots/*/*.safetensors", "{home}/.cache/huggingface/hub/models--adefossez--HTDemucs/snapshots/*/*.safetensors", "{env:TORCH_HOME}/hub/checkpoints/*.th", "{env:XDG_CACHE_HOME}/torch/hub/checkpoints/*.th", "{home}/.cache/torch/hub/checkpoints/*.th"] }
   [[requisito.receita]]
   comandos = [["uv", "run", "--project", "{raiz}/engine", "--no-sync", "python", "-c", "__import__('demucs.pretrained').pretrained.get_model('htdemucs')"]]
 

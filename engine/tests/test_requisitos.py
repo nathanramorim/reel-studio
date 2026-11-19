@@ -98,6 +98,9 @@ def test_python_e_extras_respeitam_o_uv_lock():
         assert "3.12" in cmd and "--inexact" in cmd
     r, _ = req.escolher_receita(d["extra-transcribe"], ambiente("macos", "x64"))
     assert "onnxruntime" in r["nao_suportado"]
+    r, _ = req.escolher_receita(d["extra-voice"], ambiente("macos", "x64"))
+    assert "torchaudio" in r["nao_suportado"]
+    assert "HTDemucs" in d["modelo-demucs"].checar["arquivo"][0]
     for extra in ("extra-transcribe", "extra-voice", "extra-vision", "chrome-headless"):
         r, _ = req.escolher_receita(d[extra], ambiente("windows", "arm64"))
         assert "nao_suportado" in r, extra
