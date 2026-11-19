@@ -32,12 +32,31 @@ A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o v�
 | 🧠 **Poucos tokens** | Cerca de 1 a 2 mil tokens por reel, numa chamada só. |
 | 🧩 **Replicável** | Plugin do Claude Code: instala, usa o próprio tema, pronto. |
 
-## Antes de começar
+## Requisitos
 
-- **Python 3.11+** com [uv](https://docs.astral.sh/uv/).
-- **ffmpeg** no PATH (macOS: `brew install ffmpeg-full`, com libass para a legenda; Windows: `winget install ffmpeg`).
-- **Node.js 18+** (só para o modo VSL, que usa Remotion).
-- **Um agente que lê skills** (Claude Code, agy/Antigravity ou Codex) para gerar cortes e roteiros sem chave de API. Sem nenhum deles, dá para automatizar com `OPENROUTER_API_KEY` (veja "Caminho de automação" abaixo).
+> **Cole isto na sua IA antes de instalar:**
+>
+> "Confira os requisitos do reel-studio. Se o repositório ainda não estiver clonado, clone com o GitHub CLI: `gh repo clone nathanramorim/reel-studio` (instale o gh com `winget install --id GitHub.cli -e` no Windows, pelo https://cli.github.com no macOS e pelo pacote `gh` da sua distro no Linux; o `gh auth login` é comigo). No Windows, rode `powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1`; no macOS ou Linux, rode `sh scripts/bootstrap.sh`. Ele confere e, com o meu ok, instala o uv, e depois mostra o que falta. Para cada item, peça meu ok e rode `uv run scripts/requisitos.py instalar --sim <item>`. Itens marcados como é com você (licença, consentimento ou voz, login, permissões do sistema, senha de administrador): me explique e espere eu fazer. Não aceite licenças nem declarações por mim e não mexa em senhas, chaves ou tokens."
+
+O bloco serve para Linux, Windows e macOS. Os requisitos ficam declarados em [`requisitos.toml`](requisitos.toml), com uma receita por sistema, e quem confere é o motor [`requisitos-para-ia`](https://github.com/nathanramorim/requisitos-para-ia), copiado em `scripts/` (origem e commit no [`skills.lock`](skills.lock)). O Homebrew, o MacPorts, o winget e o apt são usados quando existem, mas nenhum deles é pré-requisito: sem eles, o item diz o caminho manual.
+
+- **Com o repositório clonado** (o caminho do bloco acima; sem o GitHub CLI, `git clone https://github.com/nathanramorim/reel-studio` também serve, porque o repositório é público): o bootstrap confere o uv e roda `uv run scripts/requisitos.py checar`. Depois: `uv run scripts/requisitos.py checar --json`, `uv run scripts/requisitos.py instalar --dry-run` (só mostra o plano), `uv run scripts/requisitos.py instalar <item>` (pergunta antes de cada um) e `uv run scripts/requisitos.py plataforma`.
+- **Sem clonar** (com o uv já instalado; vale depois do merge na `main`): `uv run https://raw.githubusercontent.com/nathanramorim/reel-studio/main/scripts/requisitos.py --arquivo https://raw.githubusercontent.com/nathanramorim/reel-studio/main/requisitos.toml checar`. Os itens do motor e do render (extras, modelos, `npm ci`, Chrome) só ficam ok dentro do clone.
+
+O motor nunca usa `sudo` sozinho (comandos de administrador ele só mostra), nunca aceita a licença do Remotion e nunca lê nem mostra a chave do OpenRouter: isso é sempre com você.
+
+| Ponto | O que precisa |
+|---|---|
+| **Onde roda** | Feito e testado no **macOS 14+ com Apple Silicon**. Linux (x64 e arm64) e Windows x64 têm receita, conferida na CI nos três sistemas, mas o vídeo não foi testado neles. **Não roda:** Mac Intel (o `onnxruntime` travado no `uv.lock`, usado pela transcrição, não tem wheel para macOS x86_64; o extra `voice` também não instala lá) e Windows arm64 (sem `av`, PyTorch, OpenCV nem o Chrome do Remotion): use o WSL (Ubuntu) ou uma máquina x64. No Apple Silicon, use o terminal nativo (arm64), não o Rosetta. Agentes: Claude Code (plugin), agy (Antigravity) e Codex (lêem a mesma skill); sem agente, a CLI funciona com o OpenRouter (veja "Contas e chaves"). |
+| **Programas** | [`uv`](https://docs.astral.sh/uv/), que o bootstrap instala pelo instalador oficial com o seu ok; ele instala o **Python 3.11 ou 3.12** (o PyTorch 2.2.2 travado no `uv.lock` para o extra `voice` não instala no 3.13 ou mais novo, e os extras dividem o mesmo ambiente; você não usa `pip`). **ffmpeg com libass** (a legenda usa o filtro `ass`): no Mac com Homebrew, o `ffmpeg-full` (keg-only, por isso o `brew link`); no MacPorts, no Linux (Ubuntu, Debian, Fedora, Arch, openSUSE) e no Windows (`Gyan.FFmpeg` pelo winget, scoop ou choco), o ffmpeg do pacote já tem libass. **Node.js 18 ou mais novo**, só para o modo VSL e os componentes do corte. O comando de cada sistema sai no `checar`. |
+| **Extras do motor** (em `engine/`) | `transcribe` (faster-whisper, **obrigatório**), `voice` (demucs + PyTorch, só para isolar a voz com `--voice-only`) e `vision` (OpenCV, só para o enquadramento automático do corte; sem ele o corte usa `fit`). O motor instala cada um com `uv sync --project engine --python 3.12 --inexact --extra <nome>` (o `--inexact` mantém os outros). |
+| **Por sistema** | **Linux:** as bibliotecas do Chrome Headless Shell (lista do Remotion: `libnss3`, `libgbm`, `libasound2t64` ou `libasound2` e outras; Alpine não roda); no arm64, o extra `voice` compila o `sphn` (precisa do `gcc` e do Rust). **Windows:** o runtime do Visual C++ (PyTorch e ctranslate2). **macOS:** o Chrome e as bibliotecas de áudio já vêm prontos. |
+| **GPU** | A transcrição usa `device="auto"`: CUDA quando houver as bibliotecas da NVIDIA, senão CPU; o demucs usa CUDA se houver. No Linux x64 o PyTorch do PyPI já traz as bibliotecas CUDA (cerca de 3 GB); no Windows e no macOS é CPU (MPS não é usado). |
+| **Downloads na primeira execução** | Modelo do **Whisper** `small` (cerca de 480 MB; outro com `REEL_WHISPER_MODEL=tiny`, `base`, `medium` ou `large-v3`) em `~/.cache/huggingface/hub/` em todos os sistemas (ou `HF_HOME`/`HF_HUB_CACHE`), baixado na primeira transcrição ou adiantado com `instalar modelo-whisper`. Extra `voice`: PyTorch (cerca de 1 GB) no `.venv` e o modelo **htdemucs** (cerca de 80 MB), que o demucs 4.1 baixa do Hugging Face para `~/.cache/huggingface/hub/` (ou `HF_HOME`/`HF_HUB_CACHE`). Modo VSL: `npm ci` em `render/` (Remotion travado em 4.0.543 no `package-lock.json`) e o **Chrome Headless Shell** (cerca de 200 MB) em `render/node_modules/.remotion/`, baixado no primeiro render ou adiantado com `instalar chrome-headless` (roda `npm --prefix render run browser`). Depois disso tudo roda sem internet. |
+| **Contas e chaves** | Nenhuma dentro do Claude Code, agy ou Codex: o próprio agente escreve os cortes e o roteiro. **Opcional:** para automação sem agente (`suggest` e `script`), uma chave do OpenRouter em `OPENROUTER_API_KEY`, definida por você no ambiente ou no `.env` (copie de `.env.example`; o `.env` fica fora do git). O motor de requisitos só confere se a variável existe no ambiente; nunca lê o valor nem grava a chave. |
+| **Máquina** | RAM: estimativa de 8 GB (não medido; a transcrição e o render rodam no seu computador). Reserve cerca de 3 GB de disco (5 GB no Linux x64) com os extras e o modo VSL, mais o espaço dos vídeos. |
+| **Licenças e limites** | Código MIT. faster-whisper e demucs: MIT. OpenCV: Apache 2.0. O **Remotion** é grátis para uso pessoal e para empresas de até 3 pessoas; acima disso, a empresa precisa da [licença paga](https://www.remotion.dev/license). Quem aceita é você: o motor só mostra. |
+| **O que você fornece** | O **vídeo** já gravado (ou o áudio, no modo VSL) e o **tema** com a sua marca (cores, fonte, legenda e CTA): copie `themes/exemplo.json` (veja a skill, referência "criar tema"). Você aprova os cortes ou o roteiro antes de qualquer vídeo ser gerado. |
 
 ## Instalação
 
@@ -53,8 +72,8 @@ A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o v�
 ```bash
 git clone https://github.com/nathanramorim/reel-studio
 cd reel-studio
-cd engine && uv sync --extra transcribe
-cd ../render && npm install   # só se for usar o modo VSL
+cd engine && uv sync --python 3.12 --extra transcribe
+cd ../render && npm ci   # só se for usar o modo VSL
 ```
 
 Abra o agy ou o Codex **dentro da pasta `reel-studio`**: o agy encontra a skill em `.agents/skills/reel-studio/`, o Codex lê `AGENTS.md` na raiz. Os dois apontam para a mesma fonte, `skills/reel-studio/SKILL.md`.
@@ -120,6 +139,8 @@ Tema é a sua marca (cores, fontes, legenda, CTA): qualquer pessoa cria o dela. 
 
 | Versão | Novidades |
 |---|---|
+| **0.3.0** | Requisitos em Linux, Windows e macOS pelo motor [`requisitos-para-ia`](https://github.com/nathanramorim/requisitos-para-ia) (cópia em `scripts/`, origem no `skills.lock`): receita por sistema em `requisitos.toml` (o que não roda é dito, com alternativa), bootstrap do uv para cada sistema (`scripts/bootstrap.sh` e `scripts/bootstrap.ps1`), sem Homebrew como pré-requisito, prompt para a IA gerado pelo motor e CI nos três sistemas. |
+| **0.2.0** (não publicada como tag) | `scripts/requisitos.py` com `checar` e `instalar` (pergunta antes de instalar e nunca aceita licença por você), seção Requisitos completa e o prompt para colar na IA antes de instalar. Inclui as entregas 03 a 05 da `main` (veja `sdd/releases/history.md`). |
 | **0.1.0** | Primeira versão: modo corte completo, modo VSL com 3 estilos SVG, 3 temas + exemplo, plugin do Claude Code. |
 
 ## Licença

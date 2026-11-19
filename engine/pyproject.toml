@@ -1,6 +1,6 @@
 [project]
 name = "reel-studio"
-version = "0.1.0"
+version = "0.3.0"
 description = "Motor local do reel-studio: transforma vídeos gravados em reels verticais."
 license = "MIT"
 requires-python = ">=3.11"

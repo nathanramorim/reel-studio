@@ -68,6 +68,7 @@ As regras abaixo indexam as decisões invioláveis do projeto por IDs estáveis.
 - **ARQ-06:** Contratos públicos e comandos expostos são explícitos e documentados (Regra 10).
 - **ARQ-10:** Lógica de domínio nunca vaza para a camada de transporte ou interface.
 - **ARQ-11:** Toda spec de feature ou módulo declara explicitamente seu modelo (`completo` ou `enxuto`) com justificativa.
+- **ARQ-12:** Todo desenvolvimento considera a facilidade de uso e um prompt para a IA. Não vale qualquer prompt: o que dá para fazer de forma determinística vira script, e o prompt usa o script como ferramenta (ex.: `scripts/requisitos.py checar` e `instalar`).
 
 ### Segurança (`SEG`)
 - **SEG-01:** Toda entrada externa é validada na borda antes de chegar ao domínio.
@@ -127,5 +128,5 @@ A relação entre cada rule, o escopo (`globs`) e os IDs que ela cobre (`regras`
 | Regra 3 | `themes/pessoal.json`, `themes/busize.json`, `themes/forge.json`, `themes/forge/` | Temas com marca e nome reais do autor dentro da skill | Mover para o projeto de quem usa (tema por caminho) e manter só `exemplo` | `/nova-feature` (a abrir) |
 | Regra 3 | `engine/src/reel_studio/cli.py` (`--theme` padrão `pessoal`) | Tema padrão com nome de pessoa | Padrão `exemplo` ou tema obrigatório | mesma feature |
 | Regra 3 | `styles/forge-motion/`, `render/src/forge/` | Estilo com nome de produto real | Renomear para nome neutro | mesma feature |
-| Regra 3 / 12 | `README.md` | Exemplos com `busize`/`forge`; sem `## Requisitos` (falha no `verificar_readme.py`) | Reescrever pelo readme-studio | `/novo-fix` (a abrir) |
+| Regra 3 | `README.md` | Exemplos com `busize`/`forge` (a seção `## Requisitos` já existe desde a 07) | Trocar pelos exemplos neutros junto com os temas | mesma feature dos temas |
 <!-- forge-sdd-governanca:fim -->

@@ -54,8 +54,9 @@ def probe_duration(video: Path) -> float:
         raise ReelError(f"Não consegui ler a duração de {video.name}.") from None
 
 
-FFMPEG_HINT = ("Instale o ffmpeg (macOS: brew install ffmpeg-full; "
-               "Windows: winget install ffmpeg).")
+FFMPEG_HINT = ("Instale o ffmpeg com libass: `uv run scripts/requisitos.py instalar ffmpeg` "
+               "mostra o comando do seu sistema (macOS com Homebrew: brew install ffmpeg-full; "
+               "Linux: o pacote ffmpeg da distro; Windows: winget install --id Gyan.FFmpeg -e).")
 
 
 def has_filter(ffmpeg: str, name: str) -> bool:

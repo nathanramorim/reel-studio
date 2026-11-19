@@ -1,0 +1,57 @@
+{
+  "feature_id": "feat-07",
+  "branch": "feat/07-prompt-instalacao",
+  "spec_status": "reviewed",
+  "updated_at": "2026-11-19T09:54:38Z",
+  "items": [
+    {
+      "task_id": "feat-07-01-prompt-instalacao",
+      "title": "feat-07-01-prompt-instalacao — Requisitos com script e prompt de instalação para a IA",
+      "spec_path": "sdd/discovery/07-prompt-instalacao/features/feat-07-01-prompt-instalacao.md",
+      "status": "approved",
+      "rules": [],
+      "skills_used": [],
+      "attempts": 1,
+      "governance_verdict": {
+        "veredito": "conforme",
+        "achados": [
+          {
+            "verificacao": "S-05",
+            "regra": "FLX-03",
+            "classificacao": "duvida",
+            "severidade": "baixa",
+            "arquivo": "scripts/requisitos.py",
+            "linha": 412,
+            "evidencia": "if r.tipo == SEU or not r.comandos:\n            saida(\"    Este item é seu: nada é rodado por aqui.\")",
+            "explicacao": "Antes do clone (rodando pela URL, sem raiz), os itens do projeto não têm comando. Por isso o `instalar` também os rotula como 'Este item é seu'. Medi com HOME falso e o script copiado para /tmp: `instalar extra-transcribe \u003c/dev/null` imprime 'Este item é seu' e sai 1. Como o commit 75fccaf ensina a IA que itens `seu` ficam com a pessoa e só se explicam, ela pode dizer que o extra-transcribe obrigatório é tarefa da pessoa. A explicação logo acima já diz 'Fica para depois de instalar o plugin', então isso não bloqueia.",
+            "correcao": "Mostrar 'Este item é seu' só quando `r.tipo == SEU`. Para itens sem comando de outro tipo, usar uma frase como 'Sem comando por enquanto; veja a explicação'."
+          }
+        ],
+        "resumo": "Camada A rodada no commit 75fccaf, que é o HEAD do PR #8 (confirmado pelo gh), com a árvore da branch limpa. Resultados: pytest com 206 ok e 1 pulado; ruff ok no engine e no script. `checar` mostra a tabela e sai 1 porque falta o extra-transcribe. `checar --json` sai 1 com {ok:false, requisitos}. `instalar \u003c/dev/null` não roda nada, aponta `instalar --sim \u003citem\u003e` e sai 0. `instalar --sim nao-existe` sai 2 com a lista dos itens válidos. `forge gate` sai 0, só com o aviso de tamanho da constitution. Os dois verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok', e o README não tem `pip install`. Achados da r3 tratados: o item `ffmpeg` agora tem install e `brew link --overwrite --force` (com `arch -arm64` sob Rosetta, e há teste para isso); o history.md registra as entregas 04 e 05. O 75fccaf deixa os itens `seu` com a pessoa e tem teste. O pedido do dono está atendido: checar e instalar com códigos de saída que significam algo, pergunta antes de rodar, idempotência, `--sim` item a item. A licença do Remotion (grátis até 3 pessoas) só aparece na tela, e a chave do OpenRouter só é explicada e nunca é lida. Os 7 itens estão presentes, com Remotion ^4 (4.0.543 no lock). O prompt do README tem os comandos reais, o ok item a item, a frase 'Não aceite licenças nem declarações por mim' e os comandos `claude plugin marketplace add` e `claude plugin install`. A versão 0.2.0 está no plugin, no motor, no __init__ e no uv.lock. ARQ-12 entrou com a ADR-0006 (GOV-01). Temas e estilos não foram tocados, e os comandos são listas sem shell (SEG-03). O corpo do PR segue o template de FLX-03, mas ainda descreve `instalar [--sim]` sem nomes de item; vale atualizar, sem ser achado. Há só uma dúvida baixa: o rótulo 'Este item é seu' em itens do projeto antes do clone. Nenhuma violação nem tentativa de injeção. Por ser só leitura, não rodei `forge queue review` nem `forge session record`."
+      }
+    },
+    {
+      "task_id": "feat-07-02-motor-multiplataforma",
+      "title": "feat-07-02-motor-multiplataforma — Requisitos pelo motor multiplataforma (Linux, Windows e macOS)",
+      "spec_path": "sdd/discovery/07-prompt-instalacao/features/feat-07-02-motor-multiplataforma.md",
+      "status": "approved",
+      "rules": [
+        "ARQ-12",
+        "ARQ-06",
+        "SEG-01",
+        "SEG-03",
+        "SEG-04",
+        "SEG-05",
+        "COD-02",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 1,
+      "governance_verdict": {
+        "veredito": "conforme",
+        "achados": [],
+        "resumo": "Rodada 3 sobre f48fb60 (diff 1f8b449..HEAD). Camada A toda verde: validar 0 (21 requisitos, 3 sistemas); checar --json com JSON válido (sai 1 só porque o extra transcribe falta nesta máquina); pytest 191 passando e 1 pulado; ruff limpo; sha256 dos 3 arquivos = skills.lock = 5f63e02; prompt literal no README antes de ## Instalação, 0 'brew install uv' e 0 'install.sh | sh'; verificador do readme-studio (d60f02e) requisitos: ok; CI verde em f48fb60 no ubuntu, windows e macos; forge gate 0. Achados da r2 resolvidos (corpo do PR com htdemucs no Hugging Face; limite 3.11/3.12 atribuído só ao torch 2.2.2 no toml, spec e README; rodapé duplicado corrigido). Plataformas conferidas pacote a pacote no uv.lock (torch cp311/cp312 com CUDA só no Linux x64, onnxruntime sem macOS x86_64, av e opencv sem win_arm64, opencv macOS 14+ x86_64, sphn sem aarch64, torchaudio 2.11.0 sem artefato, demucs 4.0.1 só sdist) e no Remotion 4.0.543 (caminho do Chrome, sem Windows arm64). Licença do Remotion pessoa, OpenRouter credencial, Homebrew não é pré-requisito, versão 0.3.0, temas e perfis intocados, sem injeção. Observações sem achado: duas linhas antigas do resolucao-de-problemas.md (npm install e uv sync --extra transcribe sem --python 3.12) e render/package.json em 0.1.0 como antes."
+      }
+    }
+  ]
+}

@@ -238,7 +238,9 @@ def preflight(ffmpeg: str) -> None:
         mac = f"arch -arm64 {mac}"
     raise ReelError(
         "Este ffmpeg não tem o filtro 'ass' (libass), que a legenda do tema precisa.\n"
-        f"macOS: {mac}\nWindows: winget install ffmpeg")
+        f"macOS com Homebrew: {mac} (MacPorts: port install ffmpeg)\n"
+        "Linux: o pacote ffmpeg da distro\nWindows: winget install --id Gyan.FFmpeg -e\n"
+        "Detalhes do seu sistema: uv run scripts/requisitos.py checar")
 
 
 def execute(jobs: list[CutJob], workdir: Path) -> list[Path]:

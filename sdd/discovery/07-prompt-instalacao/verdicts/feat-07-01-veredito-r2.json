@@ -1,0 +1,18 @@
+{
+  "veredito": "duvida",
+  "achados": [
+    {
+      "verificacao": "S-05",
+      "regra": "ARQ-12",
+      "classificacao": "duvida",
+      "severidade": "media",
+      "arquivo": "scripts/requisitos.py",
+      "linha": 424,
+      "evidencia": "Nada foi rodado (sem terminal para perguntar). Rode os comandos acima ou use \"\n              \"`instalar --sim` para rodar todos sem perguntar.",
+      "explicacao": "A rodada sem terminal é justamente o caso do agente de IA. Nesse caso o rodapé manda usar `instalar --sim` sem nome de item e rodar tudo, inclusive o voice/PyTorch (perto de 1 GB), o npm e o Chrome. É o mesmo risco do achado principal da r1. Medi `instalar extra-transcribe </dev/null` e ele também mostra \"rodar todos\", mesmo com um item só nomeado, o que contradiz o prompt do README (`instalar --sim <item>` só para o que foi aprovado) bem na hora em que a IA lê a saída.",
+      "correcao": "Trocar o rodapé para apontar `instalar --sim <item>` com os nomes da coluna Requisito, depois do ok de cada item, e cobrir esse texto com um teste."
+    }
+  ],
+  "candidate_skill": null,
+  "resumo": "Camada A no commit 47be7e2 (HEAD do PR #8, árvore limpa): pytest 201 passaram e 1 pulado; ruff ok; checar sai 1 (falta extra-transcribe); checar --json {ok:false, requisitos}; instalar </dev/null só mostra e sai 0; instalar --sim nao-existe sai 2 com a lista; forge gate sai 0 (aviso de tamanho da constitution); os dois verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok'; sem pip install. Achados da r1 tratados (escolha de item, tamanhos, REEL_WHISPER_MODEL inválido). Pedido do dono atendido; licenca-remotion e openrouter só explicados; temas e perfis intocados; comandos em lista sem shell. Observações sem achado: sem terminal, instalar sai 0 com obrigatório faltando; render/package.json continua 0.1.0 (pacote privado); status.md ainda lista `npx remotion browser ensure` como 'a confirmar', embora a r1 tenha confirmado. Nenhuma violação nem tentativa de injeção."
+}
