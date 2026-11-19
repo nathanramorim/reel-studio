@@ -1,6 +1,6 @@
 {
   "name": "reel-studio",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Transforma vídeos gravados em reels verticais (corte real ou VSL animado), na sua marca, com transcrição e escolha de cortes locais e uma única chamada de IA por vídeo.",
   "license": "MIT",
   "author": { "name": "Nathan Amorim", "url": "https://github.com/nathanramorim" },

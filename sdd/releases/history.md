@@ -4,7 +4,13 @@ Este arquivo registra o histórico de entregas de produto deste projeto.
 
 ## Entregas
 
-### 07 — Prompt de instalação para a IA (0.2.0, 2026-11-19)
+### 07 — Requisitos em Linux, Windows e macOS pelo motor multiplataforma (0.3.0, 2026-11-19, task feat-07-02)
+- **Motor vendorizado:** `scripts/requisitos.py`, `scripts/bootstrap.sh` e `scripts/bootstrap.ps1` copiados de `nathanramorim/requisitos-para-ia@5f63e02` (origem e sha256 no `skills.lock`); o script próprio da 0.2.0 saiu.
+- **`requisitos.toml`:** receita por sistema (ffmpeg com libass, extras com Python 3.11/3.12, Node, `npm ci`, Chrome do Remotion e as bibliotecas dele no Linux, caches dos modelos); Mac Intel e Windows arm64 marcados como não suportados, com alternativa; sem Homebrew como pré-requisito; licença do Remotion e chave do OpenRouter continuam com a pessoa.
+- **README:** o bloco para a IA é a saída de `requisitos.py prompt`; caminho com clone e sem clone. **CI:** `.github/workflows/requisitos.yml` em ubuntu, windows e macos.
+- **render:** script `browser` (`remotion browser ensure`) para baixar o Chrome dentro de `render/`.
+
+### 07 — Prompt de instalação para a IA (0.2.0, 2026-11-19) (não publicada como tag)
 - **`scripts/requisitos.py`:** `checar` mostra cada requisito (ok, faltando ou opcional, versão e comando); `instalar` pergunta antes de cada comando, pula o que já está ok e nunca aceita licença nem lê chave. Roda antes de clonar, pela URL.
 - **README:** seção `## Requisitos` completa e o bloco "Cole isto na sua IA antes de instalar".
 - **Constitution:** `ARQ-12` (ADR-0006): o prompt para a IA usa script como ferramenta.

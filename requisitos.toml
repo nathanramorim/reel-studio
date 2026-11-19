@@ -1,0 +1,395 @@
+# Requisitos do reel-studio. Motor vendorizado de nathanramorim/requisitos-para-ia@5f63e02 (skills.lock);
+# contrato: sdd/spec/contrato-requisitos.md do motor.
+# Fatos conferidos em 2026-11-19 contra engine/uv.lock e render/package-lock.json:
+# - Python 3.11 ou 3.12: o uv.lock fixa torch 2.2.2 e onnxruntime 1.32.0, sem wheel para 3.13+.
+# - extra transcribe (faster-whisper -> onnxruntime 1.32.0): wheel para macOS 14+ arm64, Linux x64 e arm64 e
+#   Windows x64; sem wheel para Mac Intel; av sem wheel para Windows arm64.
+# - extra voice (demucs + torch 2.2.2): Linux arm64 compila sphn (Rust); Windows arm64 sem torch.
+# - extra vision (opencv-python-headless 4.14): sem wheel para Mac Intel nem Windows arm64 no lock.
+# - faster-whisper usa device="auto" (CUDA se houver as bibliotecas da NVIDIA, senão CPU; nunca MPS); o demucs
+#   usa CUDA se houver, senão CPU. Caches: Hugging Face e torch ficam em ~/.cache em todos os sistemas.
+# - Remotion 4.0.543: Chrome Headless Shell em render/node_modules/.remotion/ (baixado a partir da pasta
+#   render/; sem Windows arm64; no Linux precisa de bibliotecas do sistema; Alpine não roda).
+versao = 1
+
+[projeto]
+nome = "reel-studio"
+script = "scripts/requisitos.py"
+repo = "nathanramorim/reel-studio"
+
+[[requisito]]
+id = "uv"
+descricao = "Gerencia o Python e as dependências do motor (você não usa pip)"
+tipo = "programa"
+obrigatorio = true
+checar = { comando = ["uv", "--version"], versao_minima = "0.5", procurar_em = ["{home}/.local/bin", "{home}/.cargo/bin"] }
+  [[requisito.receita]]
+  quando = { sistema = "macos", gerenciador = "brew" }
+  comandos = [["brew", "install", "uv"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "pacman" }
+  comandos = [["pacman", "-S", "uv"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "dnf" }
+  comandos = [["dnf", "install", "uv"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "winget" }
+  comandos = [["winget", "install", "--id", "astral-sh.uv", "-e"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "scoop" }
+  comandos = [["scoop", "install", "uv"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows" }
+  manual = "Rode powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1: ele instala o uv pelo instalador oficial (sem administrador) com o seu ok."
+  [[requisito.receita]]
+  manual = "Rode sh scripts/bootstrap.sh: ele mostra o instalador oficial do uv (https://astral.sh/uv/install.sh, sem sudo) e só instala com o seu ok."
+  path = ["{home}/.local/bin"]
+
+[[requisito]]
+id = "python"
+descricao = "Python 3.11 ou 3.12 para o motor, instalado pelo uv (3.13 ou mais novo não instala o uv.lock)"
+tipo = "programa"
+obrigatorio = true
+depende_de = ["uv"]
+checar = { comando = ["uv", "python", "find", "--system", ">=3.11,<3.13"], regex = "3\\.1[12]" }
+  [[requisito.receita]]
+  quando = { sistema = "macos", rosetta = true }
+  manual = "Este terminal roda em Rosetta (x86_64): abra um terminal nativo arm64, senão o uv pega um Python Intel e a transcrição não instala."
+  [[requisito.receita]]
+  comandos = [["uv", "python", "install", "3.12"]]
+
+[[requisito]]
+id = "ffmpeg"
+descricao = "Corta o vídeo, extrai o áudio e grava a legenda (precisa ter libass)"
+tipo = "programa"
+obrigatorio = true
+tamanho = "80 MB (ffmpeg-full no Mac: cerca de 300 MB)"
+checar = { comando = ["ffmpeg", "-version"], versao_regex = "ffmpeg version n?(\\d+\\.\\d+)" }
+  [[requisito.receita]]
+  quando = { sistema = "macos", gerenciador = "brew" }
+  comandos = [["brew", "install", "ffmpeg-full"], ["brew", "link", "--overwrite", "--force", "ffmpeg-full"]]
+  nota = "O ffmpeg comum do Homebrew não tem libass; o ffmpeg-full tem e é keg-only, por isso o brew link."
+  [[requisito.receita]]
+  quando = { sistema = "macos", gerenciador = "port" }
+  comandos = [["port", "install", "ffmpeg"]]
+  admin = true
+  [[requisito.receita]]
+  quando = { sistema = "macos" }
+  manual = "Sem Homebrew nem MacPorts: baixe um ffmpeg estático com libass para macOS (links em https://ffmpeg.org/download.html, seção macOS), traga o ffmpeg e o ffprobe e ponha a pasta no PATH."
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "apt" }
+  comandos = [["apt-get", "install", "ffmpeg"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "dnf" }
+  comandos = [["dnf", "install", "ffmpeg-free"]]
+  nota = "ffmpeg-free tem menos codecs; o completo vem do RPM Fusion."
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "pacman" }
+  comandos = [["pacman", "-S", "ffmpeg"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "zypper" }
+  comandos = [["zypper", "install", "ffmpeg"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux" }
+  manual = "Instale o ffmpeg (com libass) pelo gerenciador da sua distro."
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "winget" }
+  comandos = [["winget", "install", "--id", "Gyan.FFmpeg", "-e"]]
+  nota = "O winget pergunta o aceite dos termos a você. Abra outro terminal depois."
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "scoop" }
+  comandos = [["scoop", "install", "ffmpeg"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "choco" }
+  comandos = [["choco", "install", "ffmpeg"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows" }
+  manual = "Instale o winget (App Installer da Microsoft Store) e rode: winget install --id Gyan.FFmpeg -e (ou baixe o build do gyan.dev e ponha a pasta bin no PATH)."
+
+[[requisito]]
+id = "ffprobe"
+descricao = "Mede duração e dimensões do vídeo (vem no pacote ffmpeg)"
+tipo = "programa"
+obrigatorio = true
+depende_de = ["ffmpeg"]
+checar = { comando = ["ffprobe", "-version"], versao_regex = "ffprobe version n?(\\d+\\.\\d+)" }
+  [[requisito.receita]]
+  manual = "Vem junto com o ffmpeg; se faltar, reinstale o ffmpeg e abra outro terminal."
+
+[[requisito]]
+id = "ffmpeg-libass"
+descricao = "Filtro 'ass' do ffmpeg (libass), que desenha a legenda do tema"
+tipo = "programa"
+obrigatorio = true
+depende_de = ["ffmpeg"]
+checar = { comando = ["ffmpeg", "-hide_banner", "-filters"], regex = "(?m)^\\s*\\S+\\s+ass\\s" }
+  [[requisito.receita]]
+  quando = { sistema = "macos", gerenciador = "brew" }
+  comandos = [["brew", "install", "ffmpeg-full"], ["brew", "link", "--overwrite", "--force", "ffmpeg-full"]]
+  nota = "Troca o ffmpeg comum (sem libass) pelo ffmpeg-full no PATH."
+  [[requisito.receita]]
+  quando = { sistema = "macos" }
+  manual = "Este ffmpeg não tem libass: troque por um build com libass (MacPorts: port install ffmpeg; ou um estático de https://ffmpeg.org/download.html)."
+  [[requisito.receita]]
+  quando = { sistema = "linux" }
+  manual = "Os pacotes ffmpeg do Ubuntu, Debian, Fedora (ffmpeg-free), Arch e openSUSE têm libass: se faltar, o ffmpeg do PATH é outro (um build mínimo); instale o da distro."
+  [[requisito.receita]]
+  quando = { sistema = "windows" }
+  manual = "Os builds do gyan.dev (winget Gyan.FFmpeg) e o ffmpeg do scoop têm libass: se faltar, o ffmpeg do PATH é outro; instale um deles e abra outro terminal."
+
+[[requisito]]
+id = "compilador"
+descricao = "Compilador C e Rust (no Linux arm64 o extra voice compila o sphn)"
+tipo = "biblioteca"
+obrigatorio = false
+checar = { comando = ["cargo", "--version"] }
+  [[requisito.receita]]
+  quando = { sistema = "linux", arch = "arm64" }
+  manual = "Instale o gcc pelo gerenciador da distro e o Rust pelo https://rustup.rs (o instalador passa por shell: rode você). Só para o extra voice."
+  [[requisito.receita]]
+  dispensado = "Aqui os extras têm wheel pronta; não precisa compilar."
+
+[[requisito]]
+id = "runtime-vc"
+descricao = "Runtime do Visual C++ (PyTorch e ctranslate2 no Windows precisam dele)"
+tipo = "biblioteca"
+obrigatorio = false
+checar = { arquivo = ["{env:SystemRoot}/System32/vcruntime140_1.dll", "C:/Windows/System32/vcruntime140_1.dll"] }
+  [[requisito.receita]]
+  quando = { sistema = "windows", arch = "arm64" }
+  dispensado = "Sem os extras no Windows arm64 (veja extra-transcribe)."
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "winget" }
+  comandos = [["winget", "install", "--id", "Microsoft.VCRedist.2015+.x64", "-e"]]
+  nota = "O winget pergunta o aceite dos termos a você."
+  [[requisito.receita]]
+  quando = { sistema = "windows" }
+  manual = "Baixe e rode você o instalador da Microsoft: https://aka.ms/vs/17/release/vc_redist.x64.exe"
+  [[requisito.receita]]
+  dispensado = "Só o Windows precisa."
+
+[[requisito]]
+id = "extra-transcribe"
+descricao = "Transcrição local com faster-whisper (os dois modos precisam)"
+tipo = "pacote-python"
+obrigatorio = true
+depende_de = ["uv", "python", "runtime-vc"]
+tamanho = "250 MB"
+checar = { arquivo = ["{raiz}/engine/.venv/lib/python3.1*/site-packages/faster_whisper", "{raiz}/engine/.venv/Lib/site-packages/faster_whisper", "{env:UV_PROJECT_ENVIRONMENT}/lib/python3.1*/site-packages/faster_whisper", "{env:UV_PROJECT_ENVIRONMENT}/Lib/site-packages/faster_whisper"] }
+  [[requisito.receita]]
+  quando = { sistema = "windows", arch = "arm64" }
+  nao_suportado = "O av (leitura de áudio do faster-whisper) não tem wheel para Windows arm64: use o WSL (Ubuntu) ou uma máquina x64."
+  [[requisito.receita]]
+  quando = { sistema = "macos", rosetta = true }
+  manual = "Este terminal roda em Rosetta (x86_64): abra um terminal nativo arm64 e rode de novo."
+  [[requisito.receita]]
+  quando = { sistema = "macos", arch = "x64" }
+  nao_suportado = "Mac Intel: o onnxruntime fixado no uv.lock (dependência do faster-whisper) não tem wheel para macOS x86_64. Use um Mac com Apple Silicon, Linux, Windows x64 ou o WSL."
+  [[requisito.receita]]
+  quando = { sistema = "macos" }
+  comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "transcribe"]]
+  nota = "Sistema testado. Precisa do macOS 14 ou mais novo (wheel do onnxruntime). O --inexact mantém os outros extras."
+  [[requisito.receita]]
+  comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "transcribe"]]
+  nota = "Wheels conferidas para Linux x64 e arm64 e Windows x64; não testado nesses sistemas. CPU por padrão; CUDA só com as bibliotecas da NVIDIA instaladas."
+
+[[requisito]]
+id = "extra-voice"
+descricao = "Isola a voz do fundo (extract --voice-only): demucs e PyTorch"
+tipo = "pacote-python"
+obrigatorio = false
+depende_de = ["uv", "python", "runtime-vc", "compilador"]
+tamanho = "1 GB (Linux x64: cerca de 3 GB, o torch do PyPI traz CUDA)"
+checar = { arquivo = ["{raiz}/engine/.venv/lib/python3.1*/site-packages/demucs", "{raiz}/engine/.venv/Lib/site-packages/demucs", "{env:UV_PROJECT_ENVIRONMENT}/lib/python3.1*/site-packages/demucs", "{env:UV_PROJECT_ENVIRONMENT}/Lib/site-packages/demucs"] }
+  [[requisito.receita]]
+  quando = { sistema = "windows", arch = "arm64" }
+  nao_suportado = "O PyTorch não publica wheel para Windows arm64: use o WSL (Ubuntu) ou uma máquina x64."
+  [[requisito.receita]]
+  quando = { sistema = "macos", rosetta = true }
+  manual = "Este terminal roda em Rosetta (x86_64): abra um terminal nativo arm64 e rode de novo."
+  [[requisito.receita]]
+  quando = { sistema = "linux", arch = "arm64" }
+  comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "voice"]]
+  nota = "Linux arm64: o sphn não tem wheel e compila (precisa do gcc e do Rust, item compilador). Não testado."
+  [[requisito.receita]]
+  comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "voice"]]
+  nota = "torch 2.2.2 do uv.lock: no Linux x64 traz CUDA; no Windows e no macOS é CPU (o demucs não usa MPS). Testado só no macOS arm64."
+
+[[requisito]]
+id = "extra-vision"
+descricao = "Enquadramento automático do corte (OpenCV); sem ele o corte usa fit"
+tipo = "pacote-python"
+obrigatorio = false
+depende_de = ["uv", "python"]
+tamanho = "60 MB"
+checar = { arquivo = ["{raiz}/engine/.venv/lib/python3.1*/site-packages/cv2", "{raiz}/engine/.venv/Lib/site-packages/cv2", "{env:UV_PROJECT_ENVIRONMENT}/lib/python3.1*/site-packages/cv2", "{env:UV_PROJECT_ENVIRONMENT}/Lib/site-packages/cv2"] }
+  [[requisito.receita]]
+  quando = { sistema = "windows", arch = "arm64" }
+  nao_suportado = "O OpenCV do uv.lock não tem wheel para Windows arm64; o corte usa o enquadramento fit (ou use o WSL)."
+  [[requisito.receita]]
+  quando = { sistema = "macos", arch = "x64" }
+  nao_suportado = "O OpenCV do uv.lock não tem wheel para Mac Intel; o corte usa o enquadramento fit."
+  [[requisito.receita]]
+  comandos = [["uv", "sync", "--project", "{raiz}/engine", "--python", "3.12", "--inexact", "--extra", "vision"]]
+
+[[requisito]]
+id = "modelo-whisper"
+descricao = "Modelo small do Whisper (REEL_WHISPER_MODEL muda); baixa sozinho na primeira transcrição"
+tipo = "download"
+obrigatorio = false
+depende_de = ["extra-transcribe"]
+tamanho = "480 MB (medium e large-v3 são maiores)"
+cache = "{home}/.cache/huggingface/hub"
+checar = { arquivo = ["{env:HF_HUB_CACHE}/models--Systran--faster-whisper-{env:REEL_WHISPER_MODEL}/snapshots/*/model.bin", "{env:HF_HOME}/hub/models--Systran--faster-whisper-{env:REEL_WHISPER_MODEL}/snapshots/*/model.bin", "{home}/.cache/huggingface/hub/models--Systran--faster-whisper-{env:REEL_WHISPER_MODEL}/snapshots/*/model.bin", "{env:HF_HUB_CACHE}/models--Systran--faster-whisper-small/snapshots/*/model.bin", "{env:HF_HOME}/hub/models--Systran--faster-whisper-small/snapshots/*/model.bin", "{home}/.cache/huggingface/hub/models--Systran--faster-whisper-small/snapshots/*/model.bin"] }
+  [[requisito.receita]]
+  comandos = [["uv", "run", "--project", "{raiz}/engine", "--no-sync", "python", "-c", "__import__('faster_whisper').WhisperModel('small')"]]
+  nota = "Adianta o download do small. Com REEL_WHISPER_MODEL (tiny, base, small, medium ou large-v3; outro valor o motor recusa), o modelo escolhido baixa na primeira transcrição."
+
+[[requisito]]
+id = "modelo-demucs"
+descricao = "Modelo htdemucs (só para isolar a voz); baixa sozinho no primeiro uso"
+tipo = "download"
+obrigatorio = false
+depende_de = ["extra-voice"]
+tamanho = "80 MB"
+cache = "{home}/.cache/torch/hub/checkpoints"
+checar = { arquivo = ["{env:TORCH_HOME}/hub/checkpoints/*.th", "{env:XDG_CACHE_HOME}/torch/hub/checkpoints/*.th", "{home}/.cache/torch/hub/checkpoints/*.th"] }
+  [[requisito.receita]]
+  comandos = [["uv", "run", "--project", "{raiz}/engine", "--no-sync", "python", "-c", "__import__('demucs.pretrained').pretrained.get_model('htdemucs')"]]
+
+[[requisito]]
+id = "node"
+descricao = "Node.js 18 ou mais novo (modo VSL e componentes do corte, pelo Remotion)"
+tipo = "programa"
+obrigatorio = false
+checar = { comando = ["node", "--version"], versao_regex = "v(\\d+\\.\\d+\\.\\d+)", versao_minima = "18" }
+  [[requisito.receita]]
+  quando = { sistema = "macos", gerenciador = "brew" }
+  comandos = [["brew", "install", "node"]]
+  [[requisito.receita]]
+  quando = { sistema = "macos", gerenciador = "port" }
+  comandos = [["port", "install", "nodejs22", "npm10"]]
+  admin = true
+  [[requisito.receita]]
+  quando = { sistema = "macos" }
+  manual = "Baixe e rode você o instalador LTS para macOS em https://nodejs.org (a licença é aceita por você)."
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "apt" }
+  comandos = [["apt-get", "install", "nodejs", "npm"]]
+  nota = "Ubuntu 22.04 traz o Node 12, velho demais: nele use o instalador do https://nodejs.org (ou o NodeSource)."
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "dnf" }
+  comandos = [["dnf", "install", "nodejs", "npm"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "pacman" }
+  comandos = [["pacman", "-S", "nodejs", "npm"]]
+  [[requisito.receita]]
+  quando = { sistema = "linux" }
+  manual = "Instale o Node.js 18+ pelo gerenciador da distro ou pelo https://nodejs.org."
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "winget" }
+  comandos = [["winget", "install", "--id", "OpenJS.NodeJS.LTS", "-e"]]
+  nota = "O winget pergunta o aceite dos termos a você. Abra outro terminal depois."
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "scoop" }
+  comandos = [["scoop", "install", "nodejs-lts"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows", gerenciador = "choco" }
+  comandos = [["choco", "install", "nodejs-lts"]]
+  [[requisito.receita]]
+  quando = { sistema = "windows" }
+  manual = "Baixe e rode você o instalador LTS para Windows em https://nodejs.org."
+
+[[requisito]]
+id = "render-npm"
+descricao = "Pacotes do render (Remotion 4.0.543, travado no package-lock.json)"
+tipo = "pacote-node"
+obrigatorio = false
+depende_de = ["node"]
+tamanho = "500 MB"
+checar = { arquivo = "{raiz}/render/node_modules/remotion/package.json" }
+  [[requisito.receita]]
+  comandos = [["npm", "ci", "--prefix", "{raiz}/render"]]
+
+[[requisito]]
+id = "chrome-libs"
+descricao = "Bibliotecas do sistema que o Chrome Headless Shell do Remotion usa (Linux)"
+tipo = "biblioteca"
+obrigatorio = false
+checar = { arquivo = ["/usr/lib/x86_64-linux-gnu/libnss3.so", "/usr/lib/aarch64-linux-gnu/libnss3.so", "/usr/lib64/libnss3.so", "/usr/lib/libnss3.so"] }
+  [[requisito.receita]]
+  quando = { sistema = "linux", distro = "alpine" }
+  nao_suportado = "O Remotion não roda no Alpine (libc incompatível): use Debian, Ubuntu ou um contêiner Debian."
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "apt" }
+  comandos = [["apt-get", "install", "libnss3", "libdbus-1-3", "libatk1.0-0", "libxrandr2", "libxkbcommon-dev", "libxfixes3", "libxcomposite1", "libxdamage1", "libgbm-dev", "libcups2", "libcairo2", "libpango-1.0-0", "libatk-bridge2.0-0"]]
+  nota = "Lista da documentação do Remotion. Falta a ALSA, cujo nome muda: instale também libasound2t64 (Ubuntu 24.04+) ou libasound2 (Ubuntu 22.04 e Debian)."
+  [[requisito.receita]]
+  quando = { sistema = "linux", gerenciador = "dnf" }
+  comandos = [["dnf", "install", "nss", "atk", "at-spi2-atk", "at-spi2-core", "cups-libs", "libdrm", "libxkbcommon", "libXcomposite", "libXdamage", "libXfixes", "libXrandr", "mesa-libgbm", "pango", "alsa-lib", "dbus-libs"]]
+  nota = "Nomes da lista do Remotion para Amazon Linux 2023 (mesma família do Fedora)."
+  [[requisito.receita]]
+  quando = { sistema = "linux" }
+  manual = "Instale pela sua distro: nss, atk, at-spi2-atk, cups, libdrm, libxkbcommon, libXcomposite, libXdamage, libXfixes, libXrandr, mesa (libgbm), pango, alsa e dbus (veja https://www.remotion.dev/docs/miscellaneous/linux-dependencies)."
+  [[requisito.receita]]
+  dispensado = "No macOS e no Windows o Chrome já traz o que precisa."
+
+[[requisito]]
+id = "chrome-headless"
+descricao = "Chrome Headless Shell que o Remotion usa para desenhar o vídeo"
+tipo = "download"
+obrigatorio = false
+depende_de = ["render-npm", "chrome-libs"]
+tamanho = "200 MB"
+cache = "{raiz}/render/node_modules/.remotion"
+checar = { arquivo = "{raiz}/render/node_modules/.remotion/chrome-headless-shell/*/chrome-headless-shell-*" }
+  [[requisito.receita]]
+  quando = { sistema = "windows", arch = "arm64" }
+  nao_suportado = "O Remotion não tem Chrome Headless Shell para Windows arm64: use o WSL (Ubuntu) ou uma máquina x64. O modo corte sem componentes não precisa dele."
+  [[requisito.receita]]
+  comandos = [["npm", "--prefix", "{raiz}/render", "run", "browser"]]
+  nota = "Roda remotion browser ensure dentro de render/ (é lá que o render procura). Sem isso, baixa no primeiro render."
+
+[[requisito]]
+id = "licenca-remotion"
+descricao = "Licença do Remotion: grátis para uso pessoal e empresas de até 3 pessoas"
+tipo = "pessoa"
+obrigatorio = false
+depende_de = ["render-npm"]
+  [[requisito.receita]]
+  manual = "Leia https://www.remotion.dev/license: acima de 3 pessoas, a empresa precisa da licença paga. Quem decide e aceita é você; ninguém aceita por você."
+
+[[requisito]]
+id = "openrouter"
+descricao = "Chave do OpenRouter, só para automação sem agente (suggest e script)"
+tipo = "credencial"
+obrigatorio = false
+checar = { env = "OPENROUTER_API_KEY" }
+  [[requisito.receita]]
+  manual = "Opcional: dentro do Claude Code, agy ou Codex não precisa. Para automação, crie a chave no OpenRouter e defina OPENROUTER_API_KEY você mesmo no ambiente (ou no .env do repositório, fora do git, que o checar não enxerga). O motor nunca lê, mostra nem grava a chave."
+
+[[requisito]]
+id = "video-e-tema"
+descricao = "O vídeo gravado (ou o áudio, no VSL) e o tema com a sua marca"
+tipo = "pessoa"
+obrigatorio = false
+  [[requisito.receita]]
+  manual = "Traga o vídeo e copie themes/exemplo.json para o seu tema (cores, fonte, legenda e CTA). Você aprova os cortes ou o roteiro antes de qualquer vídeo ser gerado."
+
+[[requisito]]
+id = "disco"
+descricao = "Espaço para extras, modelos e o render"
+tipo = "maquina"
+obrigatorio = false
+checar = { disco_gb = 3 }
+  [[requisito.receita]]
+  manual = "Libere cerca de 3 GB (5 GB no Linux x64, pelo PyTorch com CUDA), mais o espaço dos vídeos."
+
+[[requisito]]
+id = "memoria"
+descricao = "Memória para transcrever e renderizar (estimativa, não medida)"
+tipo = "maquina"
+obrigatorio = false
+checar = { memoria_gb = 8 }
+  [[requisito.receita]]
+  manual = "Estimativa de 8 GB de RAM; com menos, use o modelo base ou tiny e feche outros programas."

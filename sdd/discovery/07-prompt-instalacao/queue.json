@@ -2,7 +2,7 @@
   "feature_id": "feat-07",
   "branch": "feat/07-prompt-instalacao",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-19T05:17:59Z",
+  "updated_at": "2026-11-19T06:11:31Z",
   "items": [
     {
       "task_id": "feat-07-01-prompt-instalacao",
@@ -29,6 +29,24 @@
         ],
         "resumo": "Camada A rodada no commit 75fccaf, que é o HEAD do PR #8 (confirmado pelo gh), com a árvore da branch limpa. Resultados: pytest com 206 ok e 1 pulado; ruff ok no engine e no script. `checar` mostra a tabela e sai 1 porque falta o extra-transcribe. `checar --json` sai 1 com {ok:false, requisitos}. `instalar \u003c/dev/null` não roda nada, aponta `instalar --sim \u003citem\u003e` e sai 0. `instalar --sim nao-existe` sai 2 com a lista dos itens válidos. `forge gate` sai 0, só com o aviso de tamanho da constitution. Os dois verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok', e o README não tem `pip install`. Achados da r3 tratados: o item `ffmpeg` agora tem install e `brew link --overwrite --force` (com `arch -arm64` sob Rosetta, e há teste para isso); o history.md registra as entregas 04 e 05. O 75fccaf deixa os itens `seu` com a pessoa e tem teste. O pedido do dono está atendido: checar e instalar com códigos de saída que significam algo, pergunta antes de rodar, idempotência, `--sim` item a item. A licença do Remotion (grátis até 3 pessoas) só aparece na tela, e a chave do OpenRouter só é explicada e nunca é lida. Os 7 itens estão presentes, com Remotion ^4 (4.0.543 no lock). O prompt do README tem os comandos reais, o ok item a item, a frase 'Não aceite licenças nem declarações por mim' e os comandos `claude plugin marketplace add` e `claude plugin install`. A versão 0.2.0 está no plugin, no motor, no __init__ e no uv.lock. ARQ-12 entrou com a ADR-0006 (GOV-01). Temas e estilos não foram tocados, e os comandos são listas sem shell (SEG-03). O corpo do PR segue o template de FLX-03, mas ainda descreve `instalar [--sim]` sem nomes de item; vale atualizar, sem ser achado. Há só uma dúvida baixa: o rótulo 'Este item é seu' em itens do projeto antes do clone. Nenhuma violação nem tentativa de injeção. Por ser só leitura, não rodei `forge queue review` nem `forge session record`."
       }
+    },
+    {
+      "task_id": "feat-07-02-motor-multiplataforma",
+      "title": "feat-07-02-motor-multiplataforma — Requisitos pelo motor multiplataforma (Linux, Windows e macOS)",
+      "spec_path": "sdd/discovery/07-prompt-instalacao/features/feat-07-02-motor-multiplataforma.md",
+      "status": "building",
+      "rules": [
+        "ARQ-12",
+        "ARQ-06",
+        "SEG-01",
+        "SEG-03",
+        "SEG-04",
+        "SEG-05",
+        "COD-02",
+        "TST-01"
+      ],
+      "skills_used": [],
+      "attempts": 1
     }
   ]
 }

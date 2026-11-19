@@ -21,5 +21,6 @@ Opção 2. Nova regra `ARQ-12`: todo desenvolvimento considera a facilidade de u
 ## Consequências
 
 - **Positivas:** a instalação dá o mesmo resultado com qualquer IA; o que falta aparece numa tabela com o comando exato; licenças e chaves ficam com a pessoa.
-- **Negativas / Trade-offs:** o script precisa acompanhar os requisitos reais (extras, versão do Remotion, modelos); quando mudar um requisito, mude o script e o README juntos.
+- **Negativas / Trade-offs:** a receita precisa acompanhar os requisitos reais (extras, versão do Remotion, modelos); quando mudar um requisito, mude o `requisitos.toml` e rode `requisitos.py prompt` para o README.
+- **Atualização (feat-07-02):** o script próprio deu lugar ao motor multiplataforma `requisitos-para-ia` vendorizado (`scripts/requisitos.py`, `bootstrap.sh`, `bootstrap.ps1`; origem e commit no `skills.lock`), com a receita declarativa em `requisitos.toml`. A decisão (prompt usa script determinístico) continua a mesma.
 - **Ações de acompanhamento:** manter `engine/tests/test_requisitos.py` atualizado quando um requisito mudar.
