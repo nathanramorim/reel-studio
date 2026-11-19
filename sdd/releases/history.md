@@ -4,6 +4,10 @@ Este arquivo registra o histórico de entregas de produto deste projeto.
 
 ## Entregas
 
+### 07 — Motor de requisitos na tag v0.1.0 (0.3.1, 2026-11-19, fix-07-01)
+- **Motor vendorizado:** os três arquivos copiados de `nathanramorim/requisitos-para-ia@v0.1.0` (commit `93abe08`), no lugar do `5f63e02`; `skills.lock` com `ref`, `commit` e sha256 novos.
+- **`requisitos.toml`:** a v0.1.0 recusa o intervalo `>=3.11,<3.13` (dois operadores) e código inline de interpretador (`python -c`). O `python` passa a conferir o 3.12, que os extras usam (`--python 3.12`); `modelo-whisper` e `modelo-demucs` viram `manual` (os modelos baixam sozinhos no primeiro uso).
+
 ### 07 — Requisitos em Linux, Windows e macOS pelo motor multiplataforma (0.3.0, 2026-11-19, task feat-07-02)
 - **Motor vendorizado:** `scripts/requisitos.py`, `scripts/bootstrap.sh` e `scripts/bootstrap.ps1` copiados de `nathanramorim/requisitos-para-ia@5f63e02` (origem e sha256 no `skills.lock`); o script próprio da 0.2.0 saiu.
 - **`requisitos.toml`:** receita por sistema (ffmpeg com libass, extras com Python 3.11/3.12, Node, `npm ci`, Chrome do Remotion e as bibliotecas dele no Linux, caches dos modelos); Mac Intel e Windows arm64 marcados como não suportados, com alternativa; sem Homebrew como pré-requisito; licença do Remotion e chave do OpenRouter continuam com a pessoa.

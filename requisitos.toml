@@ -1,8 +1,9 @@
-# Requisitos do reel-studio. Motor vendorizado de nathanramorim/requisitos-para-ia@5f63e02 (skills.lock);
+# Requisitos do reel-studio. Motor vendorizado de nathanramorim/requisitos-para-ia@v0.1.0 (skills.lock);
 # contrato: sdd/spec/contrato-requisitos.md do motor.
 # Fatos conferidos em 2026-11-19 contra engine/uv.lock e render/package-lock.json:
-# - Python 3.11 ou 3.12: o torch 2.2.2 do uv.lock (extra voice) não tem wheel para 3.13+; como os extras dividem o
-#   mesmo engine/.venv, todos usam --python 3.12 (transcribe e vision instalariam no 3.13, voice não).
+# - Python 3.12: o torch 2.2.2 do uv.lock (extra voice) não tem wheel para 3.13+; como os extras dividem o
+#   mesmo engine/.venv, todos usam --python 3.12 (transcribe e vision instalariam no 3.13, voice não). O checar
+#   procura o 3.12 exato: a trava da v0.1.0 recusa o intervalo '>=3.11,<3.13' (dois operadores).
 # - extra transcribe (faster-whisper -> onnxruntime 1.32.0): wheel para macOS 14+ arm64, Linux x64 e arm64 e
 #   Windows x64; sem wheel para Mac Intel; av sem wheel para Windows arm64.
 # - extra voice (demucs 4.1.0 + torch 2.2.2): Linux arm64 compila sphn (Rust); Windows arm64 sem torch; no Mac
@@ -51,11 +52,11 @@ checar = { comando = ["uv", "--version"], versao_minima = "0.5", procurar_em = [
 
 [[requisito]]
 id = "python"
-descricao = "Python 3.11 ou 3.12 para o motor, instalado pelo uv (o torch 2.2.2 do extra voice não instala no 3.13+)"
+descricao = "Python 3.12 para os extras do motor, instalado pelo uv (eles rodam com --python 3.12; o torch 2.2.2 do extra voice não instala no 3.13+)"
 tipo = "programa"
 obrigatorio = true
 depende_de = ["uv"]
-checar = { comando = ["uv", "python", "find", "--system", ">=3.11,<3.13"], regex = "3\\.1[12]" }
+checar = { comando = ["uv", "python", "find", "--system", "3.12"], regex = "3\\.12" }
   [[requisito.receita]]
   quando = { sistema = "macos", rosetta = true }
   manual = "Este terminal roda em Rosetta (x86_64): abra um terminal nativo arm64, senão o uv pega um Python Intel e a transcrição não instala."
@@ -250,8 +251,7 @@ tamanho = "480 MB (medium e large-v3 são maiores)"
 cache = "{home}/.cache/huggingface/hub"
 checar = { arquivo = ["{env:HF_HUB_CACHE}/models--Systran--faster-whisper-{env:REEL_WHISPER_MODEL}/snapshots/*/model.bin", "{env:HF_HOME}/hub/models--Systran--faster-whisper-{env:REEL_WHISPER_MODEL}/snapshots/*/model.bin", "{home}/.cache/huggingface/hub/models--Systran--faster-whisper-{env:REEL_WHISPER_MODEL}/snapshots/*/model.bin", "{env:HF_HUB_CACHE}/models--Systran--faster-whisper-small/snapshots/*/model.bin", "{env:HF_HOME}/hub/models--Systran--faster-whisper-small/snapshots/*/model.bin", "{home}/.cache/huggingface/hub/models--Systran--faster-whisper-small/snapshots/*/model.bin"] }
   [[requisito.receita]]
-  comandos = [["uv", "run", "--project", "{raiz}/engine", "--no-sync", "python", "-c", "__import__('faster_whisper').WhisperModel('small')"]]
-  nota = "Adianta o download do small. Com REEL_WHISPER_MODEL (tiny, base, small, medium ou large-v3; outro valor o motor recusa), o modelo escolhido baixa na primeira transcrição."
+  manual = "Não precisa fazer nada: o faster-whisper baixa o modelo small sozinho na primeira transcrição (cerca de 480 MB, no cache do Hugging Face). Com REEL_WHISPER_MODEL (tiny, base, small, medium ou large-v3; outro valor o motor recusa), baixa o modelo escolhido."
 
 [[requisito]]
 id = "modelo-demucs"
@@ -263,7 +263,7 @@ tamanho = "80 MB"
 cache = "{home}/.cache/huggingface/hub"
 checar = { arquivo = ["{env:HF_HUB_CACHE}/models--adefossez--HTDemucs/snapshots/*/*.safetensors", "{env:HF_HOME}/hub/models--adefossez--HTDemucs/snapshots/*/*.safetensors", "{home}/.cache/huggingface/hub/models--adefossez--HTDemucs/snapshots/*/*.safetensors", "{env:TORCH_HOME}/hub/checkpoints/*.th", "{env:XDG_CACHE_HOME}/torch/hub/checkpoints/*.th", "{home}/.cache/torch/hub/checkpoints/*.th"] }
   [[requisito.receita]]
-  comandos = [["uv", "run", "--project", "{raiz}/engine", "--no-sync", "python", "-c", "__import__('demucs.pretrained').pretrained.get_model('htdemucs')"]]
+  manual = "Não precisa fazer nada: o demucs baixa o htdemucs sozinho no primeiro extract --voice-only (cerca de 80 MB, no cache do Hugging Face)."
 
 [[requisito]]
 id = "node"
