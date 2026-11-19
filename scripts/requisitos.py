@@ -383,6 +383,8 @@ def instalar(amb: Ambiente, sim: bool, interativo: bool,
              itens: list[str] | None = None) -> int:
     """Mostra e roda os comandos do que falta. Idempotente: o que já está ok é pulado.
 
+    Devolve 1 se um comando falhar ou se um item pedido pelo nome continuar faltando.
+
     A checagem usa o executor do ambiente (silencioso); a instalação usa `executor`.
     """
     executor = executor or amb.executar
@@ -421,8 +423,18 @@ def instalar(amb: Ambiente, sim: bool, interativo: bool,
         else:
             saida("    Feito.")
     if not sim and not interativo:
-        saida("\nNada foi rodado (sem terminal para perguntar). Rode os comandos acima ou use "
-              "`instalar --sim` para rodar todos sem perguntar.")
+        rodaveis = [r.nome for r in pendentes if r.tipo != SEU and r.comandos]
+        dica = (f" Itens que dá para instalar: {', '.join(rodaveis)}." if rodaveis else "")
+        saida("\nNada foi rodado (sem terminal para perguntar). Só depois do ok da pessoa para "
+              "cada item, rode `instalar --sim <item>` com o nome da coluna Requisito, um item "
+              f"por vez.{dica}")
+    if itens:
+        # item pedido pelo nome que ainda não ficou ok (pulado, só mostrado ou que não resolveu)
+        ainda = [r.nome for r in checar(amb)
+                 if r.nome in itens and r.estado != OK and r.tipo != SEU]
+        if ainda:
+            saida(f"Ainda não está ok: {', '.join(ainda)}.")
+            falhou = True
     return 1 if falhou else 0
 
 

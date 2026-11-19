@@ -2,7 +2,7 @@
   "feature_id": "feat-07",
   "branch": "feat/07-prompt-instalacao",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-19T05:05:19Z",
+  "updated_at": "2026-11-19T05:09:10Z",
   "items": [
     {
       "task_id": "feat-07-01-prompt-instalacao",
@@ -20,36 +20,14 @@
             "regra": "ARQ-12",
             "classificacao": "duvida",
             "severidade": "media",
-            "arquivo": "README.md",
-            "linha": 39,
-            "evidencia": "com o meu ok, rode `uv run https://raw.githubusercontent.com/nathanramorim/reel-studio/main/scripts/requisitos.py instalar` para cada item",
-            "explicacao": "O prompt manda rodar `instalar` 'para cada item', mas no commit e701f71 o `instalar` não tem como escolher um item. Dentro de um agente não há terminal, então ele só mostra os comandos e sai com 0, mesmo com o extra-transcribe faltando (medido: exit=0). A IA então tende a usar `--sim` (linhas 392-394 e 406-408 do script), que instala todos os opcionais pesados (voice/PyTorch, perto de 1 GB, e npm/Chrome) sem o ok item a item que o dono pediu.",
-            "correcao": "Dar ao `instalar` a escolha de item (`instalar --sim \u003citem\u003e`), com teste, ou fazer o prompt mandar rodar só o comando mostrado de cada item aprovado."
-          },
-          {
-            "verificacao": "S-05",
-            "regra": "FLX-03",
-            "classificacao": "duvida",
-            "severidade": "baixa",
-            "arquivo": "README.md",
-            "linha": 48,
-            "evidencia": "`npm install` em `render/` (cerca de 300 MB em `render/node_modules/`) e o **Chrome Headless Shell** do Remotion (cerca de 100 MB",
-            "explicacao": "Medido no plugin 0.1.0 instalado (Remotion 4.0.543): `render/node_modules` tem 716 MB no total, dos quais `.remotion` (Chrome Headless Shell) tem 210 MB. Os números do README e do script (linhas 281 e 295) ficam bem abaixo disso. O próprio status.md diz que esses tamanhos e os 8 GB de RAM (README linha 50) não foram medidos.",
-            "correcao": "Corrigir para perto de 500 MB de pacotes e 200 MB de Chrome (e rever a estimativa de cerca de 3 GB de disco), ou deixar claro que são estimativas."
-          },
-          {
-            "verificacao": "S-03",
-            "regra": "DUP-06",
-            "classificacao": "duvida",
-            "severidade": "baixa",
             "arquivo": "scripts/requisitos.py",
-            "linha": 223,
-            "evidencia": "if modelo not in WHISPER_MODELOS:\n        modelo = \"small\"",
-            "explicacao": "Com REEL_WHISPER_MODEL inválido, o script usa o small e pode marcar ok. O motor (core/transcribe.resolve_model) dá ReelError nesse caso, então a checagem fica verde enquanto a transcrição falharia. A spec pediu esse comportamento, por isso fica como dúvida.",
-            "correcao": "Avisar na explicação do item quando o valor do ambiente for inválido, porque o motor vai recusar."
+            "linha": 424,
+            "evidencia": "Nada foi rodado (sem terminal para perguntar). Rode os comandos acima ou use \"\n              \"`instalar --sim` para rodar todos sem perguntar.",
+            "explicacao": "A rodada sem terminal é justamente o caso do agente de IA. Nesse caso o rodapé manda usar `instalar --sim` sem nome de item e rodar tudo, inclusive o voice/PyTorch (perto de 1 GB), o npm e o Chrome. É o mesmo risco do achado principal da r1. Medi `instalar extra-transcribe \u003c/dev/null` e ele também mostra \"rodar todos\", mesmo com um item só nomeado, o que contradiz o prompt do README (`instalar --sim \u003citem\u003e` só para o que foi aprovado) bem na hora em que a IA lê a saída.",
+            "correcao": "Trocar o rodapé para apontar `instalar --sim \u003citem\u003e` com os nomes da coluna Requisito, depois do ok de cada item, e cobrir esse texto com um teste."
           }
         ],
-        "resumo": "Camada A no commit e701f71 (HEAD do PR #8): pytest 197 passaram e 1 foi pulado; ruff passa em engine e no script. `checar` mostra a tabela e sai 1 (falta extra-transcribe); `checar --json` sai com {ok, requisitos}. `instalar \u003c/dev/null` não roda nada e sai 0. O verificar_readme.py do readme-studio dá 'requisitos: ok' e não há `pip install` no README. `forge gate` (modo observação) passa; só avisa do tamanho da constitution. Fatos conferidos e certos: extras transcribe/voice/vision; Remotion 4.0.543 no package-lock e ^4 no package.json; `npx remotion browser ensure` existe (ENSURE_COMMAND em @remotion/cli/dist/browser/ensure.js); licenças MIT para faster-whisper e demucs, Apache 2.0 para OpenCV e a regra do Remotion de grátis até 3 pessoas; ARQ-12 com ADR-0006; versões 0.2.0 batem nos 3 lugares e no uv.lock; temas e perfis não foram tocados; comandos são listas sem shell (SEG-03). Nenhuma violação nem tentativa de injeção. Atenção: durante a revisão apareceram mudanças NÃO COMMITADAS na árvore de trabalho (README.md, scripts/requisitos.py, test_requisitos.py e a spec), com um prompt novo usando `instalar --sim \u003citem\u003e` que parece tratar o achado principal. Elas não foram revisadas e pedem nova revisão depois do commit."
+        "resumo": "Camada A no commit 47be7e2 (HEAD do PR #8, árvore limpa): pytest 201 passaram e 1 pulado; ruff ok; checar sai 1 (falta extra-transcribe); checar --json {ok:false, requisitos}; instalar \u003c/dev/null só mostra e sai 0; instalar --sim nao-existe sai 2 com a lista; forge gate sai 0 (aviso de tamanho da constitution); os dois verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok'; sem pip install. Achados da r1 tratados (escolha de item, tamanhos, REEL_WHISPER_MODEL inválido). Pedido do dono atendido; licenca-remotion e openrouter só explicados; temas e perfis intocados; comandos em lista sem shell. Observações sem achado: sem terminal, instalar sai 0 com obrigatório faltando; render/package.json continua 0.1.0 (pacote privado); status.md ainda lista `npx remotion browser ensure` como 'a confirmar', embora a r1 tenha confirmado. Nenhuma violação nem tentativa de injeção."
       }
     }
   ]

@@ -195,6 +195,17 @@ def test_instalar_sem_terminal_e_sem_sim_so_mostra(tmp_path):
     assert rodados == [] and codigo == 0
     assert "brew install ffmpeg-full" in texto
     assert "Nada foi rodado" in texto
+    assert "`instalar --sim <item>`" in texto and "ok da pessoa" in texto
+    assert "Itens que dá para instalar: ffmpeg, ffmpeg-libass." in texto
+    assert "todos" not in texto
+
+
+def test_instalar_sem_terminal_com_item_nunca_sugere_todos(tmp_path):
+    amb = ambiente(tmp_path, programas=TODOS - {"ffmpeg"}, extras_ok=False)
+    codigo, rodados, texto = _instalar(amb, sim=False, interativo=False, itens=["extra-voice"])
+    assert rodados == [] and codigo == 1  # o item pedido continua faltando
+    assert "todos" not in texto
+    assert "Itens que dá para instalar: extra-voice." in texto
 
 
 @pytest.mark.parametrize(("resposta", "roda"), [("s", True), ("n", False), ("", False)])
@@ -250,7 +261,7 @@ def raiz_falsa_em(pasta: Path) -> None:
 def test_instalar_com_item_cuida_so_dele(tmp_path):
     amb = ambiente(tmp_path, programas=TODOS - {"ffmpeg"}, extras_ok=False)
     codigo, rodados, texto = _instalar(amb, sim=True, interativo=False, itens=["extra-voice"])
-    assert codigo == 0
+    assert codigo == 1  # no ambiente falso o extra segue ausente depois do comando
     assert [c for c, _ in rodados] == [["uv", "sync", "--inexact", "--extra", "voice"]]
     assert "ffmpeg" not in texto
 
@@ -273,3 +284,17 @@ def test_main_instalar_repassa_os_itens(monkeypatch, tmp_path):
     amb = ambiente(tmp_path)
     monkeypatch.setattr(req, "Ambiente", lambda raiz: amb)
     assert req.main(["instalar", "--sim", "nao-existe"]) == 2
+
+
+def test_instalar_item_pedido_que_continua_faltando_sai_1(tmp_path):
+    # o comando "roda" (executor falso devolve 0), mas o extra continua ausente na rechecagem
+    amb = ambiente(tmp_path, extras_ok=False)
+    codigo, rodados, texto = _instalar(amb, sim=True, interativo=False, itens=["extra-voice"])
+    assert rodados and codigo == 1
+    assert "Ainda não está ok: extra-voice." in texto
+
+
+def test_instalar_item_seu_pedido_nao_conta_como_falha(tmp_path):
+    codigo, rodados, _ = _instalar(ambiente(tmp_path), sim=True, interativo=False,
+                                   itens=["openrouter"])
+    assert codigo == 0 and rodados == []
