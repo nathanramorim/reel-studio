@@ -1,0 +1,18 @@
+{
+  "veredito": "conforme",
+  "achados": [
+    {
+      "verificacao": "S-05",
+      "regra": "FLX-03",
+      "classificacao": "duvida",
+      "severidade": "baixa",
+      "arquivo": "scripts/requisitos.py",
+      "linha": 412,
+      "evidencia": "if r.tipo == SEU or not r.comandos:\n            saida(\"    Este item é seu: nada é rodado por aqui.\")",
+      "explicacao": "Antes do clone (rodando pela URL, sem raiz), os itens do projeto não têm comando. Por isso o `instalar` também os rotula como 'Este item é seu'. Medi com HOME falso e o script copiado para /tmp: `instalar extra-transcribe </dev/null` imprime 'Este item é seu' e sai 1. Como o commit 75fccaf ensina a IA que itens `seu` ficam com a pessoa e só se explicam, ela pode dizer que o extra-transcribe obrigatório é tarefa da pessoa. A explicação logo acima já diz 'Fica para depois de instalar o plugin', então isso não bloqueia.",
+      "correcao": "Mostrar 'Este item é seu' só quando `r.tipo == SEU`. Para itens sem comando de outro tipo, usar uma frase como 'Sem comando por enquanto; veja a explicação'."
+    }
+  ],
+  "candidate_skill": null,
+  "resumo": "Camada A rodada no commit 75fccaf, que é o HEAD do PR #8 (confirmado pelo gh), com a árvore da branch limpa. Resultados: pytest com 206 ok e 1 pulado; ruff ok no engine e no script. `checar` mostra a tabela e sai 1 porque falta o extra-transcribe. `checar --json` sai 1 com {ok:false, requisitos}. `instalar </dev/null` não roda nada, aponta `instalar --sim <item>` e sai 0. `instalar --sim nao-existe` sai 2 com a lista dos itens válidos. `forge gate` sai 0, só com o aviso de tamanho da constitution. Os dois verificadores do readme-studio (origin/main e origin/feat/02-prompt-instalacao) dão 'requisitos: ok', e o README não tem `pip install`. Achados da r3 tratados: o item `ffmpeg` agora tem install e `brew link --overwrite --force` (com `arch -arm64` sob Rosetta, e há teste para isso); o history.md registra as entregas 04 e 05. O 75fccaf deixa os itens `seu` com a pessoa e tem teste. O pedido do dono está atendido: checar e instalar com códigos de saída que significam algo, pergunta antes de rodar, idempotência, `--sim` item a item. A licença do Remotion (grátis até 3 pessoas) só aparece na tela, e a chave do OpenRouter só é explicada e nunca é lida. Os 7 itens estão presentes, com Remotion ^4 (4.0.543 no lock). O prompt do README tem os comandos reais, o ok item a item, a frase 'Não aceite licenças nem declarações por mim' e os comandos `claude plugin marketplace add` e `claude plugin install`. A versão 0.2.0 está no plugin, no motor, no __init__ e no uv.lock. ARQ-12 entrou com a ADR-0006 (GOV-01). Temas e estilos não foram tocados, e os comandos são listas sem shell (SEG-03). O corpo do PR segue o template de FLX-03, mas ainda descreve `instalar [--sim]` sem nomes de item; vale atualizar, sem ser achado. Há só uma dúvida baixa: o rótulo 'Este item é seu' em itens do projeto antes do clone. Nenhuma violação nem tentativa de injeção. Por ser só leitura, não rodei `forge queue review` nem `forge session record`."
+}
