@@ -1,7 +1,8 @@
 # Requisitos do reel-studio. Motor vendorizado de nathanramorim/requisitos-para-ia@5f63e02 (skills.lock);
 # contrato: sdd/spec/contrato-requisitos.md do motor.
 # Fatos conferidos em 2026-11-19 contra engine/uv.lock e render/package-lock.json:
-# - Python 3.11 ou 3.12: o uv.lock fixa torch 2.2.2 e onnxruntime 1.32.0, sem wheel para 3.13+.
+# - Python 3.11 ou 3.12: o torch 2.2.2 do uv.lock (extra voice) não tem wheel para 3.13+; como os extras dividem o
+#   mesmo engine/.venv, todos usam --python 3.12 (transcribe e vision instalariam no 3.13, voice não).
 # - extra transcribe (faster-whisper -> onnxruntime 1.32.0): wheel para macOS 14+ arm64, Linux x64 e arm64 e
 #   Windows x64; sem wheel para Mac Intel; av sem wheel para Windows arm64.
 # - extra voice (demucs 4.1.0 + torch 2.2.2): Linux arm64 compila sphn (Rust); Windows arm64 sem torch; no Mac
@@ -50,7 +51,7 @@ checar = { comando = ["uv", "--version"], versao_minima = "0.5", procurar_em = [
 
 [[requisito]]
 id = "python"
-descricao = "Python 3.11 ou 3.12 para o motor, instalado pelo uv (3.13 ou mais novo não instala o uv.lock)"
+descricao = "Python 3.11 ou 3.12 para o motor, instalado pelo uv (o torch 2.2.2 do extra voice não instala no 3.13+)"
 tipo = "programa"
 obrigatorio = true
 depende_de = ["uv"]

@@ -2,7 +2,7 @@
   "feature_id": "feat-07",
   "branch": "feat/07-prompt-instalacao",
   "spec_status": "reviewed",
-  "updated_at": "2026-11-19T09:46:21Z",
+  "updated_at": "2026-11-19T09:49:56Z",
   "items": [
     {
       "task_id": "feat-07-01-prompt-instalacao",
@@ -54,12 +54,12 @@
             "verificacao": "S-05",
             "regra": "FLX-03",
             "classificacao": "violacao",
-            "severidade": "media",
-            "arquivo": "requisitos.toml",
-            "linha": 256,
-            "evidencia": "checar = { arquivo = [\"{env:TORCH_HOME}/hub/checkpoints/*.th\", \"{env:XDG_CACHE_HOME}/torch/hub/checkpoints/*.th\", \"{home}/.cache/torch/hub/checkpoints/*.th\"] }",
-            "explicacao": "O engine/uv.lock fixa demucs 4.1.0 em todas as plataformas suportadas (o 4.0.1 fica só no Mac x86_64). Nessa versão, get_model('htdemucs') chama primeiro get_hf_model -\u003e hf_hub_download('adefossez/HTDemucs', 'htdemucs.yaml' / '955717e8.safetensors'), e esses arquivos existem no Hugging Face (API confirmada). Por isso o modelo vai para ~/.cache/huggingface/hub/models--adefossez--HTDemucs/snapshots/*/*.safetensors, não para o cache do torch (*.th); o checar nunca dá ok e `instalar modelo-demucs` sai 1 na reconferência. O mesmo erro está no `cache = \"{home}/.cache/torch/hub/checkpoints\"` (linha 255) e no README, linha 55 (\"htdemucs ... em `~/.cache/torch/hub/checkpoints/` (ou `TORCH_HOME`)\").",
-            "correcao": "Pôr primeiro no checar e no cache do modelo-demucs os globs do Hugging Face ({env:HF_HUB_CACHE}, {env:HF_HOME}/hub e {home}/.cache/huggingface/hub com /models--adefossez--HTDemucs/snapshots/*/*.safetensors), deixar o torch hub como alternativa e corrigir a linha 55 do README."
+            "severidade": "baixa",
+            "arquivo": "PR #8 (corpo, seção 'O que muda na 0.3.0', item requisitos.toml)",
+            "linha": 13,
+            "evidencia": "Caches do Whisper (`REEL_WHISPER_MODEL`, Hugging Face) e do htdemucs (torch).",
+            "explicacao": "A correção do achado 1 da r1 foi aplicada no requisitos.toml (checar e cache em models--adefossez--HTDemucs no Hugging Face) e na linha 55 do README, mas o corpo do PR, que faz parte da entrega, ainda diz que o htdemucs fica no cache do torch. Por isso o achado 1 da r1 está resolvido só em parte.",
+            "correcao": "Trocar no corpo do PR para 'htdemucs (Hugging Face, adefossez/HTDemucs; torch hub como alternativa)' e acrescentar a linha do fix-r1."
           },
           {
             "verificacao": "S-05",
@@ -67,24 +67,13 @@
             "classificacao": "violacao",
             "severidade": "baixa",
             "arquivo": "requisitos.toml",
-            "linha": 231,
-            "evidencia": "nao_suportado = \"O OpenCV do uv.lock não tem wheel para Mac Intel; o corte usa o enquadramento fit.\"",
-            "explicacao": "O engine/uv.lock tem opencv-python-headless 4.14.0.94 com a wheel cp37-abi3-macosx_14_0_x86_64, então a afirmação é falsa para Mac Intel com macOS 14 ou mais novo. O comentário da linha 8 repete o erro (\"sem wheel para Mac Intel nem Windows arm64 no lock\"). O impacto prático é baixo, porque a transcrição (obrigatória) já é nao_suportado no Mac Intel.",
-            "correcao": "Corrigir o texto do nao_suportado e o comentário da linha 8 para refletir a wheel macOS 14+ x86_64 (ou justificar o bloqueio pela transcrição)."
-          },
-          {
-            "verificacao": "S-05",
-            "regra": "FLX-03",
-            "classificacao": "duvida",
-            "severidade": "baixa",
-            "arquivo": "requisitos.toml",
-            "linha": 216,
-            "evidencia": "nota = \"torch 2.2.2 do uv.lock: no Linux x64 traz CUDA; no Windows e no macOS é CPU (o demucs não usa MPS). Testado só no macOS arm64.\"",
-            "explicacao": "No Mac x86_64 o lock resolve demucs 4.0.1, que depende de torchaudio 2.11.0, e essa entrada não tem nenhuma wheel nem sdist no uv.lock; então `uv sync --extra voice` deve falhar ali. Mesmo assim o extra-voice não tem receita nao_suportado para macOS x64 e cai na receita geral. Fica como dúvida porque não rodei o sync num Mac Intel.",
-            "correcao": "Avaliar uma receita `quando = { sistema = \"macos\", arch = \"x64\" }` com nao_suportado no extra-voice, como já existe no extra-transcribe."
+            "linha": 4,
+            "evidencia": "# - Python 3.11 ou 3.12: o uv.lock fixa torch 2.2.2 e onnxruntime 1.32.0, sem wheel para 3.13+.",
+            "explicacao": "No engine/uv.lock, o onnxruntime 1.32.0 tem wheels cp313 e cp314 (macOS arm64, Linux e Windows), e av e ctranslate2 também têm cp313. Quem não tem wheel cp313 é só o torch 2.2.2 (extra voice). O requires-python do lock é \u003e=3.11, então o motivo dado para limitar a 3.11/3.12 é falso no caso do onnxruntime. O impacto é baixo, porque fixar a 3.12 é conservador e funciona.",
+            "correcao": "Atribuir o limite de 3.13+ só ao torch 2.2.2 (extra voice) no comentário da linha 4 e no item da tabela 'O que já existe' da spec."
           }
         ],
-        "resumo": "Camada A toda verde (validar, checar --json, pytest 191, ruff, sha256 = skills.lock = 5f63e02, prompt literal no README, verificador ok, CI verde nos 3 sistemas, forge gate 0, raw URL ok). Reprovado pelo cache do htdemucs (demucs 4.1.0 do lock baixa do Hugging Face, não do torch hub; média), pela afirmação falsa sobre a wheel do OpenCV no Mac Intel (baixa) e pela dúvida do extra voice no Mac Intel (torchaudio 2.11.0 sem artefato no lock; baixa)."
+        "resumo": "Rodada 2 sobre 5d55328: Camada A toda verde (validar, checar --json, pytest 191, ruff, sha256 = skills.lock = 5f63e02, prompt literal, verificador ok, CI verde nos 3 sistemas, forge gate 0). Achados 2 e 3 da r1 resolvidos; o 1 corrigido no toml, README e teste, mas não no corpo do PR. Dois ajustes baixos de texto: corpo do PR (htdemucs no torch) e comentário da linha 4 do toml (onnxruntime tem cp313; só o torch 2.2.2 limita). Observações: spec ainda diz htdemucs (cache do torch); rodapé de atribuição do PR duplicado."
       }
     }
   ]
