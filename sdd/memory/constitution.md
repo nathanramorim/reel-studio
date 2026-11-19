@@ -1,20 +1,21 @@
 # Constituição — reel-studio
 
 ## Missão
-Transformar vídeos já gravados em reels verticais (corte do vídeo real ou VSL animado), no estilo e na marca escolhidos, rodando local e gastando o mínimo de tokens.
+Transformar vídeos já gravados em reels verticais (corte do vídeo real ou VSL animado), no estilo e na marca de quem usa, rodando local e gastando o mínimo de tokens. Habilidade replicável, instalada como plugin (Claude Code, agy e Codex), sem nome de empresa ou pessoa dentro dela.
 
 ## Stack
 | Camada | Escolha | Motivo |
 |--------|---------|--------|
-| Motor (CLI) | Python 3.11+ com `uv` | Pipeline de mídia e IA local; uv é o padrão do autor |
+| Motor (CLI) | Python >= 3.11 só via `uv` (`engine/pyproject.toml` + `uv.lock`; extras `transcribe`, `voice`, `vision`) | Pipeline de mídia e IA local; nunca pip (ADR-0004) |
 | Mídia | `ffmpeg` (binário do sistema) | Corte, áudio e queima de legenda sem dependência pesada |
 | Transcrição | `faster-whisper` (MIT), local | Nada sai da máquina |
 | Escolha de cortes e roteiro | O agente (Claude Code) gera o JSON a partir do prompt; OpenRouter só no caminho de automação | Dentro do Claude Code, zero chamada de rede extra e zero chave |
-| Render animado | Remotion (React/TS) + Manim (estilo matemático) | Cenas por componentes prontos, sem gerar código por vídeo |
-| Distribuição | Plugin do Claude Code (skill + comandos) | Instalação direta do GitHub |
+| Render animado | Remotion 4.x (React/TS) | Cenas por componentes prontos, sem gerar código por vídeo |
+| Testes | pytest + ruff (grupo `dev`) | `uv run pytest`, `uv run ruff check` |
+| Distribuição | Plugin (marketplace na raiz, skill + comandos) | Instalado do GitHub, nunca copiado para um hub |
 | DB | none | Estado em arquivos JSON por vídeo |
 | Config | `themes/`, `styles/`, `contracts/` | Tokens e contratos versionados |
-| Secrets | `.env` local (`OPENROUTER_API_KEY`) | Nunca no repositório |
+| Secrets | `.env` local (`OPENROUTER_API_KEY`, só no caminho de automação) | Nunca no repositório |
 
 ## Decisões resolvidas
 | Decisão | Resolução |
@@ -25,6 +26,8 @@ Transformar vídeos já gravados em reels verticais (corte do vídeo real ou VSL
 | MCP? | Não. Skill carrega sob demanda (ADR-0001) |
 | Layout Python | `engine/src/reel_studio/cli.py` é a borda (equivale a `cmd/`); `engine/src/reel_studio/core/` é o domínio (equivale a `internal/`) (ADR-0001) |
 | Multiagente (DUP-10) | Skill do produto (gerar reels) tem fonte única em `skills/reel-studio/`, exigida pelo plugin do Claude Code; `.agents/skills/reel-studio/` (agy) e `AGENTS.md` (Codex) são adaptadores finos que apontam para ela — não duplicam o corpo (ADR-0001) |
+| Python | Sempre `uv`; nunca pip (ADR-0004) |
+| Padrão de skill | Repositório próprio, replicável, fluxo Forge para toda feature/fix, README com `## Requisitos` (ADR-0005) |
 
 ## Ferramentas e Integrações
 | Campo | Valor |
@@ -35,21 +38,21 @@ Consulte `sdd/memory/mcps.md` para o status real de cada MCP configurado (`ativo
 
 ## Regras (máx. 15)
 0. Idioma: pt-BR (chat, commits e PRs). Nível de Linguagem: padrão. (`COD-05`)
-1. Sem commits diretos em main (`FLX-02`)
-2. Branch por feature (`feat/*`) (`FLX-02`)
-3. Config e recursos estáticos centralizados conforme arquitetura do projeto (`ARQ-03`)
-4. Secrets em `.env` ou cofre seguro — nunca no binário ou repositório (`SEG-04`)
+1. Sem commits diretos em `main`; uma branch por iniciativa (`feat/<id>-<nome>` ou `fix/<id>-<nome>`), nunca por task: pergunte o ponto de partida (padrão `main`) e verifique se há branch a retomar. (`FLX-02`)
+2. Toda feature ou fix nasce por `/discovery`, `/nova-feature` ou `/novo-fix` (pasta em `sdd/discovery/`, fila, `status.md`, revisão da Governança): mapeia execuções, cria histórico e sequencializa o contexto. (`FLX-01`)
+3. Replicável: nenhum nome de empresa, pessoa ou perfil na skill, no motor ou nos exemplos; tema (marca) e estilo vêm de quem usa; exemplos com marca fictícia (`themes/exemplo.json`, `acme`); instalado como plugin, nunca copiado para um hub. (`ARQ-03`)
+4. Secrets em `.env` ou cofre seguro — nunca no binário ou repositório; `OPENROUTER_API_KEY` só no caminho de automação, `.env.example` sem valor. (`SEG-04`)
 5. Antes de usar lib externa, consultar context7 com versão exata — desde que `sdd/memory/mcps.md` o liste como `ativo`; se `indisponível`, usar a documentação oficial da lib (`SEG-07`)
-6. Toda feature tem critério executável (`TST-01`)
-7. Verificação estática / linter deve passar após cada task (`COD-02`)
-8. Dependências de runtime restritas ao estritamente necessário (`ARQ-04`)
+6. Python só via `uv` (`uv sync`, `uv run`, `uv add`); nunca `pip`. Toda feature tem critério executável; `uv run ruff check` e `uv run pytest` (em `engine/`) passam após cada task, sem baixar modelo nem usar rede. (`COD-02`, `TST-01`)
+7. Local por padrão: vídeo, áudio e transcrição completa nunca saem da máquina; o LLM só recebe a transcrição compactada (texto) e nunca gera código de animação. Dentro de um agente, o próprio agente escreve o JSON; o OpenRouter é só para automação sem agente. (`SEG-05`)
+8. Dependências de runtime no mínimo; as pesadas (Whisper, demucs, OpenCV) são extras opcionais. (`ARQ-04`)
 9. Modos de simulação (`--dry-run`) nunca causam efeitos colaterais em disco (`ARQ-05`)
-10. Superfície pública do sistema expõe contratos explícitos (`ARQ-06`)
+10. Contratos explícitos entre etapas (`transcript`, `clips`, `scenes`, `theme`, `style`) em `contracts/`, validados na borda; processos externos sem shell. (`ARQ-06`, `SEG-01`, `SEG-03`)
 11. Versões Beta (`-beta`) não podem ser mescladas na `main`; a tag é criada diretamente na branch de feature e o PR correspondente deve ser mantido aberto para estabilização antes de promover para oficial. (`FLX-07`)
-12. Documentação e Release Notes atualizados a cada entrega relevante, com destaques reais em `sdd/releases/history.md`. (`FLX-07`)
+12. Documentação e Release Notes atualizados a cada entrega relevante: README pelo readme-studio, com `## Requisitos` antes de `## Instalação` (o `verificar_readme.py` do readme-studio passa), e destaques reais em `sdd/releases/history.md`. (`FLX-07`)
 13. As tasks de uma iniciativa ficam em `sdd/discovery/<id>-<nome>/features/`. (`FLX-02`)
-14. A telemetria da sessão é gravada no `Close`, com o caminho completo da feature ou task. (`FLX-04`)
-15. Uma branch por iniciativa (`<prefixo>/<id>-<nome>`), nunca por task: pergunte o ponto de partida (padrão `main`) e verifique se há branch a retomar. (`FLX-02`)
+14. A telemetria da sessão é gravada no `Close` (`forge session record`), com o caminho completo da feature ou task; arquivos de sessão ficam fora do git (repositório público). (`FLX-04`)
+15. Semiautomático: `cut` e `render` só rodam depois que a pessoa aprova `clips.json` ou `scenes.json`. (`ARQ-06`)
 
 <!-- forge-sdd-governanca:inicio versao=3.0.0-beta -->
 ## IDs Canônicos da Constituição (O Quê e Por Quê)
@@ -121,5 +124,8 @@ A relação entre cada rule, o escopo (`globs`) e os IDs que ela cobre (`regras`
 
 | ID | Onde | O que diverge | Proposta | Tarefa |
 |----|------|---------------|----------|--------|
-| — | — | Nenhuma divergência ativa registrada | — | — |
+| Regra 3 | `themes/pessoal.json`, `themes/busize.json`, `themes/forge.json`, `themes/forge/` | Temas com marca e nome reais do autor dentro da skill | Mover para o projeto de quem usa (tema por caminho) e manter só `exemplo` | `/nova-feature` (a abrir) |
+| Regra 3 | `engine/src/reel_studio/cli.py` (`--theme` padrão `pessoal`) | Tema padrão com nome de pessoa | Padrão `exemplo` ou tema obrigatório | mesma feature |
+| Regra 3 | `styles/forge-motion/`, `render/src/forge/` | Estilo com nome de produto real | Renomear para nome neutro | mesma feature |
+| Regra 3 / 12 | `README.md` | Exemplos com `busize`/`forge`; sem `## Requisitos` (falha no `verificar_readme.py`) | Reescrever pelo readme-studio | `/novo-fix` (a abrir) |
 <!-- forge-sdd-governanca:fim -->
