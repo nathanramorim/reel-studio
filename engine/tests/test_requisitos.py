@@ -309,3 +309,11 @@ def test_instalar_item_seu_pedido_nao_conta_como_falha(tmp_path):
     codigo, rodados, _ = _instalar(ambiente(tmp_path), sim=True, interativo=False,
                                    itens=["openrouter"])
     assert codigo == 0 and rodados == []
+
+
+def test_instalar_whisper_modelo_invalido_pedido_nao_sai_1_nem_roda(tmp_path):
+    amb = ambiente(tmp_path, env={"REEL_WHISPER_MODEL": "errado"})
+    codigo, rodados, texto = _instalar(amb, sim=True, interativo=False,
+                                       itens=["whisper-modelo", "licenca-remotion"])
+    assert codigo == 0 and rodados == []
+    assert "Este item é seu" in texto
