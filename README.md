@@ -32,12 +32,24 @@ A transcrição roda local (Whisper). O modelo de IA só vê o texto, nunca o v�
 | 🧠 **Poucos tokens** | Cerca de 1 a 2 mil tokens por reel, numa chamada só. |
 | 🧩 **Replicável** | Plugin do Claude Code: instala, usa o próprio tema, pronto. |
 
-## Antes de começar
+## Requisitos
 
-- **Python 3.11+** com [uv](https://docs.astral.sh/uv/).
-- **ffmpeg** no PATH (macOS: `brew install ffmpeg-full`, com libass para a legenda; Windows: `winget install ffmpeg`).
-- **Node.js 18+** (só para o modo VSL, que usa Remotion).
-- **Um agente que lê skills** (Claude Code, agy/Antigravity ou Codex) para gerar cortes e roteiros sem chave de API. Sem nenhum deles, dá para automatizar com `OPENROUTER_API_KEY` (veja "Caminho de automação" abaixo).
+> **Cole isto na sua IA antes de instalar:**
+>
+> "Verifique os requisitos do reel-studio: rode `uv run https://raw.githubusercontent.com/nathanramorim/reel-studio/main/scripts/requisitos.py checar`. Se faltar algo, me mostre a lista e, com o meu ok, rode `uv run https://raw.githubusercontent.com/nathanramorim/reel-studio/main/scripts/requisitos.py instalar` para cada item. Não aceite licenças nem declarações por mim. Depois instale o plugin com `claude plugin marketplace add nathanramorim/reel-studio` e `claude plugin install reel-studio@reel-studio`, e rode o `instalar` de novo para os itens do motor."
+
+Sem o `uv`, a IA instala ele primeiro (`brew install uv` no Mac). O script é público e só usa o Python padrão: dá para rodar antes de clonar. `checar` mostra cada item como `ok`, `faltando` (obrigatório) ou `opcional`, com a versão e o comando que resolve (`--json` para máquina); sai com código 1 se faltar um obrigatório. `instalar` pergunta antes de cada comando (`--sim` roda sem perguntar), pula o que já está ok e **nunca** aceita licença nem lê chave: esses itens ele só explica. Os itens do motor (extras e `npm install`) só aparecem resolvíveis depois do plugin instalado ou do repositório clonado; num clone, rode `uv run scripts/requisitos.py checar` na pasta `reel-studio`.
+
+| Ponto | O que precisa |
+|---|---|
+| **Onde roda** | Feito e testado no **macOS com Apple Silicon**. Linux e Windows não foram testados (o motor já dá a dica de `winget` no Windows). No Apple Silicon, use o terminal nativo (arm64): sob Rosetta, instale com `arch -arm64 brew ...` (o script já monta assim). Agentes: Claude Code (plugin), agy (Antigravity) e Codex (lêem a mesma skill); sem agente, a CLI funciona com o OpenRouter (veja "Contas e chaves"). |
+| **Programas** | [`uv`](https://docs.astral.sh/uv/): `brew install uv` (ele instala o **Python 3.11** ou mais novo; você não usa `pip`). **ffmpeg com libass** (a legenda usa o filtro `ass`): `brew install ffmpeg-full` e, como ele é keg-only, `brew link --overwrite --force ffmpeg-full`; no Windows, `winget install ffmpeg`. **Node.js 18 ou mais novo**, só para o modo VSL e os componentes do corte: `brew install node`. O render usa **Remotion 4** (travado em 4.0.543 no `package-lock.json`). |
+| **Extras do motor** (em `engine/`) | `transcribe` (faster-whisper, **obrigatório**): `uv sync --inexact --extra transcribe`. `voice` (demucs + PyTorch, só para isolar a voz com `--voice-only`): `uv sync --inexact --extra voice`. `vision` (OpenCV, só para o enquadramento automático do corte; sem ele o corte usa `fit`): `uv sync --inexact --extra vision`. O `--inexact` mantém os extras que você já tinha. |
+| **Downloads na primeira execução** | Modelo do **Whisper** `small` (cerca de 480 MB; outro com `REEL_WHISPER_MODEL=medium` ou `large-v3`, maiores) em `~/.cache/huggingface/hub/`, baixado na primeira transcrição. Extra `voice`: PyTorch (cerca de 1 GB) no `.venv` e o modelo **htdemucs** (cerca de 80 MB) em `~/.cache/torch/hub/checkpoints/`, no primeiro `--voice-only`. Modo VSL: `npm install` em `render/` (cerca de 300 MB em `render/node_modules/`) e o **Chrome Headless Shell** do Remotion (cerca de 100 MB, em `render/node_modules/.remotion/`, ou adiantado com `npx remotion browser ensure`). Depois disso tudo roda sem internet. |
+| **Contas e chaves** | Nenhuma dentro do Claude Code, agy ou Codex: o próprio agente escreve os cortes e o roteiro. **Opcional:** para automação sem agente (`suggest` e `script`), uma chave do OpenRouter em `OPENROUTER_API_KEY` no `.env` (copie de `.env.example`; o `.env` fica fora do git). O script de requisitos não lê nem grava a chave. |
+| **Máquina** | Recomendado 8 GB de RAM (a transcrição e o render rodam no seu computador). Reserve cerca de 3 GB de disco com os extras e o modo VSL (modelos, PyTorch, `node_modules` e Chrome), mais o espaço dos vídeos. |
+| **Licenças e limites** | Código MIT. faster-whisper e demucs: MIT. OpenCV: Apache 2.0. O **Remotion** é grátis para uso pessoal e para empresas de até 3 pessoas; acima disso, a empresa precisa da [licença paga](https://www.remotion.dev/license). Quem aceita é você: o script só mostra. |
+| **O que você fornece** | O **vídeo** já gravado (ou o áudio, no modo VSL) e o **tema** com a sua marca (cores, fonte, legenda e CTA): copie `themes/exemplo.json` (veja a skill, referência "criar tema"). Você aprova os cortes ou o roteiro antes de qualquer vídeo ser gerado. |
 
 ## Instalação
 
@@ -120,6 +132,7 @@ Tema é a sua marca (cores, fontes, legenda, CTA): qualquer pessoa cria o dela. 
 
 | Versão | Novidades |
 |---|---|
+| **0.2.0** | `scripts/requisitos.py` com `checar` e `instalar` (pergunta antes de instalar e nunca aceita licença por você), seção Requisitos completa e o prompt para colar na IA antes de instalar. Inclui as entregas 03 a 05 da `main` (veja `sdd/releases/history.md`). |
 | **0.1.0** | Primeira versão: modo corte completo, modo VSL com 3 estilos SVG, 3 temas + exemplo, plugin do Claude Code. |
 
 ## Licença

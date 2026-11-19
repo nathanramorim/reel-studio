@@ -4,6 +4,11 @@ Este arquivo registra o histórico de entregas de produto deste projeto.
 
 ## Entregas
 
+### 07 — Prompt de instalação para a IA (0.2.0, 2026-11-19)
+- **`scripts/requisitos.py`:** `checar` mostra cada requisito (ok, faltando ou opcional, versão e comando); `instalar` pergunta antes de cada comando, pula o que já está ok e nunca aceita licença nem lê chave. Roda antes de clonar, pela URL.
+- **README:** seção `## Requisitos` completa e o bloco "Cole isto na sua IA antes de instalar".
+- **Constitution:** `ARQ-12` (ADR-0006): o prompt para a IA usa script como ferramenta.
+
 ### 03 — Enquadramento automático do corte (2026-11-16)
 - **Layout automático:** `cut` escolhe sozinho `fill` (pessoa), `zoom` (tela com atividade) ou `fit`, sem parâmetro. Extra opcional `vision` (OpenCV) para detectar rosto e atividade; sem ele, `fit`.
 - **Zoom no tempo:** a região acompanha a ação dentro do corte; fundo na cor do tema e legenda `lower-third` abaixo do conteúdo.
