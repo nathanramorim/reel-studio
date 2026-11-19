@@ -14,7 +14,7 @@ sequenceDiagram
   A->>C: save-clips --file cortes.json
   C-->>U: clips.json para aprovar ou editar
   U->>A: aprova
-  A->>C: cut --theme busize
+  A->>C: cut --theme acme
   C-->>U: output/clip-01.mp4 ...
 ```
 
@@ -28,10 +28,10 @@ sequenceDiagram
   A->>C: prompt-script --style isometric-pastel
   C-->>A: system + transcrição compactada + tipos de cena do estilo
   A->>A: gera roteiro.json
-  A->>C: save-scenes --file roteiro.json --theme forge
+  A->>C: save-scenes --file roteiro.json --theme acme
   C-->>U: scenes.json para aprovar ou editar
   U->>A: aprova
-  A->>C: render --theme forge
+  A->>C: render --theme acme
   C->>R: scenes.json + tema + estilo
   R-->>U: output/vsl.mp4
 ```

@@ -1,6 +1,6 @@
 ---
 description: Como executar o Reuse Check, manter o catálogo de conceitos, aplicar a Regra de Três para Auto-Skills e preservar fonte única da verdade.
-globs: ["sdd/**", "internal/**", ".agents/**"]
+globs: ["sdd/**", "engine/**", "render/**", ".agents/**"]
 regras: [DUP-01, DUP-02, DUP-05, DUP-10, GOV-04]
 ---
 
@@ -11,7 +11,7 @@ Passos práticos para cumprir `DUP-01`, `DUP-02`, `DUP-05`, `DUP-10` e `GOV-04` 
 ## 1. Catálogo de Conceitos e Reuse Check Obrigatório (`DUP-01`, `DUP-02`)
 
 - **Consulta ao catálogo (`DUP-01`):**
-  - Antes de criar uma nova struct de configuração, estado ou comando, consulte `sdd/spec/concepts.md` para identificar qual pacote em `internal/` já é dono daquele conceito.
+  - Antes de criar uma nova struct de configuração, estado ou comando, consulte `sdd/spec/concepts.md` para identificar qual módulo de `engine/src/reel_studio/core/` ou `render/src/` já é dono daquele conceito.
   - Se um novo conceito de domínio nascer na entrega, adicione sua linha correspondente em `sdd/spec/concepts.md` apontando o pacote dono e o contrato público.
 - **Preenchimento de `## O que já existe` (`DUP-02`):**
   - Toda spec (`criteria-ID-*.md` e `feat-XX-*.md`) deve conter uma tabela com as colunas `| Procurei | Onde | Achei | Decisão (reusar, estender, criar) | Justificativa |`.
@@ -31,5 +31,5 @@ Passos práticos para cumprir `DUP-01`, `DUP-02`, `DUP-05`, `DUP-10` e `GOV-04` 
 - Na 1ª ocorrência de um procedimento, resolva diretamente na task.
 - Na 2ª ocorrência similar, observe a repetição e mantenha o código/fluxo alinhado.
 - Na **3ª ocorrência** de um mesmo bloco de código ou roteiro operacional:
-  - Se for lógica em Go, extraia uma função ou pacote interno compartilhado.
+  - Se for lógica do motor, extraia uma função compartilhada em `core/`; se for do render, um componente em `render/src/`.
   - Se for procedimento operacional de agente (ex.: sequência padrão de criar subcomando + template + golden test), proponha uma Auto-Skill em `.agents/skills/<slug>/SKILL.md` via `forge skills propose` (ou no campo `candidate_skill` da revisão semântica).

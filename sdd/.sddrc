@@ -1,9 +1,9 @@
 {
   "project": "reel-studio",
-  "version": "4.8.0",
-  "agents": ["claude"],
+  "version": "4.9.1-beta",
+  "agents": ["claude", "gemini"],
   "telemetry": {
-    "enabled": false,
+    "enabled": true,
     "anonymous": true,
     "endpoint": "local"
   },

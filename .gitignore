@@ -27,3 +27,7 @@ engine/.venv/
 
 # SO
 .DS_Store
+
+# Forge SDD: telemetria e runtime locais (repositório público)
+sdd/.metrics/session-*.json
+sdd/.runtime/
